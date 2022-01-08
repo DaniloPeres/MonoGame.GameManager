@@ -1,0 +1,27 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/MonoGame.GameManager/bin
+/MonoGame.GameManager/obj
+/Samples/Demos/MonoGame.GameManager.Samples.Android/bin
+/Samples/Demos/MonoGame.GameManager.Samples.Android/obj
+/Samples/Demos/MonoGame.GameManager.Samples.Shared/Content/bin
+/Samples/Demos/MonoGame.GameManager.Samples.Shared/Content/obj
+/Samples/Demos/MonoGame.GameManager.Samples.UWP/bin
+/Samples/Demos/MonoGame.GameManager.Samples.UWP/obj
+/Samples/Demos/MonoGame.GameManager.Samples.WinExe/bin
+/Samples/Demos/MonoGame.GameManager.Samples.WinExe/obj
+/Samples/Games/Ping-Pong/bin
+/Samples/Games/Ping-Pong/obj
+/Samples/Games/Ping-Pong/Content/bin
+/Samples/Games/Ping-Pong/Content/obj
+/Samples/Games/Snake/bin
+/Samples/Games/Snake/obj
+/Samples/Games/Snake/Content/bin
+/Samples/Games/Snake/Content/obj
+/Samples/Games/Tic-Tac-Toe/bin
+/Samples/Games/Tic-Tac-Toe/obj
+/Samples/Games/Tic-Tac-Toe/Content/bin
+/Samples/Games/Tic-Tac-Toe/Content/obj

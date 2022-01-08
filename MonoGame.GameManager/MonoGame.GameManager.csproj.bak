@@ -1,0 +1,54 @@
+﻿<Project Sdk="MSBuild.Sdk.Extras/3.0.22">
+
+	<PropertyGroup>
+		<TargetFrameworks>netstandard2.0;Xamarin.iOS10;MonoAndroid10.0;</TargetFrameworks>
+		<TargetFrameworks Condition="'$(OS)' == 'Windows_NT'">$(TargetFrameworks);uap10.0.18362;</TargetFrameworks>
+		<UseFullSemVerForNuGet>false</UseFullSemVerForNuGet>
+		<EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+		<DebugType>portable</DebugType>
+		<Configurations>Debug;Release</Configurations>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Logging.EventLog" Version="6.0.0" />
+		<PackageReference Include="MonoGame.Framework.Content.Pipeline" Version="3.8.0.1641" />
+		<PackageReference Include="Serilog" Version="2.10.0" />
+		<PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
+		<PackageReference Include="Xamarin.Build.TypeRedirector" Version="0.1.2-preview" PrivateAssets="all" />
+		<Compile Include="**\*.cs" />
+		<Compile Remove="**\*.netstandard.cs" />
+		<Compile Remove="**\*.uwp.cs" />
+		<Compile Remove="**\*.android.cs" />
+		<Compile Remove="**\*.ios.cs" />
+		<Compile Remove="Controls\Extensions\**" />
+		<Compile Remove="obj\**" />
+		<EmbeddedResource Remove="Controls\Extensions\**" />
+		<EmbeddedResource Remove="obj\**" />
+		<None Remove="Controls\Extensions\**" />
+		<None Remove="obj\**" />
+	</ItemGroup>
+	<ItemGroup Condition=" $(TargetFramework.StartsWith('net')) ">
+		<Compile Include="**\*.netstandard.cs" />
+		<PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.0.1641" />
+	</ItemGroup>
+	<ItemGroup Condition=" $(TargetFramework.StartsWith('uap10.0')) ">
+		<Compile Include="**\*.uwp.cs" />
+		<PackageReference Include="MonoGame.Framework.WindowsUniversal" Version="3.8.0.1641" />
+		<SDKReference Include="WindowsMobile, Version=10.0.18362.0">
+			<Name>Windows Mobile Extensions for the UWP</Name>
+		</SDKReference>
+	</ItemGroup>
+	<ItemGroup Condition=" $(TargetFramework.StartsWith('MonoAndroid')) ">
+		<Compile Include="**\*.android.cs" />
+		<PackageReference Include="MonoGame.Framework.Android" Version="3.8.0.1641" />
+	</ItemGroup>
+	<ItemGroup Condition=" $(TargetFramework.StartsWith('Xamarin.iOS')) ">
+		<Compile Include="**\*.ios.cs" />
+		<PackageReference Include="MonoGame.Framework.iOS" Version="3.8.0.1641" />
+	</ItemGroup>
+	<ItemGroup>
+	  <Compile Remove="GameMath\PositionCalculations.cs" />
+	</ItemGroup>
+</Project>

@@ -1,0 +1,26 @@
+{
+	"texture": "Coin",
+	"size": "96 96",
+	"frameDuration": 0.06,
+	"frameCount": 10,
+	"cycles": {
+		"star": {
+			"framesByIndex": {
+				0: {
+					"frameDuration": 0.5
+				}
+			}
+		},
+		"heart": {
+			"position": "0 96",
+			"framesByIndex": {
+				9: {
+					"frameDuration": 0.5
+				}
+			}
+		},
+		"number": {
+			"position": "0 192"
+		}
+	}
+}

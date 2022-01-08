@@ -1,0 +1,31 @@
+{
+	"frameDuration": 0.08,
+	"cycles": {
+		"idle": {
+			"textures": "Idle ({0})",
+			"frameCount": 10,
+			"multipleTexturesStartingCount": 1
+		},
+		"walk": {
+			"textures": "Walk ({0})",
+			"frameCount": 10,
+			"multipleTexturesStartingCount": 1
+		},
+		"run": {
+			"textures": "Run ({0})",
+			"frameCount": 8,
+			"multipleTexturesStartingCount": 1
+		},
+		"jump": {
+			"textures": "Jump ({0})",
+			"frameCount": 12,
+			"multipleTexturesStartingCount": 1
+		},
+		"dead": {
+			"textures": "Dead_{0:00}",
+			"frameCount": 8,
+			"multipleTexturesStartingCount": 1,
+			"frameDuration": 0.1
+		}
+	}
+}
