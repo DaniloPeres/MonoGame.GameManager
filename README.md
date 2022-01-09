@@ -31,7 +31,7 @@ Repository: https://github.com/DaniloPeres/MonoGame.GameManager/tree/main/Sample
 - [Screen](#screen)
   - [Screen Transition](#screen-transition)
   - [Screen Manager](#screen-manager)
-- [Samples - Games](#samples-games)
+- [Samples - Games](#samples---games)
   - [Ping-Pong](#ping-pong)
   - [Snake](#snake)
   - [Tic-Tac-Toe](#tic-tac-toe)
