@@ -11,6 +11,12 @@ namespace MonoGame.GameManager.Controls
         public RectangleControl(Rectangle destinationRectangle, Color color)
             : this(destinationRectangle.Location.ToVector2(), destinationRectangle.Size.ToVector2(), color) { }
 
+        public override Vector2 Origin
+        {
+            get => OriginWithoutScale * Size;
+            set => base.Origin = value;
+        }
+
         public RectangleControl(Vector2 position, Vector2 size, Color color)
         {
             PositionAnchor = position;

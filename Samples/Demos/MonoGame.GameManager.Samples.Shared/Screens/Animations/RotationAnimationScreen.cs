@@ -141,7 +141,7 @@ namespace MonoGame.GameManager.Samples.Screens.Animations
             new RectangleControl(Vector2.Zero, rotationAnimationContainer.Size, new Color(15, 15, 15))
                 .AddToScreen(rotationAnimationContainer);
 
-            rectangleControlPreview = new RectangleControl(new Rectangle(75, 75, 150, 150), Color.White)
+            rectangleControlPreview = new RectangleControl(new Rectangle(0, 0, 150, 150), Color.White)
                 .AddToScreen(rotationAnimationContainer)
                 .SetAnchor(Enums.Anchor.Center)
                 .SetOriginRate(0.5f);

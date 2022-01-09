@@ -100,6 +100,8 @@ namespace MonoGame.GameManager.Animations
         public TAnimation ResetAnimation()
         {
             durationPlaying = 0;
+            // Update the animation to not wait until next frame to re-calculate
+            Update(new GameTime());
             return ThiasAsT;
         }
 
@@ -137,11 +139,17 @@ namespace MonoGame.GameManager.Animations
                         Stop();
                         // mark that it still is playing
                         IsPlaying = true;
-                        pingPongDelayTime = new DelayTime(LoopingDelayTimeDuration, () => Play())
+                        pingPongDelayTime = new DelayTime(LoopingDelayTimeDuration, () =>
+                            {
+                                ResetAnimation();
+                                Play();
+                            })
                             .Play();
                     }
+                    else
+                        ResetAnimation();
 
-                    ResetAnimation();
+
                 }
                 else
                 {

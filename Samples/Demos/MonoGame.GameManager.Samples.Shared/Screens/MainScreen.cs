@@ -182,10 +182,10 @@ namespace MonoGame.GameManager.Samples.Screens
         private void AddRotationSection(Vector2 pos)
         {
             var rotationButton = AddOptionButton(pos, "Rotation", RotationAnimationScreen.OpenRotationAnimationScreen);
-            var rotationRectangle = new RectangleControl(new Rectangle(40, 20, 80, 60), Color.DarkGreen)
+            var rotationRectangle = new RectangleControl(new Rectangle(0, -15, 80, 60), Color.DarkGreen)
                 .AddToScreen(rotationButton)
-                .SetAnchor(Enums.Anchor.Center)
-                .SetOriginRate(new Vector2(0.5f));
+                .SetOriginRate(new Vector2(0.5f))
+                .SetAnchor(Enums.Anchor.Center);
 
             new RotationAnimation(rotationRectangle, 1f, 360f)
                 .SetParent(rotationButton)

@@ -22,7 +22,7 @@ namespace MonoGame.GameManager.Controls.Abstracts
 
         public override Vector2 Size
         {
-            get => base.Size * scale;
+            get => base.Size * Scale;
             set => base.Size = value;
         }
 
@@ -30,7 +30,7 @@ namespace MonoGame.GameManager.Controls.Abstracts
 
         public override Vector2 Origin
         {
-            get => base.Origin * scale;
+            get => base.Origin * Scale;
             set => base.Origin = value;
         }
 
@@ -38,7 +38,7 @@ namespace MonoGame.GameManager.Controls.Abstracts
             get => OriginWithoutScale;
             set => OriginWithoutScale = value;
         }
-        public Vector2 OriginWithoutScale
+        public virtual Vector2 OriginWithoutScale
         {
             get => base.Origin;
             set => base.Origin = value;
