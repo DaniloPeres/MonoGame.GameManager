@@ -35,6 +35,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Screens\Controls\MultiLineLabelScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Screens\Controls\PanelScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Screens\Controls\RectangleScreen.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Screens\Controls\ScrollViewerScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Screens\Controls\SpriteAnimationScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Screens\MainScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Screens\ScreensInfo\ScreenManagerScreen.cs" />

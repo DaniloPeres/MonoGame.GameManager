@@ -77,6 +77,8 @@ namespace MonoGame.GameManager.Screens
 
         protected override void Draw(GameTime gameTime)
         {
+            controlManager.OnBeforeDraw();
+
             // Draw in the render target and after that draw in the correct position and scale
             GraphicsDevice.SetRenderTarget(renderTarget);
             controlManager.Draw();
@@ -104,6 +106,7 @@ namespace MonoGame.GameManager.Screens
             if (ServiceProvider.MemoryManager.CleanMemoryType == Enums.CleanMemoryType.OnChangeScreen)
                 ServiceProvider.MemoryManager.CleanMemory();
 
+            ServiceProvider.RootPanel.IterateChildren(x => x.Dispose());
             ServiceProvider.RootPanel.ClearChildren();
             actualScreen.LoadContent();
             actualScreen.OnInit();

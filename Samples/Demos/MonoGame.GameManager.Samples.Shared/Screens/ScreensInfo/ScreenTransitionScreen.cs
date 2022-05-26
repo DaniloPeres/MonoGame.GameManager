@@ -48,7 +48,7 @@ namespace MonoGame.GameManager.Samples.Screens.ScreensInfo
         {
             var noTransitionButton = new Button(ContentHandler.Instance.TextureButtonBackground, pos)
                .AddToScreen()
-               .SetScale(new Vector2(1.25f, 1f))
+               .SetBackgroundScale(new Vector2(1.25f, 1f))
                .SetHoverTexture(ContentHandler.Instance.TextureButtonBackgroundHover)
                .SetMousePressedTexture(ContentHandler.Instance.TextureButtonBackgroundPressed)
                .AddOnClick(args =>
@@ -102,7 +102,7 @@ namespace MonoGame.GameManager.Samples.Screens.ScreensInfo
         {
             var noTransitionButton = new Button(ContentHandler.Instance.TextureButtonBackground, pos)
                .AddToScreen()
-               .SetScale(new Vector2(1.25f, 1f))
+               .SetBackgroundScale(new Vector2(1.25f, 1f))
                .SetHoverTexture(ContentHandler.Instance.TextureButtonBackgroundHover)
                .SetMousePressedTexture(ContentHandler.Instance.TextureButtonBackgroundPressed)
                .AddOnClick(args =>

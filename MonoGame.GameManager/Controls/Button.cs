@@ -1,12 +1,12 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.GameManager.Controls.Abstracts;
-using MonoGame.GameManager.Controls.MouseEvent;
+using MonoGame.GameManager.Controls.InputEvent;
 using MonoGame.GameManager.Extensions;
 
 namespace MonoGame.GameManager.Controls
 {
-    public class Button : ScalableContainerAbstract<Button>
+    public class Button : ContainerAbstract<Button>
     {
         private Texture2D drawTexture;
         private Texture2D defaultTexture;
@@ -21,6 +21,17 @@ namespace MonoGame.GameManager.Controls
         }
         private Texture2D hoverTexture;
         private Texture2D mousePressedTexture;
+
+        private Vector2 backgroundScale = new Vector2(1f);
+        public Vector2 BackgroundScale
+        {
+            get => backgroundScale;
+            set
+            {
+                backgroundScale = value;
+                MarkAsDirty();
+            }
+        }
 
         public Button(Texture2D defaultTexture, Vector2 position)
         {
@@ -53,14 +64,20 @@ namespace MonoGame.GameManager.Controls
 
         public override void Draw(SpriteBatch spriteBatch)
         {
-            DrawTexture(spriteBatch, drawTexture, new Rectangle(GetPosition().ToPoint(), (drawTexture.Size().ToVector2() * Scale).ToPoint()), null, OriginWithoutScale);
+            DrawTexture(spriteBatch, drawTexture, new Rectangle(GetPosition().ToPoint(), (drawTexture.Size().ToVector2() * backgroundScale * NestedScale).ToPoint()), null, OriginWithoutScale);
             base.Draw(spriteBatch);
         }
 
-        private void OnMouseEnterButton(ControlEventArgs args) => UpdateDrawTexture();
-        private void OnMouseLeaveButton(ControlEventArgs args) => UpdateDrawTexture();
-        private void OnMousePressed(ControlEventArgs args) => UpdateDrawTexture();
-        private void OnMouseReleased(ControlEventArgs args) => UpdateDrawTexture();
+        public Button SetBackgroundScale(Vector2 backgroundScale)
+        {
+            BackgroundScale = backgroundScale;
+            return this;
+        }
+
+        private void OnMouseEnterButton(ControlMouseEventArgs args) => UpdateDrawTexture();
+        private void OnMouseLeaveButton(ControlMouseEventArgs args) => UpdateDrawTexture();
+        private void OnMousePressed(ControlMouseEventArgs args) => UpdateDrawTexture();
+        private void OnMouseReleased(ControlMouseEventArgs args) => UpdateDrawTexture();
 
         private void UpdateDrawTexture()
         {
@@ -72,6 +89,6 @@ namespace MonoGame.GameManager.Controls
                         : DefaultTexture; // use default texture
         }
 
-        protected override Vector2 CalculateSize() => DefaultTexture.Size().ToVector2();
+        protected override Vector2 CalculateSize() => DefaultTexture.Size().ToVector2() * BackgroundScale;
     }
 }

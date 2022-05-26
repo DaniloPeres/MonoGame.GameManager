@@ -1,6 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using MonoGame.GameManager.Controls.MouseEvent;
+using MonoGame.GameManager.Controls.InputEvent;
 using MonoGame.GameManager.GameMath;
 using MonoGame.GameManager.Services;
 
@@ -28,10 +28,10 @@ namespace MonoGame.GameManager.Controls
             RootPanel.FireOnUpdateEvent(gameTime);
         }
 
+        public void OnBeforeDraw() => RootPanel.OnBeforeDraw();
+
         public void Draw()
         {
-            RootPanel.OnBeforeDraw();
-
             graphicsDevice.Clear(ServiceProvider.ScreenManager.ScreenBackgroundColor);
             spriteBatch.Begin();
             RootPanel.Draw(spriteBatch);

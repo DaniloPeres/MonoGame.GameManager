@@ -4,10 +4,12 @@ using System.Collections.Generic;
 
 namespace MonoGame.GameManager.Controls.Interfaces
 {
-    public interface IContainer : IControl
+    public interface IContainer : IScalableControl
     {
+        bool HideOverflow { get; set; }
         IEnumerable<IControl> Children { get; }
         IControl AddChild(IControl child);
+        bool ContainsChild(IControl child);
         void RemoveChild(IControl child);
         void ClearChildren();
         void SetNeedToShortChildren();
@@ -15,5 +17,7 @@ namespace MonoGame.GameManager.Controls.Interfaces
         IEnumerable<IControl> GetAllNestedControls();
         IEnumerable<IControl> Find(Func<IControl, bool> predicate, bool recursive = true);
         IEnumerable<T> FindByType<T>() where T : IControl;
+        IControl SetHideOverflow(bool hideOverflow);
+        IControl AddOnChildRemoved(Action<IControl> onChildRemoved);
     }
 }

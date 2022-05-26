@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.GameManager.Controls;
 using MonoGame.GameManager.Controls.Builders;
-using MonoGame.GameManager.Controls.MouseEvent;
+using MonoGame.GameManager.Controls.InputEvent;
 using MonoGame.GameManager.Controls.Sprites;
 using MonoGame.GameManager.Samples.ScreenComponents;
 using MonoGame.GameManager.Samples.Services;
@@ -139,7 +139,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
 
             var resetAnimationButton = new Button(ContentHandler.Instance.TextureButtonBackground, new Vector2(playStopButton.Size.X + 10, 0))
                 .AddToScreen(container)
-                .SetScale(new Vector2(1.25f, 1f))
+                .SetBackgroundScale(new Vector2(1.25f, 1f))
                 .SetHoverTexture(ContentHandler.Instance.TextureButtonBackgroundHover)
                 .SetMousePressedTexture(ContentHandler.Instance.TextureButtonBackgroundPressed)
                 .AddOnClick(ResetAnimationButtonClick);
@@ -222,7 +222,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             return new SpriteAnimationInfo(cycles);
         }
 
-        private void PlayStopButtonClick(ControlEventArgs args)
+        private void PlayStopButtonClick(ControlMouseEventArgs args)
         {
             if (playStopLabel.Text == "Stop")
                 spriteAnimationPreview.Stop();
@@ -232,7 +232,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             UpdatePlayStopButtonLabel();
         }
 
-        private void ResetAnimationButtonClick(ControlEventArgs args)
+        private void ResetAnimationButtonClick(ControlMouseEventArgs args)
         {
             spriteAnimationPreview.ResetAnimation();
         }

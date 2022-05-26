@@ -1,0 +1,11 @@
+{
+	"texture": "Scrolling",
+	"frameDuration": 0.04,
+	"frameCount": 14,
+	"FrameCountRow": 7,
+	"framesByIndex": {
+		13: {
+			"frameDuration": 1
+		}
+	}
+}

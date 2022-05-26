@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework;
 using System;
 using MonoGame.GameManager.Services;
-using MonoGame.GameManager.Controls.MouseEvent;
+using MonoGame.GameManager.Controls.InputEvent;
 using MonoGame.GameManager.Enums;
 using MonoGame.GameManager.GameMath;
 using MonoGame.GameManager.Controls.Interfaces;
@@ -98,12 +98,18 @@ namespace MonoGame.GameManager.Controls
         }
         private Vector2 size;
 
+        /// <summary>
+        /// The calculated scale of control with parent scale
+        /// eg: Control scale 0.5f and parent scale 0.5f, so, nested scale will be 0.25f
+        /// </summary>
+        public Vector2 NestedScale { get; private set; } = Vector2.One;
+
         private Rectangle destinationRectangle;
 
         /// <summary>
         /// The calculated destination rectangle of the control.
         /// </summary>
-        public Rectangle DestinationRectangle
+        public virtual Rectangle DestinationRectangle
         {
             get
             {
@@ -117,6 +123,7 @@ namespace MonoGame.GameManager.Controls
         /// Mark if the size of this control is dirty and need to recalculate.
         /// </summary>
         protected bool IsSizeDirty = true;
+        protected bool IsNestedScaleDirty = true;
 
         private TControl ThisAsT => (TControl)(object)this;
 
@@ -140,6 +147,7 @@ namespace MonoGame.GameManager.Controls
         {
             IsDirty = true;
             IsSizeDirty = true;
+            IsNestedScaleDirty = true;
         }
 
         public bool IsMouseHover { get; private set; }
@@ -215,12 +223,6 @@ namespace MonoGame.GameManager.Controls
             return ThisAsT;
         }
 
-        public virtual void Move(Vector2 distance)
-        {
-            PositionAnchor += distance;
-            MarkAsDirty();
-        }
-
         IControl IControl.SetMouseEventsColor(Color hoverColor, Color pressedColor) => SetMouseEventsColor(hoverColor, pressedColor);
         public TControl SetMouseEventsColor(Color hoverColor, Color pressedColor)
         {
@@ -242,49 +244,56 @@ namespace MonoGame.GameManager.Controls
             spriteBatch.Draw(texture, destinationRectangle, sourceRectangle, Color, Rotation, origin, SpriteEffects, LayerDepthDraw);
         }
 
-        private event CallbackEvent onMouseEnter;
-        private event CallbackEvent onMouseLeave;
-        private event CallbackEvent onMousePressed;
-        private event CallbackEvent onMouseMoved;
-        private event CallbackEvent onMouseReleased;
-        private event CallbackEvent onClick;
+        private event CallbackMouseEvent onMouseEnter;
+        private event CallbackMouseEvent onMouseLeave;
+        private event CallbackMouseEvent onMousePressed;
+        private event CallbackMouseEvent onMouseMoved;
+        private event CallbackMouseEvent onMouseReleased;
+        private event CallbackMouseEvent onClick;
+        private event CallbackMultipleTouchpointsEvent onMultipleTouchpoints;
         private event Action onUpdateDestinationRectangle;
         private event Action<GameTime> onUpdateEvent;
 
-        IControl IControl.AddOnMouseEnter(CallbackEvent onMouseEnter) => AddOnMouseEnter(onMouseEnter);
-        public TControl AddOnMouseEnter(CallbackEvent onMouseEnter)
+        IControl IControl.AddOnMouseEnter(CallbackMouseEvent onMouseEnter) => AddOnMouseEnter(onMouseEnter);
+        public TControl AddOnMouseEnter(CallbackMouseEvent onMouseEnter)
         {
             this.onMouseEnter += onMouseEnter;
             return ThisAsT;
         }
-        IControl IControl.AddOnMouseLeave(CallbackEvent onMouseLeave) => AddOnMouseLeave(onMouseLeave);
-        public TControl AddOnMouseLeave(CallbackEvent onMouseLeave)
+        IControl IControl.AddOnMouseLeave(CallbackMouseEvent onMouseLeave) => AddOnMouseLeave(onMouseLeave);
+        public TControl AddOnMouseLeave(CallbackMouseEvent onMouseLeave)
         {
             this.onMouseLeave += onMouseLeave;
             return ThisAsT;
         }
-        IControl IControl.AddOnMousePressed(CallbackEvent onMousePressed) => AddOnMousePressed(onMousePressed);
-        public TControl AddOnMousePressed(CallbackEvent onMousePressed)
+        IControl IControl.AddOnMousePressed(CallbackMouseEvent onMousePressed) => AddOnMousePressed(onMousePressed);
+        public TControl AddOnMousePressed(CallbackMouseEvent onMousePressed)
         {
             this.onMousePressed += onMousePressed;
             return ThisAsT;
         }
-        IControl IControl.AddOnMouseMoved(CallbackEvent onMouseMoved) => AddOnMouseMoved(onMouseMoved);
-        public TControl AddOnMouseMoved(CallbackEvent onMouseMoved)
+        IControl IControl.AddOnMouseMoved(CallbackMouseEvent onMouseMoved) => AddOnMouseMoved(onMouseMoved);
+        public TControl AddOnMouseMoved(CallbackMouseEvent onMouseMoved)
         {
             this.onMouseMoved += onMouseMoved;
             return ThisAsT;
         }
-        IControl IControl.AddOnMouseReleased(CallbackEvent onMouseReleased) => AddOnMouseReleased(onMouseReleased);
-        public TControl AddOnMouseReleased(CallbackEvent onMouseReleased)
+        IControl IControl.AddOnMouseReleased(CallbackMouseEvent onMouseReleased) => AddOnMouseReleased(onMouseReleased);
+        public TControl AddOnMouseReleased(CallbackMouseEvent onMouseReleased)
         {
             this.onMouseReleased += onMouseReleased;
             return ThisAsT;
         }
-        IControl IControl.AddOnClick(CallbackEvent onClick) => AddOnClick(onClick);
-        public TControl AddOnClick(CallbackEvent onClick)
+        IControl IControl.AddOnClick(CallbackMouseEvent onClick) => AddOnClick(onClick);
+        public TControl AddOnClick(CallbackMouseEvent onClick)
         {
             this.onClick += onClick;
+            return ThisAsT;
+        }
+        IControl IControl.AddOnMultipleTouchpoints(CallbackMultipleTouchpointsEvent onMultipleTouchpoints) => AddOnMultipleTouchpoints(onMultipleTouchpoints);
+        public TControl AddOnMultipleTouchpoints(CallbackMultipleTouchpointsEvent onMultipleTouchpoints)
+        {
+            this.onMultipleTouchpoints += onMultipleTouchpoints;
             return ThisAsT;
         }
 
@@ -308,13 +317,14 @@ namespace MonoGame.GameManager.Controls
             return ThisAsT;
         }
 
-        public void RemoveOnMouseEnter(CallbackEvent onMouseEnter) => this.onMouseEnter -= onMouseEnter;
-        public void RemoveOnMouseLeave(CallbackEvent onMouseLeave) => this.onMouseLeave -= onMouseLeave;
-        public void RemoveOnMousePressed(CallbackEvent onPressed) => this.onMousePressed -= onPressed;
-        public void RemoveOnMouseMoved(CallbackEvent onMouseMoved) => this.onMouseMoved -= onMouseMoved;
-        public void RemoveOnMouseReleased(CallbackEvent onMouseReleased) => this.onMouseReleased -= onMouseReleased;
-        public void RemoveOnClick(CallbackEvent onClick) => this.onClick -= onClick;
+        public void RemoveOnMouseEnter(CallbackMouseEvent onMouseEnter) => this.onMouseEnter -= onMouseEnter;
+        public void RemoveOnMouseLeave(CallbackMouseEvent onMouseLeave) => this.onMouseLeave -= onMouseLeave;
+        public void RemoveOnMousePressed(CallbackMouseEvent onPressed) => this.onMousePressed -= onPressed;
+        public void RemoveOnMouseMoved(CallbackMouseEvent onMouseMoved) => this.onMouseMoved -= onMouseMoved;
+        public void RemoveOnMouseReleased(CallbackMouseEvent onMouseReleased) => this.onMouseReleased -= onMouseReleased;
+        public void RemoveOnClick(CallbackMouseEvent onClick) => this.onClick -= onClick;
         public void RemoveOnUpdateEvent(Action<GameTime> onUpdateEvent) => this.onUpdateEvent -= onUpdateEvent;
+        public void RemoveOnMultipleTouchpoints(CallbackMultipleTouchpointsEvent onMultipleTouchpointsEvent) => this.onMultipleTouchpoints -= onMultipleTouchpointsEvent;
 
         public virtual void CleanOnUpdateEvent() => onUpdateEvent = null;
 
@@ -335,7 +345,7 @@ namespace MonoGame.GameManager.Controls
         /// <returns>The control</returns>
         public TControl BlockMouseEvents()
         {
-            CallbackEvent doNothingEvent = args => { };
+            CallbackMouseEvent doNothingEvent = args => { };
 
             AddOnMouseEnter(doNothingEvent);
             AddOnMouseLeave(doNothingEvent);
@@ -347,12 +357,22 @@ namespace MonoGame.GameManager.Controls
             return ThisAsT;
         }
 
-        public void FireOnMouseEnter(ControlEventArgs args) => FireMouseEvent(onMouseEnter, args);
-        public void FireOnMouseLeave(ControlEventArgs args) => FireMouseEvent(onMouseLeave, args);
-        public void FireOnPressed(ControlEventArgs args) => FireMouseEvent(onMousePressed, args);
-        public void FireOnMoved(ControlEventArgs args) => FireMouseEvent(onMouseMoved, args);
-        public void FireOnReleased(ControlEventArgs args) => FireMouseEvent(onMouseReleased, args);
-        public void FireOnClick(ControlEventArgs args) => FireMouseEvent(onClick, args);
+        public void FireOnMouseEnter(ControlMouseEventArgs args) => FireMouseEvent(onMouseEnter, args);
+        public void FireOnMouseLeave(ControlMouseEventArgs args) => FireMouseEvent(onMouseLeave, args);
+        public void FireOnPressed(ControlMouseEventArgs args) => FireMouseEvent(onMousePressed, args);
+        public void FireOnMoved(ControlMouseEventArgs args) => FireMouseEvent(onMouseMoved, args);
+        public void FireOnReleased(ControlMouseEventArgs args) => FireMouseEvent(onMouseReleased, args);
+        public void FireOnClick(ControlMouseEventArgs args) => FireMouseEvent(onClick, args);
+        public void FireOnMultipleTouchpoints(ControlMultipleTouchpointsEventArgs args)
+        {
+            if (onMultipleTouchpoints == null)
+            {
+                args.ContinuePropagation();
+                return;
+            }
+
+            onMultipleTouchpoints(args);
+        }
         public virtual void FireOnUpdateEvent(GameTime gameTime) => onUpdateEvent?.Invoke(gameTime);
 
         /// <summary>
@@ -376,11 +396,12 @@ namespace MonoGame.GameManager.Controls
             if (IsSizeDirty)
             {
                 IsSizeDirty = false;
+                CalculatedNestedScaleIfDirty();
                 Size = CalculateSize();
             }
         }
 
-        public void RemoveFromScreen()
+        public virtual void RemoveFromScreen()
         {
             Parent?.RemoveChild(this);
         }
@@ -391,6 +412,16 @@ namespace MonoGame.GameManager.Controls
             GC.SuppressFinalize(this);
         }
 
+        public void CalculatedNestedScaleIfDirty()
+        {
+            if (IsNestedScaleDirty)
+            {
+                IsNestedScaleDirty = false;
+                NestedScale = CalculateNestedScale();
+            }
+        }
+
+        public virtual Vector2 CalculateNestedScale() => Parent?.CalculateNestedScale() ?? Vector2.One;
         protected virtual void Dispose(bool disposing)
         {
             if (!isDispossed)
@@ -404,7 +435,7 @@ namespace MonoGame.GameManager.Controls
             }
         }
 
-        protected virtual Vector2 CalculateSize() => Size;
+        protected virtual Vector2 CalculateSize() => Size * NestedScale;
 
         /// <summary>
         /// Update destination rectangle.
@@ -426,6 +457,7 @@ namespace MonoGame.GameManager.Controls
             if (IsDirty)
             {
                 blockSetIsDirty = true;
+                CalculatedNestedScaleIfDirty();
                 CalculateSizeIfIsDirty();
                 UpdateDestinationRects();
                 blockSetIsDirty = false;
@@ -445,6 +477,8 @@ namespace MonoGame.GameManager.Controls
             var parentLeft = parentDestinationRectangle.X;
             var parentTop = parentDestinationRectangle.Y;
 
+            var positionAnchor = PositionAnchor * parent.NestedScale;
+
             // calculate position based on anchor and parent
 
             // calculate position X
@@ -456,7 +490,7 @@ namespace MonoGame.GameManager.Controls
                 case Anchor.Center:
                 case Anchor.BottomCenter:
                     var parentCenterX = parentLeft + parentDestinationRectangle.Width / 2;
-                    posX = parentCenterX - Size.X / 2 + PositionAnchor.X + Origin.X;
+                    posX = parentCenterX - Size.X / 2 + positionAnchor.X + Origin.X;
                     break;
 
                 // Right
@@ -464,12 +498,12 @@ namespace MonoGame.GameManager.Controls
                 case Anchor.CenterRight:
                 case Anchor.BottomRight:
                     var parentRight = parentLeft + parentDestinationRectangle.Width;
-                    posX = parentRight - Size.X - PositionAnchor.X + Origin.X * 2;
+                    posX = parentRight - Size.X - positionAnchor.X + Origin.X * 2;
                     break;
 
                 // Left
                 default:
-                    posX = parentLeft + PositionAnchor.X;
+                    posX = parentLeft + positionAnchor.X;
                     break;
 
             }
@@ -483,7 +517,7 @@ namespace MonoGame.GameManager.Controls
                 case Anchor.Center:
                 case Anchor.CenterRight:
                     var parentCenterY = parentTop + parentDestinationRectangle.Height / 2;
-                    posY = parentCenterY - Size.Y / 2 + PositionAnchor.Y + Origin.Y;
+                    posY = parentCenterY - Size.Y / 2 + positionAnchor.Y + Origin.Y;
                     break;
 
                 // Bottom
@@ -491,12 +525,12 @@ namespace MonoGame.GameManager.Controls
                 case Anchor.BottomCenter:
                 case Anchor.BottomRight:
                     var parentBottom = parentTop + parentDestinationRectangle.Height;
-                    posY = parentBottom - Size.Y - PositionAnchor.Y + Origin.Y * 2;
+                    posY = parentBottom - Size.Y - positionAnchor.Y + Origin.Y * 2;
                     break;
 
                 // Top
                 default:
-                    posY = parentTop + PositionAnchor.Y;
+                    posY = parentTop + positionAnchor.Y;
                     break;
             }
 
@@ -504,7 +538,7 @@ namespace MonoGame.GameManager.Controls
             return new Rectangle(position.ToPoint(), Size.ToPoint());
         }
 
-        private void FireMouseEvent(CallbackEvent mouseEvent, ControlEventArgs args)
+        private void FireMouseEvent(CallbackMouseEvent mouseEvent, ControlMouseEventArgs args)
         {
             if (mouseEvent == null)
             {

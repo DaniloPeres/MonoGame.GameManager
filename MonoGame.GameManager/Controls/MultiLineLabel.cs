@@ -80,6 +80,7 @@ namespace MonoGame.GameManager.Controls
 
         protected override void UpdateDestinationRects()
         {
+            // TODO improve multi-text label to only re-create labels if it is necessary
             IsDirty = false;
             CreateLabels();
             MarkSizeAsDirty();
@@ -121,7 +122,7 @@ namespace MonoGame.GameManager.Controls
                     break;
             }
             return new Label(spriteFont, textRow, Vector2.One, Color)
-                .SetScale(Scale)
+                .SetScale(NestedScale)
                 .SetAnchor(labelAnchor);
         }
 
@@ -145,7 +146,7 @@ namespace MonoGame.GameManager.Controls
             container.IterateChildren(child =>
             {
                 // do not apply scale in the child size
-                var childSize = child.Size / Scale;
+                var childSize = child.Size / NestedScale;
 
                 size.X = Math.Max(size.X, childSize.X);
                 size.Y += childSize.Y;
@@ -157,9 +158,11 @@ namespace MonoGame.GameManager.Controls
         private string WrapText(string text)
         {
             var wrapTextOutput = new StringBuilder();
-            var charSpaceWidth = spriteFont.MeasureString(" ").X * Scale.X;
+            var charSpaceWidth = spriteFont.MeasureString(" ").X * NestedScale.X;
 
             var textRows = text.Replace("\\n", "\n").Replace("\\N", "\n").Split(new string[] { "\n" }, StringSplitOptions.None);
+
+            var textBoxWidthNestedScale = TextBoxWidth * Parent.NestedScale.X;
 
             for (int i = 0; i < textRows.Count(); i++)
             {
@@ -171,10 +174,10 @@ namespace MonoGame.GameManager.Controls
                 var isFristWord = true;
                 words.ForEach(word =>
                 {
-                    var wordSize = spriteFont.MeasureString(word) * Scale;
+                    var wordSize = spriteFont.MeasureString(word) * NestedScale;
 
                     // check with this word makes the row larger than the text box width
-                    if (rowWidth + wordSize.X < TextBoxWidth)
+                    if (rowWidth + wordSize.X < textBoxWidthNestedScale)
                     {
                         // append the 
                         rowWidth += wordSize.X + charSpaceWidth;

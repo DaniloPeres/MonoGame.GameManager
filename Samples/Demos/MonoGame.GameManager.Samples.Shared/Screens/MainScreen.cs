@@ -23,7 +23,7 @@ namespace MonoGame.GameManager.Samples.Screens
             textureButtonPressed;
 
         private const int MarginOptions = 10;
-        const int MarginButtonsFromTitle = 50;
+        const int MarginButtonsFromTitle = 40;
 
         public override void LoadContent()
         {
@@ -36,7 +36,7 @@ namespace MonoGame.GameManager.Samples.Screens
 
         public override void OnInit()
         {
-            var sectionMargin = 30;
+            var sectionMargin = 20;
 
             BreadcrumbNavigation.CreateBreadcrumbNavigation(new List<(string text, Action openScreen)>
             {
@@ -44,7 +44,7 @@ namespace MonoGame.GameManager.Samples.Screens
             });
 
             //Controls section
-            var posY = 65;
+            var posY = 58;
             AddTitle(posY, "Controls");
             AddControlsSection(ref posY);
 
@@ -94,6 +94,9 @@ namespace MonoGame.GameManager.Samples.Screens
             AddSpriteAnimationButton(new Vector2(posX, posY));
             posX += textureButtonDefault.Width + MarginOptions;
             AddRectangleButton(new Vector2(posX, posY));
+            posY += textureButtonDefault.Height + MarginOptions;
+            posX = Config.ScreenContentMargin;
+            AddScrollViewerButton(new Vector2(posX, posY));
 
             posY += textureButtonDefault.Height;
         }
@@ -113,9 +116,20 @@ namespace MonoGame.GameManager.Samples.Screens
                 .CreateSpriteAnimation()
                 .AddToScreen(button)
                 .Play(2)
-                .SetScale(0.75f)
+                .SetScale(0.7f)
                 .SetAnchor(Enums.Anchor.Center)
-                .SetPosition(22, -25);
+                .SetPosition(22, -22);
+        }
+
+        private void AddScrollViewerButton(Vector2 pos)
+        {
+            var button = AddOptionButton(pos, "Scroll Viewer", ScrollViewerScreen.OpenScrollViewerScreen);
+            var dinoAnimation = ServiceProvider.ContentLoaderManager.LoadSpriteAnimationInfo("Images/Sprites/Scrolling.sa")
+                .CreateSpriteAnimation()
+                .AddToScreen(button)
+                .Play()
+                .SetAnchor(Enums.Anchor.Center)
+                .SetPosition(0, -12);
         }
 
         private void AddAnimationsSection(ref int posY)
@@ -210,7 +224,7 @@ namespace MonoGame.GameManager.Samples.Screens
         private void AddTitle(int posY, string title)
         {
             new Label(ContentHandler.Instance.SpriteFontArial, title, new Vector2(Config.ScreenContentMargin, posY), Color.Yellow)
-                .SetScale(1.2f)
+                .SetScale(1.1f)
                 .AddToScreen();
         }
 
@@ -234,7 +248,7 @@ namespace MonoGame.GameManager.Samples.Screens
                 .AddOnClick(env => onClick())
                 .AddToScreen();
 
-            new MultiLineLabel(ContentHandler.Instance.SpriteFontArial, title, new Vector2(0, 10), Color.DarkBlue,(int)optionButton.Size.X)
+            new MultiLineLabel(ContentHandler.Instance.SpriteFontArial, title, new Vector2(0, 5), Color.DarkBlue,(int)optionButton.Size.X)
                 .SetTextAlign(Enums.TextAlign.Center)
                 .SetScale(0.75f)
                 .SetAnchor(Enums.Anchor.BottomCenter)
@@ -246,8 +260,8 @@ namespace MonoGame.GameManager.Samples.Screens
         private Texture2D CreateButtonTexture(Color backgroundColor, Color borderColor)
         {
             var radius = 15;
-            var size = 150;
-            using (var textureTemp = ShaderEffects.CreateRoudedRectangle(radius, new Point(size), backgroundColor, ServiceProvider.GraphicsDevice))
+            var size = new Point(150, 134);
+            using (var textureTemp = ShaderEffects.CreateRoudedRectangle(radius, size, backgroundColor, ServiceProvider.GraphicsDevice))
             {
                 return StrokeEffect.CreateStroke(textureTemp, 3, borderColor, ServiceProvider.GraphicsDevice);
             }

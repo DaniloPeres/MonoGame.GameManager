@@ -1,17 +1,13 @@
 ﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using MonoGame.GameManager.Controls.Abstracts;
-using MonoGame.GameManager.Controls.Interfaces;
-using System;
-using System.Collections.Generic;
-using System.Linq;
+using MonoGame.GameManager.Services;
 
 namespace MonoGame.GameManager.Controls
 {
     public class Panel : ContainerAbstract<Panel>
     {
 
-        public Panel() { }
+        public Panel() : this(Vector2.Zero, ServiceProvider.ScreenManager.ScreenSize.ToVector2()) { }
 
         public Panel(Rectangle destinationRectangle) : this(destinationRectangle.Location.ToVector2(), destinationRectangle.Size.ToVector2()) { }
 

@@ -1,7 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.GameManager.Controls.Abstracts;
-using MonoGame.GameManager.GameMath;
 
 namespace MonoGame.GameManager.Controls
 {
@@ -39,7 +38,7 @@ namespace MonoGame.GameManager.Controls
 
         public override void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.DrawString(SpriteFont, Text, GetPosition(), Color, Rotation, OriginWithoutScale, Scale, SpriteEffects, LayerDepthDraw);
+            spriteBatch.DrawString(SpriteFont, Text, GetPosition(), Color, Rotation, OriginWithoutScale, NestedScale, SpriteEffects, LayerDepthDraw);
         }
 
         protected override Vector2 CalculateSize() => SpriteFont.MeasureString(Text);

@@ -7,20 +7,21 @@ namespace MonoGame.GameManager.Samples.ScreenComponents
 {
     public static class FloatValueOption
     {
-        public static void CreateFloatValueOption(Panel container, ref Vector2 position, float value, Action<float> onValueChanged, float step = 0.1f)
+        public static Action<float> CreateFloatValueOption(Panel container, ref Vector2 position, float value, Action<float> onValueChanged, float step = 0.1f, string format = "{0:0.##}")
         {
             const int buttonSize = 35;
             const int marginLeft = 10;
             Label labelValue = null;
 
-            Action<float> processValueChanged = addValue =>
+            Action<float, bool> processValueChanged = (addValue, callOnValueChanged) =>
             {
                 value += addValue;
-                onValueChanged(value);
-                labelValue.Text = String.Format("{0:0.##}", value);
+                if (callOnValueChanged)
+                    onValueChanged(value);
+                labelValue.Text = string.Format(format, value);
             };
 
-            ButtonOption.CreateButtonOptionWithText(container, "-", position, new Vector2(buttonSize), () => processValueChanged(-step));
+            ButtonOption.CreateButtonOptionWithText(container, "-", position, new Vector2(buttonSize), () => processValueChanged(-step, true));
 
             position.X += buttonSize + marginLeft;
 
@@ -34,9 +35,14 @@ namespace MonoGame.GameManager.Samples.ScreenComponents
 
             position.X += textPanel.Size.X + marginLeft;
 
-            ButtonOption.CreateButtonOptionWithText(container, "+", position, new Vector2(buttonSize), () => processValueChanged(step));
+            ButtonOption.CreateButtonOptionWithText(container, "+", position, new Vector2(buttonSize), () => processValueChanged(step, true));
 
             position.X += buttonSize + marginLeft;
+
+            return newValue =>
+            {
+                processValueChanged(newValue - value, false);
+            };
         }
 
     }

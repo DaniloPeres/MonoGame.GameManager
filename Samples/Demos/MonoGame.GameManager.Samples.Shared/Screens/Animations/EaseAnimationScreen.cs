@@ -8,7 +8,7 @@ using MonoGame.GameManager.Controls;
 using MonoGame.GameManager.Services;
 using Microsoft.Xna.Framework;
 using MonoGame.GameManager.Animations;
-using MonoGame.GameManager.Controls.MouseEvent;
+using MonoGame.GameManager.Controls.InputEvent;
 
 namespace MonoGame.GameManager.Samples.Animations
 {
@@ -85,7 +85,7 @@ namespace MonoGame.GameManager.Samples.Animations
 
             var resetAnimationButton = new Button(ContentHandler.Instance.TextureButtonBackground, new Vector2(playStopButton.Size.X + 10, posY))
                .AddToScreen(container)
-               .SetScale(new Vector2(1.25f, 1f))
+               .SetBackgroundScale(new Vector2(1.25f, 1f))
                .SetHoverTexture(ContentHandler.Instance.TextureButtonBackgroundHover)
                .SetMousePressedTexture(ContentHandler.Instance.TextureButtonBackgroundPressed)
                .AddOnClick(ResetAnimationButtonClick);
@@ -96,7 +96,7 @@ namespace MonoGame.GameManager.Samples.Animations
                 .SetAnchor(Enums.Anchor.Center);
         }
 
-        private void PlayStopButtonClick(ControlEventArgs args)
+        private void PlayStopButtonClick(ControlMouseEventArgs args)
         {
             if (playStopLabel.Text == "Stop")
                 easeAnimationPreview.Stop();
@@ -120,7 +120,7 @@ namespace MonoGame.GameManager.Samples.Animations
                 : "Play";
         }
 
-        private void ResetAnimationButtonClick(ControlEventArgs args)
+        private void ResetAnimationButtonClick(ControlMouseEventArgs args)
         {
             easeAnimationPreview.ResetAnimation();
         }

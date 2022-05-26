@@ -9,7 +9,7 @@ namespace MonoGame.GameManager.Controls.Abstracts
             get => Scale;
             set => Scale = value;
         }
-        public Vector2 Scale
+        public virtual Vector2 Scale
         {
             get => scale;
             set
@@ -22,7 +22,7 @@ namespace MonoGame.GameManager.Controls.Abstracts
 
         public override Vector2 Size
         {
-            get => base.Size * Scale;
+            get => base.Size * NestedScale;
             set => base.Size = value;
         }
 
@@ -30,7 +30,7 @@ namespace MonoGame.GameManager.Controls.Abstracts
 
         public override Vector2 Origin
         {
-            get => base.Origin * Scale;
+            get => base.Origin * NestedScale;
             set => base.Origin = value;
         }
 
@@ -45,7 +45,7 @@ namespace MonoGame.GameManager.Controls.Abstracts
         }
 
         protected override Vector2 CalculateSize() => SizeWithoutScale;
-
+        public override Vector2 CalculateNestedScale() => base.CalculateNestedScale() * Scale;
         IScalableControl IScalableControl.SetScale(float scale) => SetScale(scale);
         public TControl SetScale(float scale) => SetScale(new Vector2(scale));
         IScalableControl IScalableControl.SetScale(Vector2 scale) => SetScale(scale);

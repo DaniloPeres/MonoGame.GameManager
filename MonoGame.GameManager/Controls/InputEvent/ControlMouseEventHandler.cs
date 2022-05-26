@@ -2,13 +2,12 @@
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Input.Touch;
 using MonoGame.GameManager.Controls.Interfaces;
-using MonoGame.GameManager.Services;
 using MonoGame.GameManager.Services.Inputs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace MonoGame.GameManager.Controls.MouseEvent
+namespace MonoGame.GameManager.Controls.InputEvent
 {
     public class ControlMouseEventHandler
     {
@@ -30,6 +29,7 @@ namespace MonoGame.GameManager.Controls.MouseEvent
             touchInputListener.OnTouchStarted += OnTouchStarted;
             touchInputListener.OnTouchReleased += OnTouchReleased;
             touchInputListener.OnTouchMoved += OnTouchMoved;
+            touchInputListener.OnMultipleTouch += OnMultipleTouchpoints;
         }
 
         public void AddRootPanel(Panel rootPanel)
@@ -115,12 +115,21 @@ namespace MonoGame.GameManager.Controls.MouseEvent
             return !controlArgs.ShouldStopPropagation;
         }
 
+        private bool OnControlMultipleTouchpoints(IControl control, MultipleTouchpointsEventArgs args)
+        {
+            var controlArgs = new ControlMultipleTouchpointsEventArgs(control, args.Time, args.Touchpoints);
+
+            control.FireOnMultipleTouchpoints(controlArgs);
+
+            return !controlArgs.ShouldStopPropagation;
+        }
+
         private bool CheckMouseEvent(MouseEventArgs args, IEnumerable<IControl> controls, Func<IControl, MouseEventArgs, bool> onInteractWithControl)
         {
             foreach (var control in controls.Reverse().ToList())
             {
-                // First check children elements if the control is a panel
-                if (control is Panel panel && !CheckMouseEvent(args, panel.Children, onInteractWithControl))
+                // First check children elements if the control is a container
+                if (control is IContainer container && !CheckMouseEvent(args, container.Children, onInteractWithControl))
                     return false;
 
                 // Check if the mouse events position is hitting this control
@@ -135,8 +144,30 @@ namespace MonoGame.GameManager.Controls.MouseEvent
             return true;
         }
 
-        private ControlEventArgs CreateControlEventArgs(IControl control, MouseEventArgs args)
-            => new ControlEventArgs(control, args.Time, args.CurrentState);
+        private bool CheckMultipleTouchpointsEvent(MultipleTouchpointsEventArgs args, IEnumerable<IControl> controls)
+        {
+            foreach (var control in controls.Reverse().ToList())
+            {
+                // First check children elements if the control is a container
+                if (control is IContainer container && !CheckMultipleTouchpointsEvent(args, container.Children))
+                    return false;
+
+                // Check if the mouse events position is hitting this control
+                var allPointsIntersect = args.Touchpoints.Select(touchpoint => control.Intersects(touchpoint.Position.ToPoint()));
+                if (!allPointsIntersect.All(intersects => intersects))
+                    continue;
+
+                // call the control event and return if should continue propagation
+                if (!OnControlMultipleTouchpoints(control, args))
+                    return false;
+            }
+
+            return true;
+
+        }
+
+        private ControlMouseEventArgs CreateControlEventArgs(IControl control, MouseEventArgs args)
+            => new ControlMouseEventArgs(control, args.Time, args.CurrentState);
 
         private void OnTouchStarted(TouchEventArgs args)
             => OnMouseDown(ConvertTouchToMouseEventArgs(args, ButtonState.Pressed));
@@ -146,6 +177,9 @@ namespace MonoGame.GameManager.Controls.MouseEvent
 
         private void OnTouchReleased(TouchEventArgs args)
             => OnMouseUp(ConvertTouchToMouseEventArgs(args, ButtonState.Released));
+
+        private void OnMultipleTouchpoints(MultipleTouchpointsEventArgs args)
+            => CheckMultipleTouchpointsEvent(args, panelContainer.Children);
 
         private static MouseEventArgs ConvertTouchToMouseEventArgs(TouchEventArgs touchEventArgs, ButtonState leftButton)
         {

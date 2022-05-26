@@ -34,9 +34,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
         }
 
         public static void OpenPanelScreen()
-        {
-            ServiceProvider.ScreenManager.ChangeScreen(new PanelScreen());
-        }
+            => ServiceProvider.ScreenManager.ChangeScreen(new PanelScreen());
 
         private void CreateOptionsSection()
         {
@@ -56,6 +54,10 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             Vector2Option.CreateVector2Option(container, "Position", posY, new Vector2(0), newPosition => panelPreview.SetPosition(newPosition));
             posY += 55;
             Vector2Option.CreateVector2Option(container, "Size", posY, panelPreview.Size, newSize => panelPreview.SetSize(newSize));
+            posY += 55;
+            Vector2Option.CreateVector2Option(container, "Scale", posY, panelPreview.Scale, scale => panelPreview.SetScale(scale), 0.1f);
+            posY += 55;
+            CheckboxOption.CreateCheckboxOption(container, "Hide Overflow (Parent)", posY, false, hideOverflow => panelPreview.Parent.HideOverflow = hideOverflow);
             posY += 55;
             LastEventsInfo.AddLastEventsInfo(container, posY, panelPreview);
         }
@@ -84,6 +86,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             new Label(ContentHandler.Instance.SpriteFontArial, "My panel text example", Vector2.Zero, Color.LightCyan)
                 .AddToScreen(panelPreview)
                 .SetScale(0.75f)
+                .SetMouseEventsColor(Color.Blue, Color.Red)
                 .SetPosition(new Vector2(15));
 
             new Image(ContentHandler.Instance.TextureImage)
@@ -93,7 +96,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
 
             var myButton = new Button(ContentHandler.Instance.TextureButtonBackground, Vector2.Zero)
                 .AddToScreen(panelPreview)
-                .SetScale(new Vector2(1f, 1.2f))
+                .SetBackgroundScale(new Vector2(1f, 1.2f))
                 .SetHoverTexture(ContentHandler.Instance.TextureButtonBackgroundHover)
                 .SetMousePressedTexture(ContentHandler.Instance.TextureButtonBackgroundPressed)
                 .SetPosition(new Vector2(15, 15))
@@ -110,8 +113,6 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
         }
 
         private void UpdatePanelBackgroundRectangle()
-        {
-            backgroundPanelRectangle.SetSize(panelPreview.Size);
-        }
+            => backgroundPanelRectangle.SetSize(panelPreview.Size / panelPreview.NestedScale);
     }
 }

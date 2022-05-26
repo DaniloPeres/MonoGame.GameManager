@@ -1,8 +1,9 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using MonoGame.GameManager.Controls.MouseEvent;
+using MonoGame.GameManager.Controls.InputEvent;
 using MonoGame.GameManager.Enums;
 using System;
+using System.Collections.Generic;
 
 namespace MonoGame.GameManager.Controls.Interfaces
 {
@@ -22,6 +23,7 @@ namespace MonoGame.GameManager.Controls.Interfaces
         Anchor Anchor { get; set; }
         Vector2 PositionAnchor { get; set; }
         Vector2 Size { get; set; }
+        Vector2 NestedScale { get; }
         Rectangle DestinationRectangle { get; }
         void MarkAsDirty();
         bool IsMouseHover { get; }
@@ -39,40 +41,43 @@ namespace MonoGame.GameManager.Controls.Interfaces
         Vector2 GetPosition();
         IControl SetPosition(float x, float y);
         IControl SetPosition(Vector2 position);
-        void Move(Vector2 distance);
         IControl SetMouseEventsColor(Color hoverColor, Color pressedColor);
         void OnBeforeDraw();
         void Draw(SpriteBatch spriteBatch);
-        IControl AddOnMouseEnter(CallbackEvent onMouseEnter);
-        IControl AddOnMouseLeave(CallbackEvent onMouseLeave);
-        IControl AddOnMousePressed(CallbackEvent onMousePressed);
-        IControl AddOnMouseMoved(CallbackEvent onMouseMoved);
-        IControl AddOnMouseReleased(CallbackEvent onMouseReleased);
-        IControl AddOnClick(CallbackEvent onClick);
+        IControl AddOnMouseEnter(CallbackMouseEvent onMouseEnter);
+        IControl AddOnMouseLeave(CallbackMouseEvent onMouseLeave);
+        IControl AddOnMousePressed(CallbackMouseEvent onMousePressed);
+        IControl AddOnMouseMoved(CallbackMouseEvent onMouseMoved);
+        IControl AddOnMouseReleased(CallbackMouseEvent onMouseReleased);
+        IControl AddOnClick(CallbackMouseEvent onClick);
+        IControl AddOnMultipleTouchpoints(CallbackMultipleTouchpointsEvent onMultipleTouchpoints);
         IControl AddOnUpddateDestinationRectangle(Action onUpdateDestinationRectangle);
         IControl AddOnUpdateEvent(Action<GameTime> onUpdateEvent);
-        void RemoveOnMouseEnter(CallbackEvent onMouseEnter);
-        void RemoveOnMouseLeave(CallbackEvent onMouseLeave);
-        void RemoveOnMousePressed(CallbackEvent onPressed);
-        void RemoveOnMouseMoved(CallbackEvent onMouseMoved);
-        void RemoveOnMouseReleased(CallbackEvent onMouseReleased);
-        void RemoveOnClick(CallbackEvent onClick);
+        void RemoveOnMouseEnter(CallbackMouseEvent onMouseEnter);
+        void RemoveOnMouseLeave(CallbackMouseEvent onMouseLeave);
+        void RemoveOnMousePressed(CallbackMouseEvent onPressed);
+        void RemoveOnMouseMoved(CallbackMouseEvent onMouseMoved);
+        void RemoveOnMouseReleased(CallbackMouseEvent onMouseReleased);
+        void RemoveOnClick(CallbackMouseEvent onClick);
+        void RemoveOnMultipleTouchpoints(CallbackMultipleTouchpointsEvent onMultipleTouchpoints);
         void RemoveOnUpdateEvent(Action<GameTime> onUpdateEvent);
         void CleanOnUpdateEvent();
         void SetMouseHover(bool isMouseHover);
         void SetMousePressed(bool isMousePressed);
         IControl BlockMouseEvents();
-        void FireOnMouseEnter(ControlEventArgs args);
-        void FireOnMouseLeave(ControlEventArgs args);
-        void FireOnPressed(ControlEventArgs args);
-        void FireOnMoved(ControlEventArgs args);
-        void FireOnReleased(ControlEventArgs args);
-        void FireOnClick(ControlEventArgs args);
+        void FireOnMouseEnter(ControlMouseEventArgs args);
+        void FireOnMouseLeave(ControlMouseEventArgs args);
+        void FireOnPressed(ControlMouseEventArgs args);
+        void FireOnMoved(ControlMouseEventArgs args);
+        void FireOnReleased(ControlMouseEventArgs args);
+        void FireOnClick(ControlMouseEventArgs args);
+        void FireOnMultipleTouchpoints(ControlMultipleTouchpointsEventArgs args);
         void FireOnUpdateEvent(GameTime gameTime);
         bool Intersects(Point pointToCompare);
         IControl AddToScreen(IContainer parent = null);
         void CalculateSizeIfIsDirty();
         void RemoveFromScreen();
         Rectangle CalculateDestinationRectangle();
+        Vector2 CalculateNestedScale();
     }
 }

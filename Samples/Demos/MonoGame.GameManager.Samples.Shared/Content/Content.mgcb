@@ -770,6 +770,21 @@
 /processorParam:TextureFormat=Color
 /build:Images/Sprites/Leviathan.png
 
+#begin Images/Sprites/Scrolling.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Images/Sprites/Scrolling.png
+
+#begin Images/Sprites/Scrolling.sa
+/copy:Images/Sprites/Scrolling.sa
+
 #begin Images/Sprites/TorchDrippingRed.png
 /importer:TextureImporter
 /processor:TextureProcessor

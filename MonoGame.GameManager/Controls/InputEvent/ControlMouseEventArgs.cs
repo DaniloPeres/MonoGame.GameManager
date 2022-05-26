@@ -3,14 +3,14 @@ using MonoGame.GameManager.Controls.Interfaces;
 using MonoGame.GameManager.Services.Inputs;
 using System;
 
-namespace MonoGame.GameManager.Controls.MouseEvent
+namespace MonoGame.GameManager.Controls.InputEvent
 {
-    public class ControlEventArgs : MouseEventArgs
+    public class ControlMouseEventArgs : MouseEventArgs
     {
         public readonly IControl Control;
         public bool ShouldStopPropagation { get; set; } = true;
         
-        public ControlEventArgs(IControl control, TimeSpan time, MouseState currentState)
+        public ControlMouseEventArgs(IControl control, TimeSpan time, MouseState currentState)
             : base(time, currentState)
         {
             Control = control;

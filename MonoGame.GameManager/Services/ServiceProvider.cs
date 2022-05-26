@@ -5,7 +5,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.GameManager.Controls;
 using MonoGame.GameManager.Controls.Interfaces;
-using MonoGame.GameManager.Controls.MouseEvent;
+using MonoGame.GameManager.Controls.InputEvent;
 using MonoGame.GameManager.Managers;
 using MonoGame.GameManager.Screens;
 using MonoGame.GameManager.Services.Inputs;
@@ -53,11 +53,10 @@ namespace MonoGame.GameManager.Services
         public static ControlCounterService ControlCounterService => instance.GetService<ControlCounterService>();
         public static GameWindowManager GameWindowManager => instance.GetService<GameWindowManager>();
         public static Game Game => ScreenManager;
+        public static GameTime GameTime => ScreenManager.GameTime;
 
         public static void SetScreenManager(ScreenManager screenManager)
-        {
-            ServiceProvider.screenManager = screenManager;
-        }
+            => ServiceProvider.screenManager = screenManager;
 
         private T GetService<T>() => host.Services.GetService<T>();
     }

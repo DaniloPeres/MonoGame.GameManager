@@ -62,7 +62,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
 
             buttonPreview = new Button(ContentHandler.Instance.TextureButtonBackground, Vector2.Zero)
                 .AddToScreen(buttonContainer)
-                .SetScale(new Vector2(1.3f, 1.2f))
+                .SetBackgroundScale(new Vector2(1.3f, 1.2f))
                 .SetHoverTexture(ContentHandler.Instance.TextureButtonBackgroundHover)
                 .SetMousePressedTexture(ContentHandler.Instance.TextureButtonBackgroundPressed)
                 .SetAnchor(Enums.Anchor.Center);
@@ -92,16 +92,20 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
 
             var posY = labelOptions.Size.Y + optionMarginTop;
 
+            var spaceBetweenRows = 50;
+
             AnchorOption.CreateAnchorOption(container, posY, anchor => buttonPreview.SetAnchor(anchor));
-            posY += 155;
+            posY += 150;
             Vector2Option.CreateVector2Option(container, "Scale", posY, buttonPreview.Scale, scale => buttonPreview.SetScale(scale), 0.1f);
-            posY += 55;
+            posY += spaceBetweenRows;
+            Vector2Option.CreateVector2Option(container, "Background Scale", posY, buttonPreview.BackgroundScale, scale => buttonPreview.SetBackgroundScale(scale), 0.1f, 0.8f);
+            posY += spaceBetweenRows;
             Vector2Option.CreateVector2Option(container, "Position", posY, new Vector2(0), scale => buttonPreview.SetPosition(scale), 1);
-            posY += 55;
+            posY += spaceBetweenRows;
+            CheckboxOption.CreateCheckboxOption(container, "Hide Overflow", posY, false, hideOverflow => buttonPreview.HideOverflow = hideOverflow);
+            posY += spaceBetweenRows;
             TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Rotation", posY, 0, newRotation => buttonPreview.SetRotation(newRotation), 0.05f);
-            posY += 55;
-            Vector2Option.CreateVector2Option(container, "Origin Rate", posY, new Vector2(0), newOrigin => buttonPreview.SetOriginRate(newOrigin), 0.1f);
-            posY += 55;
+            posY += spaceBetweenRows;
             CheckboxOption.CreateCheckboxOption(container, "Display Icon", posY, true, displayIcon =>
             {
                 if (displayIcon)
@@ -109,9 +113,9 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
                 else
                     buttonIconPreview.RemoveFromScreen();
             });
-            posY += 55;
+            posY += spaceBetweenRows;
             Vector2Option.CreateVector2Option(container, "Icon Position", posY, buttonIconPreview.PositionAnchor, newOrigin => buttonIconPreview.SetPosition(newOrigin));
-            posY += 55;
+            posY += spaceBetweenRows;
             AnchorOption.CreateAnchorOption(container, posY, anchor => buttonIconPreview.SetAnchor(anchor), "Icon\nAnchor");
 
             container = new Panel(new Rectangle(sectionDivisionLeft + Config.ScreenContentMargin *  2, sectionDivisionBottom + Config.ScreenContentMargin, sectionWidth - sectionDivisionLeft, sectionHeight - sectionDivisionLeft - Config.ScreenContentMargin))
@@ -124,11 +128,11 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
                 else
                     buttonTextPreview.RemoveFromScreen();
             });
-            posY += 55;
+            posY += spaceBetweenRows;
             Vector2Option.CreateVector2Option(container, "Text Position", posY, buttonTextPreview.PositionAnchor, newOrigin => buttonTextPreview.SetPosition(newOrigin));
-            posY += 55;
+            posY += spaceBetweenRows;
             AnchorOption.CreateAnchorOption(container, posY, anchor => buttonTextPreview.SetAnchor(anchor), "Text\nAnchor");
-            posY += 155;
+            posY += 150;
             LastEventsInfo.AddLastEventsInfo(container, posY, buttonPreview);
         }
     }

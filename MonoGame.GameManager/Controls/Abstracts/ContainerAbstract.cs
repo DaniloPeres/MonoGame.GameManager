@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.GameManager.Controls.Interfaces;
+using MonoGame.GameManager.Services;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -8,15 +9,28 @@ using System.Linq;
 
 namespace MonoGame.GameManager.Controls.Abstracts
 {
-    public abstract class ContainerAbstract<TControl> : Control<TControl>, IContainer where TControl : IControl
+    public abstract class ContainerAbstract<TControl> : ScalableControlAbstract<TControl>, IContainer where TControl : IScalableControl
     {
         private readonly ConcurrentDictionary<int, IControl> children = new ConcurrentDictionary<int, IControl>();
         public IEnumerable<IControl> Children => GetSortedChildren();
         private List<IControl> sortedChildren;
         private bool needToSortChildren = true;
+        private RenderTarget2D containerRenderTarget; // Used when we hide the overflow
+        private SpriteBatch containerSpriteBatch; // Used when we hide the overflow
+        private Action<IControl> onChildRemoved;
+        private bool hideOnverflow;
+        public bool HideOverflow
+        {
+            get => hideOnverflow;
+            set
+            {
+                hideOnverflow = value;
+                MarkAsDirty();
+            }
+        }
 
         public ContainerAbstract() { }
-
+         
         public ContainerAbstract(Rectangle destinationRectangle) : this(destinationRectangle.Location.ToVector2(), destinationRectangle.Size.ToVector2()) { }
 
         public ContainerAbstract(Vector2 position, Vector2 size)
@@ -32,11 +46,20 @@ namespace MonoGame.GameManager.Controls.Abstracts
         }
 
         IControl IContainer.AddChild(IControl child) => AddChild(child);
-        public TControl AddChild(IControl child)
+        public virtual TControl AddChild(IControl child)
         {
             child.Parent = this;
             children.TryAdd(child.Id, child);
             SetNeedToShortChildren();
+            return (TControl)(object)this;
+        }
+
+        public bool ContainsChild(IControl child) => children.ContainsKey(child.Id);
+
+        IControl IContainer.SetHideOverflow(bool hideOverflow) => SetHideOverflow(hideOverflow);
+        public TControl SetHideOverflow(bool hideOverflow)
+        {
+            HideOverflow = hideOverflow;
             return (TControl)(object)this;
         }
 
@@ -46,21 +69,36 @@ namespace MonoGame.GameManager.Controls.Abstracts
             base.MarkAsDirty();
         }
 
-        public void RemoveChild(IControl child)
+        public virtual void RemoveChild(IControl child)
         {
             child.Parent = null;
             children.TryRemove(child.Id, out _);
+            onChildRemoved?.Invoke(child);
             SetNeedToShortChildren();
         }
 
-        public void ClearChildren()
+        public virtual void ClearChildren()
             => children.Values.ToList().ForEach(RemoveChild);
 
         public void SetNeedToShortChildren()
             => needToSortChildren = true;
 
+        public override void OnBeforeDraw()
+        {
+            base.OnBeforeDraw();
+            IterateChildren(x => x.OnBeforeDraw(), false);
+
+            if (HideOverflow)
+                GenerateContainerImage();
+        }
+
         public override void Draw(SpriteBatch spriteBatch)
-            => DrawChildren(spriteBatch);
+        {
+            if (HideOverflow)
+                DrawTexture(spriteBatch, containerRenderTarget, DestinationRectangle, DestinationRectangle, OriginWithoutScale);
+            else
+                DrawChildren(spriteBatch);
+        }
 
         public void IterateChildren(Action<IControl> callback, bool recursive = true)
         {
@@ -80,7 +118,7 @@ namespace MonoGame.GameManager.Controls.Abstracts
 
             if (recursive)
             {
-                var panelItems = FindByType<Panel>().ToList();
+                var panelItems = FindByType<IContainer>().ToList();
                 panelItems.ForEach(panel =>
                 {
                     output.AddRange(panel.Find(predicate, recursive));
@@ -98,12 +136,6 @@ namespace MonoGame.GameManager.Controls.Abstracts
                 .Cast<T>();
         }
 
-        public override void OnBeforeDraw()
-        {
-            base.OnBeforeDraw();
-            IterateChildren(x => x.OnBeforeDraw(), false);
-        }
-
         public override void FireOnUpdateEvent(GameTime gameTime)
         {
             IterateChildren(child => child.FireOnUpdateEvent(gameTime), false);
@@ -119,7 +151,6 @@ namespace MonoGame.GameManager.Controls.Abstracts
         private void DrawChildren(SpriteBatch spriteBatch)
             => IterateChildren(child => child.Draw(spriteBatch), false);
 
-
         private List<IControl> GetSortedChildren()
         {
             if (needToSortChildren)
@@ -134,6 +165,43 @@ namespace MonoGame.GameManager.Controls.Abstracts
             }
 
             return sortedChildren;
+        }
+
+        private void GenerateContainerImage()
+        {
+            CreateSpriteBatchIfNull();
+
+            var game = ServiceProvider.Game;
+            if (containerRenderTarget == null)
+            {
+                containerRenderTarget = new RenderTarget2D(game.GraphicsDevice, (int)ServiceProvider.ScreenManager.ScreenSize.X, (int)ServiceProvider.ScreenManager.ScreenSize.Y);
+                ServiceProvider.MemoryManager.AddAssetToDispose(containerRenderTarget);
+            }
+
+            game.GraphicsDevice.SetRenderTarget(containerRenderTarget);
+            game.GraphicsDevice.Clear(Color.Transparent);
+            containerSpriteBatch.Begin();
+
+            DrawChildren(containerSpriteBatch);
+
+            containerSpriteBatch.End();
+            game.GraphicsDevice.SetRenderTarget(null);
+        }
+
+        private void CreateSpriteBatchIfNull()
+        {
+            if (containerSpriteBatch != null)
+                return;
+
+            containerSpriteBatch = new SpriteBatch(ServiceProvider.GraphicsDevice);
+            ServiceProvider.MemoryManager.AddAssetToDispose(containerSpriteBatch);
+        }
+
+        IControl IContainer.AddOnChildRemoved(Action<IControl> onChildRemoved) => AddOnChildRemoved(onChildRemoved);
+        public TControl AddOnChildRemoved(Action<IControl> onChildRemoved)
+        {
+            this.onChildRemoved += onChildRemoved;
+            return (TControl)(object)this;
         }
     }
 }

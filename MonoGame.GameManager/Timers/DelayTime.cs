@@ -67,7 +67,7 @@ namespace MonoGame.GameManager.Timers
 
         public DelayTime Stop()
         {
-            parent.RemoveOnUpdateEvent(Update);
+            parent?.RemoveOnUpdateEvent(Update);
             IsPlaying = false;
             return this;
         }
