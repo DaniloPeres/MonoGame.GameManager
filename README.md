@@ -11,23 +11,24 @@ There is a nuget package avaliable here https://www.nuget.org/packages/MonoGame.
 ## Samples - Demos
 Repository: https://github.com/DaniloPeres/MonoGame.GameManager/tree/main/Samples/Demos
 
-<img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Demos/SamplesDemosMainScreen.gif" alt="MonoGame.GameManager samples demo main screen" width="600" height="400">
+<img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Demos/SamplesDemosMainScreen.gif" alt="MonoGame.GameManager samples demo main screen" width="600" height="394">
 
 ## Table of Contents
 
 - [Controls](#controls)
-  - [Image](#image)
   - [Button](#button)
+  - [Image](#image)
   - [Label](#label)
   - [Multi-line Labels](#multi-line-labels)
   - [Panel](#panel)
-  - [Sprite Animation](#sprite-animation)
   - [Rectangle](#rectangle)
+  - [Sprite Animation](#sprite-animation)
+  - [Scroll Viewer](#scroll-viewer)
 - [Animations](#animations)
-  - [Fade Animation](#fade-animation)
   - [Ease Animation](#ease-animation)
-  - [Scale Animation](#scale-animation)
+  - [Fade Animation](#fade-animation)
   - [Rotation Animation](#rotation-animation)
+  - [Scale Animation](#scale-animation)
 - [Screen](#screen)
   - [Screen Transition](#screen-transition)
   - [Screen Manager](#screen-manager)
@@ -38,11 +39,11 @@ Repository: https://github.com/DaniloPeres/MonoGame.GameManager/tree/main/Sample
 
 ## Controls
 
-### Image
-<img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Demos/SamplesDemosImages.gif" alt="MonoGame.GameManager samples demo - images" width="600" height="400">
-
 ### Button
 <img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Demos/SamplesDemosButtons.gif" alt="MonoGame.GameManager samples demo - buttons" width="600" height="400">
+
+### Image
+<img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Demos/SamplesDemosImages.gif" alt="MonoGame.GameManager samples demo - images" width="600" height="400">
 
 ### Label
 <img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Demos/SamplesDemosLabel.gif" alt="MonoGame.GameManager samples demo - labels" width="600" height="400">
@@ -53,25 +54,28 @@ Repository: https://github.com/DaniloPeres/MonoGame.GameManager/tree/main/Sample
 ### Panel
 <img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Demos/SamplesDemosPanel.gif" alt="MonoGame.GameManager samples demo - Panel" width="600" height="400">
 
-### Sprite Animation
-<img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Demos/SamplesDemosSpriteAnimation.gif" alt="MonoGame.GameManager samples demo - Sprite Animation" width="600" height="400">
-
 ### Rectangle
 <img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Demos/SamplesDemosRectangle.gif" alt="MonoGame.GameManager samples demo - Rectangle" width="600" height="400">
 
-## Animations
+### Sprite Animation
+<img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Demos/SamplesDemosSpriteAnimation.gif" alt="MonoGame.GameManager samples demo - Sprite Animation" width="600" height="400">
 
-### Fade Animation
-<img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Demos/SamplesDemosFadeAnimation.gif" alt="MonoGame.GameManager samples demo - Fade Animation" width="600" height="400">
+### Scroll Viewer
+<img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Demos/SamplesDemosScrollViewer.gif" alt="MonoGame.GameManager samples demo - Scroll Viewer" width="600" height="396">
+
+## Animations
 
 ### Ease Animation
 <img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Demos/SamplesDemosEaseAnimation.gif" alt="MonoGame.GameManager samples demo - Ease Animation" width="600" height="400">
 
-### Scale Animation
-<img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Demos/SamplesDemosScaleAnimation.gif" alt="MonoGame.GameManager samples demo - Scale Animation" width="600" height="400">
+### Fade Animation
+<img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Demos/SamplesDemosFadeAnimation.gif" alt="MonoGame.GameManager samples demo - Fade Animation" width="600" height="400">
 
 ### Rotation Animation
 <img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Demos/SamplesDemosRotationAnimation.gif" alt="MonoGame.GameManager samples demo - Rotation Animation" width="600" height="400">
+
+### Scale Animation
+<img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Demos/SamplesDemosScaleAnimation.gif" alt="MonoGame.GameManager samples demo - Scale Animation" width="600" height="400">
 
 ## Screen
 
