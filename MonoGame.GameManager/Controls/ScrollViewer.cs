@@ -17,12 +17,13 @@ namespace MonoGame.GameManager.Controls
         // touchPanelFullScreen is used when the user is scrolling, use this touchPanel as mouse move and mouse release (to use all screen for scrolling events)
         private readonly Panel touchPanelFullScreen;
         private readonly Panel container;
-        //private readonly Panel container;
-        private const int historyScrollingMoveTotal = 5;
+        private const int historyScrollingMoveTotal = 6;
         private readonly List<Point> historyScrollingMove = new Point[historyScrollingMoveTotal].ToList();
         private Vector2 scrollingMoveVelocity;
         private readonly DelayTime scrollingMoveDelayAnimation;
         private double scrollingMoveAnimationTime;
+        private readonly DelayTime scrollingActiveDelayTime;
+        private bool isScrollingActive = false;
         private readonly List<ScrollViewerBar> bars;
         private ScrollViewerPinchZoom pinchZoom;
 
@@ -30,7 +31,7 @@ namespace MonoGame.GameManager.Controls
         public bool HorizontalScrollEnabled = false;
         public bool ShowVerticalScrollBar = true;
         public bool ShowHorizontalScrollBar = true;
-        private bool isScrollingActive = false;
+       
         private bool isPinchZoomActive => pinchZoom?.IsPinchActive ?? false;
         private Action onScrollPositionChanged;
         private Action onZoomChanged;
@@ -109,6 +110,8 @@ namespace MonoGame.GameManager.Controls
             bars.ForEach(bar => base.AddChild(bar.RectangleBar));
 
             pinchZoom = new ScrollViewerPinchZoom(this);
+            scrollingActiveDelayTime = new DelayTime(0, OnScrollingActiveUpdate)
+                    .SetIsLoop(true);
         }
 
         public override ScrollViewer AddChild(IControl child)
@@ -237,6 +240,13 @@ namespace MonoGame.GameManager.Controls
             MoveContainer(diff);
             SetHistoryScrollingMove(args.Position);
             isScrollingActive = true;
+            scrollingActiveDelayTime.Play();
+        }
+
+        private void OnScrollingActiveUpdate()
+        {
+            // Add always the last position in case the user stops moving the mouse
+            SetHistoryScrollingMove(historyScrollingMove[0]);
         }
 
         private void OnMouseReleased(ControlMouseEventArgs args)
@@ -290,6 +300,7 @@ namespace MonoGame.GameManager.Controls
         {
             touchPanelFullScreen.RemoveFromScreen();
             isScrollingActive = false;
+            scrollingActiveDelayTime.Stop();
         }
 
         public void HideBars()
