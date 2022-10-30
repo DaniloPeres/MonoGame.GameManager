@@ -16,10 +16,5 @@ namespace MonoGame.GameManager.GameMath
 
             return rec.Intersects(pointRectangleToCompare);
         }
-
-        public static bool IntersectsTextureWithPoint(Texture2D texture, Vector2 position, Vector2 originControl, Point pointToCompare)
-        {
-            return IntersectsWithPoint(new Rectangle(position.ToPoint(), texture.Size()), originControl, pointToCompare);
-        }
     }
 }

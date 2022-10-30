@@ -48,23 +48,26 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
                 .AddToScreen(container);
 
             var optionMarginTop = 10;
+            var spaceBetweenRows = 50;
 
             var posY = labelOptions.Size.Y + optionMarginTop;
 
             ColorOption.CreateColorOption(container, posY, color => imagePreview.SetColor(color));
-            posY += 55;
+            posY += spaceBetweenRows;
             AnchorOption.CreateAnchorOption(container, posY, anchor => imagePreview.SetAnchor(anchor));
-            posY += 155;
+            posY += 100 + spaceBetweenRows;
             TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Scale", posY, 1f, scale => imagePreview.SetScale(scale));
-            posY += 55;
+            posY += spaceBetweenRows;
             Vector2Option.CreateVector2Option(container, "Position", posY, new Vector2(0), newPosition => imagePreview.SetPosition(newPosition));
-            posY += 55;
+            posY += spaceBetweenRows;
             TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Rotation", posY, 0, newRotation => imagePreview.SetRotation(newRotation), 0.05f);
-            posY += 55;
+            posY += spaceBetweenRows;
             Vector2Option.CreateVector2Option(container, "Origin Rate", posY, new Vector2(0), newOrigin => imagePreview.SetOriginRate(newOrigin), 0.1f);
-            posY += 55;
+            posY += spaceBetweenRows;
             AddImagesOption(container, posY, newTexture => imagePreview.Texture = newTexture);
-            posY += 55;
+            posY += spaceBetweenRows;
+            CheckboxOption.CreateCheckboxOption(container, "Ignore transparent pixels", posY, false, ignoreTransparentPixel => imagePreview.IgnoreIntersectionTransparentPixels = ignoreTransparentPixel);
+            posY += spaceBetweenRows;
             LastEventsInfo.AddLastEventsInfo(container, posY, imagePreview);
         }
 
