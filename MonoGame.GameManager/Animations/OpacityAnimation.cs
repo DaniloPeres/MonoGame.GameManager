@@ -5,8 +5,8 @@ using System;
 namespace MonoGame.GameManager.Animations
 {
     /// <summary>
-    /// Fades a control by animating its <see cref="IControl.Opacity"/>. The opacity is applied to the control
-    /// and all its children, and it does not change the <see cref="IControl.Color"/> of the control.
+    /// Fades a control by animating its <see cref="Controls.Interfaces.IRenderable.Opacity"/>. The opacity is applied to the control
+    /// and all its children, and it does not change the <see cref="Controls.Interfaces.IRenderable.Color"/> of the control.
     /// </summary>
     /// <example>
     /// <code>

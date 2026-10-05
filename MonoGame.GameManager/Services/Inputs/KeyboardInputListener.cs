@@ -43,6 +43,9 @@ namespace MonoGame.GameManager.Services.Inputs
 
         public bool IsKeyUp(Keys key) => currentState.IsKeyUp(key);
 
+        /// <summary>True if the key was held down in the previous frame.</summary>
+        public bool WasKeyDown(Keys key) => previousState.IsKeyDown(key);
+
         /// <summary>True only in the frame the key was pressed.</summary>
         public bool WasKeyPressed(Keys key) => currentState.IsKeyDown(key) && previousState.IsKeyUp(key);
 

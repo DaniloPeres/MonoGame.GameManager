@@ -362,7 +362,8 @@ namespace MonoGame.GameManager.Controls.Abstracts
             base.Dispose(disposing);
         }
 
-        private bool UsesRenderTargetClipping => ClipMode == ContainerClipMode.RenderTarget || Rotation != 0f;
+        /// <summary>True when the overflow is hidden with a render target instead of the scissor rectangle.</summary>
+        protected virtual bool UsesRenderTargetClipping => ClipMode == ContainerClipMode.RenderTarget || Rotation != 0f;
 
         private IControl[] GetSortedChildren()
         {

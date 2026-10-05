@@ -4,7 +4,7 @@ using System;
 namespace MonoGame.GameManager.Animations
 {
     /// <summary>
-    /// Makes a control blink by switching its <see cref="IControl.Opacity"/> between
+    /// Makes a control blink by switching its <see cref="Controls.Interfaces.IRenderable.Opacity"/> between
     /// <see cref="HiddenOpacity"/> and <see cref="VisibleOpacity"/>. The control is visible at the end.
     /// </summary>
     /// <example>

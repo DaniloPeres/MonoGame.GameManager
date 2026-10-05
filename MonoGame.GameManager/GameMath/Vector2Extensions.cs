@@ -52,7 +52,8 @@ namespace MonoGame.GameManager.GameMath
         }
 
         /// <summary>Converts to a point rounding each coordinate (instead of truncating it).</summary>
-        public static Point ToPointRounded(this Vector2 vector) => new Point((int)Math.Round(vector.X), (int)Math.Round(vector.Y));
+        /// <summary>Rounds to the nearest point; halves are rounded up, so pixel snapping is the same everywhere.</summary>
+        public static Point ToPointRounded(this Vector2 vector) => new Point((int)Math.Floor(vector.X + 0.5f), (int)Math.Floor(vector.Y + 0.5f));
 
         public static Vector2 WithX(this Vector2 vector, float x) => new Vector2(x, vector.Y);
 

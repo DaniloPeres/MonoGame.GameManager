@@ -5,7 +5,7 @@ using System;
 namespace MonoGame.GameManager.Animations
 {
     /// <summary>
-    /// Base class of the animations that move a control (its <see cref="IControl.PositionAnchor"/>).
+    /// Base class of the animations that move a control (its <see cref="Controls.Interfaces.ILayoutElement.PositionAnchor"/>).
     /// </summary>
     public abstract class PositionAnimationBase<TAnimation> : AnimationAbstract<TAnimation>
         where TAnimation : PositionAnimationBase<TAnimation>

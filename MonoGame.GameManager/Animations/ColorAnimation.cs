@@ -5,7 +5,7 @@ using System;
 namespace MonoGame.GameManager.Animations
 {
     /// <summary>
-    /// Changes the <see cref="IControl.Color"/> of a control to <see cref="ColorEnd"/>. Unless
+    /// Changes the <see cref="Controls.Interfaces.IRenderable.Color"/> of a control to <see cref="ColorEnd"/>. Unless
     /// <see cref="ColorStart"/> is set explicitly, it starts from the color of the control when it is played.
     /// </summary>
     public class ColorAnimation : AnimationAbstract<ColorAnimation>

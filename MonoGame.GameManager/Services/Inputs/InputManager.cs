@@ -1,7 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using MonoGame.GameManager.Controls.Interfaces;
 using System;
-using System.Collections.Generic;
 using System.Reflection;
 
 namespace MonoGame.GameManager.Services.Inputs
@@ -12,8 +11,6 @@ namespace MonoGame.GameManager.Services.Inputs
     /// </summary>
     public class InputManager : IInputManager
     {
-        private readonly Dictionary<string, bool> previousActionStates = new Dictionary<string, bool>(StringComparer.OrdinalIgnoreCase);
-
         /// <param name="window">The game window, used to receive typed text on desktop platforms (optional).</param>
         /// <param name="windowToScreen">Converts window coordinates to virtual screen coordinates (optional).</param>
         public InputManager(GameWindow window = null, Func<Vector2, Vector2> windowToScreen = null)
@@ -51,22 +48,17 @@ namespace MonoGame.GameManager.Services.Inputs
             if (!IsEnabled)
                 return;
 
-            // Remember the state of the actions with the devices of the previous frame.
-            previousActionStates.Clear();
-            foreach (var action in Map.Actions)
-                previousActionStates[action] = EvaluateAction(action);
-
             Keyboard.Update(gameTime);
             GamePads.Update(gameTime);
             Mouse.Update(gameTime);
             Touch.Update(gameTime);
         }
 
-        public bool IsActionDown(string action) => EvaluateAction(action);
+        public bool IsActionDown(string action) => EvaluateAction(action, previousFrame: false);
 
-        public bool IsActionPressed(string action) => EvaluateAction(action) && !WasActionDown(action);
+        public bool IsActionPressed(string action) => EvaluateAction(action, previousFrame: false) && !EvaluateAction(action, previousFrame: true);
 
-        public bool IsActionReleased(string action) => !EvaluateAction(action) && WasActionDown(action);
+        public bool IsActionReleased(string action) => !EvaluateAction(action, previousFrame: false) && EvaluateAction(action, previousFrame: true);
 
         public float GetAxis(string axis)
         {
@@ -86,29 +78,44 @@ namespace MonoGame.GameManager.Services.Inputs
             return vector.LengthSquared() > 1f ? Vector2.Normalize(vector) : vector;
         }
 
-        private bool WasActionDown(string action) => previousActionStates.TryGetValue(action, out var wasDown) && wasDown;
-
-        private bool EvaluateAction(string action)
+        /// <summary>
+        /// Evaluates an action against the device states of the current or the previous frame. Using the previous
+        /// states of the listeners (instead of remembering the results) keeps the edge detection right when the
+        /// listeners are updated with simulated states.
+        /// </summary>
+        private bool EvaluateAction(string action, bool previousFrame)
         {
             foreach (var binding in Map.GetBindings(action))
             {
                 switch (binding.Type)
                 {
                     case InputBindingType.Key:
-                        if (Keyboard.IsKeyDown(binding.Key))
+                        if (previousFrame ? Keyboard.WasKeyDown(binding.Key) : Keyboard.IsKeyDown(binding.Key))
                             return true;
                         break;
                     case InputBindingType.GamePadButton:
-                        if (binding.Player.HasValue ? GamePads.IsButtonDown(binding.Button, binding.Player.Value) : GamePads.IsButtonDownOnAny(binding.Button))
+                        if (IsGamePadButtonDown(binding, previousFrame))
                             return true;
                         break;
                     case InputBindingType.MouseButton:
-                        if (Mouse.IsButtonDown(binding.MouseButton))
+                        if (previousFrame ? Mouse.WasButtonDown(binding.MouseButton) : Mouse.IsButtonDown(binding.MouseButton))
                             return true;
                         break;
                 }
             }
             return false;
+        }
+
+        private bool IsGamePadButtonDown(InputBinding binding, bool previousFrame)
+        {
+            if (binding.Player.HasValue)
+            {
+                return previousFrame
+                    ? GamePads.WasButtonDown(binding.Button, binding.Player.Value)
+                    : GamePads.IsButtonDown(binding.Button, binding.Player.Value);
+            }
+
+            return previousFrame ? GamePads.WasButtonDownOnAny(binding.Button) : GamePads.IsButtonDownOnAny(binding.Button);
         }
 
         private float EvaluateAxis(AxisBinding binding)

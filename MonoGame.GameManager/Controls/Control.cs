@@ -199,6 +199,13 @@ namespace MonoGame.GameManager.Controls
         protected Color DrawColor => Color * NestedOpacity;
 
         /// <summary>
+        /// The duration of the frame in seconds, multiplied by the global <see cref="Core.IClock.TimeScale"/>, for
+        /// controls that animate themselves in an update event (slow motion and pause follow the game clock).
+        /// </summary>
+        protected static float GetScaledDeltaSeconds(GameTime gameTime)
+            => (float)gameTime.ElapsedGameTime.TotalSeconds * ServiceProvider.Clock.TimeScale;
+
+        /// <summary>
         /// Mark if this control is dirty and need to recalculate its destination rectangle.
         /// </summary>
         protected bool IsDirty

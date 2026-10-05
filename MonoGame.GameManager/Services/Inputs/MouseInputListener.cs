@@ -46,6 +46,9 @@ namespace MonoGame.GameManager.Services.Inputs
 
         public bool IsButtonUp(MouseButtons button) => !IsButtonDown(button);
 
+        /// <summary>True if the button was held down in the previous frame.</summary>
+        public bool WasButtonDown(MouseButtons button) => GetButtonState(previousState, button) == ButtonState.Pressed;
+
         /// <summary>True only in the frame the button was pressed.</summary>
         public bool WasButtonPressed(MouseButtons button)
             => GetButtonState(currentState, button) == ButtonState.Pressed && GetButtonState(previousState, button) == ButtonState.Released;

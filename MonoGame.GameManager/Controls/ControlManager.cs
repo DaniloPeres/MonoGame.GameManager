@@ -97,14 +97,23 @@ namespace MonoGame.GameManager.Controls
         /// </summary>
         public bool TryPushClip(SpriteBatch spriteBatch, Rectangle bounds)
         {
-            var state = CurrentState;
-            var area = state.TransformMatrix.HasValue ? TransformBounds(bounds, state.TransformMatrix.Value) : bounds;
-            area = Rectangle.Intersect(area, state.ScissorRectangle ?? GraphicsDevice.Viewport.Bounds);
-            if (area.Width <= 0 || area.Height <= 0)
+            if (!TryGetClipArea(bounds, out var area))
                 return false;
 
-            PushState(spriteBatch, state.WithScissor(area));
+            PushState(spriteBatch, CurrentState.WithScissor(area));
             return true;
+        }
+
+        /// <summary>
+        /// Computes the clipping area of <paramref name="bounds"/> (in the coordinate space of the current
+        /// transformation) intersected with the current clipping area. Returns false when it is empty.
+        /// </summary>
+        public bool TryGetClipArea(Rectangle bounds, out Rectangle area)
+        {
+            var state = CurrentState;
+            area = state.TransformMatrix.HasValue ? TransformBounds(bounds, state.TransformMatrix.Value) : bounds;
+            area = Rectangle.Intersect(area, state.ScissorRectangle ?? GraphicsDevice.Viewport.Bounds);
+            return area.Width > 0 && area.Height > 0;
         }
 
         /// <summary>Begins a batch on another render target (the state stack is shared).</summary>

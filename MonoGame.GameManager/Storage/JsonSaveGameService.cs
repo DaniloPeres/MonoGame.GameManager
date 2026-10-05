@@ -22,6 +22,10 @@ namespace MonoGame.GameManager.Storage
     public class JsonSaveGameService : ISaveGameService
     {
         private const string Extension = ".json";
+
+        // The characters not allowed in Windows file names, used on every platform so a slot name always maps to
+        // the same file name.
+        private const string InvalidFileNameCharacters = "<>:\"/\\|?*";
         private readonly JsonSerializerSettings settings;
 
         /// <param name="directory">The folder of the save files (it is created when needed).</param>
@@ -124,13 +128,19 @@ namespace MonoGame.GameManager.Storage
             return Path.Combine(Directory, SanitizeName(slot) + Extension);
         }
 
+        /// <summary>Replaces the characters that are not valid in a file name on any platform with '_'.</summary>
         private static string SanitizeName(string name)
         {
-            var invalidCharacters = Path.GetInvalidFileNameChars();
             var builder = new StringBuilder(name.Length);
             foreach (var character in name.Trim())
-                builder.Append(Array.IndexOf(invalidCharacters, character) >= 0 ? '_' : character);
-            return builder.ToString();
+            {
+                var isInvalid = character < ' ' || InvalidFileNameCharacters.IndexOf(character) >= 0;
+                builder.Append(isInvalid ? '_' : character);
+            }
+
+            // Windows does not allow names ending with a dot.
+            var sanitized = builder.ToString().TrimEnd('.');
+            return sanitized.Length == 0 ? "_" : sanitized;
         }
     }
 }

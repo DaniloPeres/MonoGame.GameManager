@@ -5,7 +5,7 @@ using System;
 namespace MonoGame.GameManager.Animations
 {
     /// <summary>
-    /// Fades a control by multiplying its <see cref="IControl.Color"/> (behavior of version 1.x).
+    /// Fades a control by multiplying its <see cref="Controls.Interfaces.IRenderable.Color"/> (behavior of version 1.x).
     /// </summary>
     /// <remarks>
     /// Because it overwrites the color every frame, it conflicts with other color changes such as

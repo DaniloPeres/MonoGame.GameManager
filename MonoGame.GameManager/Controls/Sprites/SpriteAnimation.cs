@@ -25,7 +25,7 @@ namespace MonoGame.GameManager.Controls.Sprites
             : this(spriteAnimationInfo, null) { }
 
         /// <param name="spriteAnimationInfo">The cycles.</param>
-        /// <param name="cycleName">The cycle shown before <see cref="Play()"/> (null = the first cycle).</param>
+        /// <param name="cycleName">The cycle shown before <see cref="Play(bool)"/> (null = the first cycle).</param>
         public SpriteAnimation(SpriteAnimationInfo spriteAnimationInfo, string cycleName)
         {
             SpriteAnimationInfo = spriteAnimationInfo ?? throw new ArgumentNullException(nameof(spriteAnimationInfo));
@@ -248,7 +248,7 @@ namespace MonoGame.GameManager.Controls.Sprites
             if (!IsPlaying || IsPaused || CurrentCycle == null)
                 return;
 
-            time += gameTime.ElapsedGameTime.TotalSeconds * Speed;
+            time += GetScaledDeltaSeconds(gameTime) * Speed;
 
             // Advance at most one full cycle per update, so a long frame cannot loop forever.
             var steps = 0;

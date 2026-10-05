@@ -42,6 +42,20 @@ namespace MonoGame.GameManager.Services.Inputs
 
         public bool IsButtonUp(Buttons button, PlayerIndex player = PlayerIndex.One) => currentStates[(int)player].IsButtonUp(button);
 
+        /// <summary>True if the button was held down in the previous frame.</summary>
+        public bool WasButtonDown(Buttons button, PlayerIndex player = PlayerIndex.One) => previousStates[(int)player].IsButtonDown(button);
+
+        /// <summary>True if the button was held down in the previous frame on any gamepad.</summary>
+        public bool WasButtonDownOnAny(Buttons button)
+        {
+            for (var i = 0; i < MaxPlayers; i++)
+            {
+                if (previousStates[i].IsButtonDown(button))
+                    return true;
+            }
+            return false;
+        }
+
         /// <summary>True only in the frame the button was pressed.</summary>
         public bool WasButtonPressed(Buttons button, PlayerIndex player = PlayerIndex.One)
             => currentStates[(int)player].IsButtonDown(button) && previousStates[(int)player].IsButtonUp(button);
