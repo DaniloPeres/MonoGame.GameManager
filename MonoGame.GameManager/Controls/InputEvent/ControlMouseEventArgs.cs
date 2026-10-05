@@ -29,6 +29,21 @@ namespace MonoGame.GameManager.Controls.InputEvent
             Control = control;
         }
 
+        /// <summary>The handler that delivers the event (null when the arguments were created by other code).</summary>
+        internal ControlMouseEventHandler Handler { get; set; }
+
+        /// <summary>
+        /// Makes <see cref="Control"/> receive the next move and release events first, even when the pointer leaves
+        /// it, until the pointer is released. Used to implement dragging (sliders, scroll viewers...).
+        /// </summary>
+        public void CapturePointer() => Handler?.CapturePointer(Control);
+
+        /// <summary>Ends the pointer capture started by <see cref="CapturePointer"/>.</summary>
+        public void ReleasePointerCapture() => Handler?.ReleasePointer(Control);
+
+        /// <summary>True when <see cref="Control"/> captures the pointer.</summary>
+        public bool IsPointerCaptured => Handler != null && ReferenceEquals(Handler.CapturedControl, Control);
+
         /// <summary>
         /// Lets the controls below receive the same event.
         /// Eg: a button inside a panel receives OnMouseMoved and the panel receives it as well.

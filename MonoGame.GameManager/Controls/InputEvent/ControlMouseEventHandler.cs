@@ -433,8 +433,8 @@ namespace MonoGame.GameManager.Controls.InputEvent
             return point;
         }
 
-        private static ControlMouseEventArgs CreateArgs(IControl control, MouseEventArgs args, Point position, MouseButtons button)
-            => new ControlMouseEventArgs(control, args.Time, args.CurrentState, args.IsTouchInput, button, position, args.ScrollWheelDelta);
+        private ControlMouseEventArgs CreateArgs(IControl control, MouseEventArgs args, Point position, MouseButtons button)
+            => new ControlMouseEventArgs(control, args.Time, args.CurrentState, args.IsTouchInput, button, position, args.ScrollWheelDelta) { Handler = this };
 
         private void OnTouchStarted(TouchEventArgs args) => HandleMouseDown(ToMouseEventArgs(args, ButtonState.Pressed));
 

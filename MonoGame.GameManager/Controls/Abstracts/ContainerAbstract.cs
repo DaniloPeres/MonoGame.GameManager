@@ -316,8 +316,9 @@ namespace MonoGame.GameManager.Controls.Abstracts
         {
             if (UsesRenderTargetClipping)
             {
-                if (containerRenderTarget != null)
-                    DrawTexture(spriteBatch, containerRenderTarget, DestinationRectangle, null, Origin);
+                // The children were drawn with their own opacity: the result is drawn without tint.
+                if (containerRenderTarget != null && !containerRenderTarget.IsDisposed)
+                    spriteBatch.Draw(containerRenderTarget, DestinationRectangle, null, Color.White, Rotation, Origin, SpriteEffects.None, LayerDepthDraw);
                 return;
             }
 
@@ -396,7 +397,7 @@ namespace MonoGame.GameManager.Controls.Abstracts
         {
             var controlManager = ServiceProvider.ControlManager;
             var graphicsDevice = ServiceProvider.GraphicsDevice;
-            var bounds = DestinationRectangle;
+            var bounds = GetClipBounds(); // the visual area: the render target is drawn back with the origin of the container
             if (controlManager == null || graphicsDevice == null || bounds.Width <= 0 || bounds.Height <= 0)
                 return;
 
