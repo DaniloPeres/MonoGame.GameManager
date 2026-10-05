@@ -1,68 +1,94 @@
 ﻿using Microsoft.Xna.Framework.Graphics;
 using MonoGame.GameManager.Controls.Builders;
 using MonoGame.GameManager.Controls.Sprites;
+using MonoGame.GameManager.Managers;
 using MonoGame.GameManager.Services;
 using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
 namespace MonoGame.GameManager.Pipeline
 {
+    /// <summary>
+    /// Reads a sprite animation file (.sa): a JSON file, copied to the content folder, that describes the frames
+    /// and cycles of a sprite sheet or of a sequence of textures. The textures are loaded relative to the folder
+    /// of the file.
+    /// </summary>
     public class SpriteAnimationPipelineReader
     {
-        private string assetName;
-        private Dictionary<string, Texture2D> texturesMemoryCache = new Dictionary<string, Texture2D>();
+        private readonly IContentLoader contentLoader;
+        private readonly string assetName;
+        private readonly Dictionary<string, Texture2D> texturesMemoryCache = new Dictionary<string, Texture2D>();
 
-        public SpriteAnimationPipelineReader(string assetName)
+        public SpriteAnimationPipelineReader(string assetName) : this(ServiceProvider.ContentLoader, assetName) { }
+
+        public SpriteAnimationPipelineReader(IContentLoader contentLoader, string assetName)
         {
-            this.assetName = assetName;
+            this.contentLoader = contentLoader ?? throw new ArgumentNullException(nameof(contentLoader));
+            this.assetName = assetName ?? throw new ArgumentNullException(nameof(assetName));
         }
 
         public SpriteAnimationInfo Read()
         {
-            using (var stream = ServiceProvider.ContentLoaderManager.GetContentFileStream(assetName))
+            SpriteAnimationPipelineFile spriteAnimationPipelineFile;
+            using (var stream = contentLoader.OpenStream(assetName))
+            using (var reader = new StreamReader(stream))
             {
-                using (var reader = new StreamReader(stream))
+                try
                 {
-                    var json = reader.ReadToEnd();
-                    var spriteAnimationPipelineFile = JsonConvert.DeserializeObject<SpriteAnimationPipelineFile>(json);
-                    var fileCycles = PrepareSpriteAnimationPipelineFileCycles(spriteAnimationPipelineFile);
-                    return CreateSpriteAnimationInfo(fileCycles);
+                    spriteAnimationPipelineFile = JsonConvert.DeserializeObject<SpriteAnimationPipelineFile>(reader.ReadToEnd());
+                }
+                catch (JsonException exception)
+                {
+                    throw new InvalidDataException($"The sprite animation file '{assetName}' is not valid: {exception.Message}", exception);
                 }
             }
+
+            if (spriteAnimationPipelineFile == null)
+                throw new InvalidDataException($"The sprite animation file '{assetName}' is empty.");
+
+            var fileCycles = PrepareSpriteAnimationPipelineFileCycles(spriteAnimationPipelineFile);
+            return CreateSpriteAnimationInfo(fileCycles);
         }
 
-        private Dictionary<string, SpriteAnimationPipelineFileCycle> PrepareSpriteAnimationPipelineFileCycles(SpriteAnimationPipelineFile spriteAnimationPipelineFile)
+        private static Dictionary<string, SpriteAnimationPipelineFileCycle> PrepareSpriteAnimationPipelineFileCycles(SpriteAnimationPipelineFile file)
         {
-            var cycles = spriteAnimationPipelineFile.Cycles ?? new Dictionary<string, SpriteAnimationPipelineFileCycle>();
+            var cycles = file.Cycles ?? new Dictionary<string, SpriteAnimationPipelineFileCycle>();
 
-            cycles.Values.ToList().ForEach(cycle =>
+            foreach (var cycle in cycles.Values)
             {
-                // apply the properties from Pipeline File into Cycles in case the cycle has empty values
+                // The values of the file are the defaults of every cycle.
                 if (string.IsNullOrEmpty(cycle.Texture))
-                    cycle.Texture = spriteAnimationPipelineFile.Texture;
+                    cycle.Texture = file.Texture;
                 if (string.IsNullOrEmpty(cycle.Textures))
-                    cycle.Textures = spriteAnimationPipelineFile.Textures;
+                    cycle.Textures = file.Textures;
                 if (cycle.Size == default)
-                    cycle.Size = spriteAnimationPipelineFile.Size;
+                    cycle.Size = file.Size;
                 if (cycle.Position == default)
-                    cycle.Position = spriteAnimationPipelineFile.Position;
+                    cycle.Position = file.Position;
                 if (cycle.FrameCount == default)
-                    cycle.FrameCount = spriteAnimationPipelineFile.FrameCount;
+                    cycle.FrameCount = file.FrameCount;
                 if (cycle.FrameCountRow == default)
-                    cycle.FrameCountRow = spriteAnimationPipelineFile.FrameCountRow;
+                    cycle.FrameCountRow = file.FrameCountRow;
                 if (cycle.FrameDuration == default)
-                    cycle.FrameDuration = spriteAnimationPipelineFile.FrameDuration;
+                    cycle.FrameDuration = file.FrameDuration;
                 if (cycle.Margin == default)
-                    cycle.Margin = spriteAnimationPipelineFile.Margin;
-            });
+                    cycle.Margin = file.Margin;
+                if (cycle.MultipleTexturesStartingCount == default)
+                    cycle.MultipleTexturesStartingCount = file.MultipleTexturesStartingCount;
+                if (cycle.Frames == null)
+                    cycle.Frames = file.Frames;
+                if (cycle.FramesByIndex == null)
+                    cycle.FramesByIndex = file.FramesByIndex;
+            }
 
             if (!cycles.Any())
             {
-                cycles = new Dictionary<string, SpriteAnimationPipelineFileCycle>()
+                cycles = new Dictionary<string, SpriteAnimationPipelineFileCycle>
                 {
-                    { SpriteAnimationCycle.DefaultCycleName, spriteAnimationPipelineFile }
+                    { SpriteAnimationCycle.DefaultCycleName, file }
                 };
             }
 
@@ -71,20 +97,23 @@ namespace MonoGame.GameManager.Pipeline
 
         private SpriteAnimationInfo CreateSpriteAnimationInfo(Dictionary<string, SpriteAnimationPipelineFileCycle> fileCycles)
         {
-            // use some memory cache to not re-load multiple times the same texture
-            var cycles = fileCycles.Keys.ToList().Select(cycleName =>
+            var cycles = fileCycles.Select(pair =>
             {
-                var fileCycle = fileCycles[cycleName];
+                var cycleName = pair.Key;
+                var fileCycle = pair.Value;
 
                 var builder = new SpriteAnimationCycleBuilder()
+                    .WithContentLoader(contentLoader)
                     .WithName(cycleName)
                     .WithSize(fileCycle.Size)
                     .WithTexturePosition(fileCycle.Position)
                     .WithTotalOfFrames(fileCycle.FrameCount)
                     .WithFramesCountOnRow(fileCycle.FrameCountRow)
-                    .WithFrameDuration(fileCycle.FrameDuration)
                     .WithMargin(fileCycle.Margin)
                     .WithMultipleTexturesStartingCount(fileCycle.MultipleTexturesStartingCount);
+
+                if (fileCycle.FrameDuration > 0f)
+                    builder.WithFrameDuration(fileCycle.FrameDuration);
                 if (!string.IsNullOrEmpty(fileCycle.Texture))
                     builder.WithTexture(GetTexture(fileCycle.Texture));
                 if (!string.IsNullOrEmpty(fileCycle.Textures))
@@ -95,13 +124,18 @@ namespace MonoGame.GameManager.Pipeline
 
                 if (fileCycle.FramesByIndex != null)
                 {
-                    fileCycle.FramesByIndex.Keys.ToList().ForEach(frameIndex =>
-                    {
-                        builder.WithFrame(frameIndex, CreateSpriteAnimationFrame(fileCycle.FramesByIndex[frameIndex]));
-                    });
+                    foreach (var frame in fileCycle.FramesByIndex)
+                        builder.WithFrame(frame.Key, CreateSpriteAnimationFrame(frame.Value));
                 }
 
-                return builder.Build();
+                try
+                {
+                    return builder.Build();
+                }
+                catch (InvalidOperationException exception)
+                {
+                    throw new InvalidDataException($"The cycle '{cycleName}' of the sprite animation file '{assetName}' is not valid: {exception.Message}", exception);
+                }
             }).ToList();
 
             return new SpriteAnimationInfo(cycles);
@@ -124,21 +158,19 @@ namespace MonoGame.GameManager.Pipeline
             return frame;
         }
 
+        /// <summary>Resolves a texture name relative to the folder of the .sa file.</summary>
         private string GetTextureWithPath(string texture)
         {
-            var pathArray = assetName.Replace("\\", "/").Split('/');
-            var path = string.Join("/", pathArray.Take(pathArray.Length - 1));
-            return $"{path}/{texture}";
+            var normalizedAssetName = assetName.Replace('\\', '/');
+            var separatorIndex = normalizedAssetName.LastIndexOf('/');
+            return separatorIndex < 0 ? texture : normalizedAssetName.Substring(0, separatorIndex + 1) + texture;
         }
-
-        private Texture2D LoadTexture(string textureWithPath)
-            => ServiceProvider.ContentLoaderManager.LoadTexture2D(textureWithPath);
 
         private Texture2D GetTexture(string textureString)
         {
             if (!texturesMemoryCache.TryGetValue(textureString, out var texture))
             {
-                texture = LoadTexture(GetTextureWithPath(textureString));
+                texture = contentLoader.LoadTexture2D(GetTextureWithPath(textureString));
                 texturesMemoryCache.Add(textureString, texture);
             }
 

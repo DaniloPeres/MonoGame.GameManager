@@ -1,34 +1,38 @@
 ﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using MonoGame.GameManager.Controls.InputEvent;
 using MonoGame.GameManager.Enums;
 using System;
-using System.Collections.Generic;
 
 namespace MonoGame.GameManager.Controls.Interfaces
 {
-    public interface IControl : IDisposable
+    /// <summary>
+    /// A UI or game element in the control tree. It combines the layout (<see cref="ILayoutElement"/>), drawing
+    /// (<see cref="IRenderable"/>) and input (<see cref="IInputTarget"/>) contracts with the fluent API.
+    /// </summary>
+    public interface IControl : ILayoutElement, IRenderable, IInputTarget, IDisposable
     {
+        /// <summary>A unique identifier.</summary>
         int Id { get; }
+
+        /// <summary>An optional name, used by <see cref="IContainer.FindByName"/>.</summary>
+        string Name { get; set; }
+
         /// <summary>
-        /// Used to storage any extra info to control
+        /// Used to store any extra info in the control.
         /// </summary>
-        object Info { get; set;  }
-        Color Color { get; set; }
-        float ZIndex { get; }
-        SpriteEffects SpriteEffects { get; set; }
-        Vector2 Origin { get; set; }
-        float Rotation { get; }
+        object Info { get; set; }
+
+        /// <summary>The container of the control, or null when it is not on the screen.</summary>
         IContainer Parent { get; set; }
-        Anchor Anchor { get; set; }
-        Vector2 PositionAnchor { get; set; }
-        Vector2 Size { get; set; }
-        Vector2 NestedScale { get; }
-        Rectangle DestinationRectangle { get; }
-        void MarkAsDirty();
-        bool IsMouseHover { get; }
-        bool IsMousePressed { get; }
+
+        /// <summary>True after <see cref="IDisposable.Dispose"/> was called.</summary>
+        bool IsDisposed { get; }
+
+        /// <summary>Raised once when the control is disposed.</summary>
+        event Action<IControl> Disposed;
+
         IControl SetInfo(object info);
+        IControl SetName(string name);
         IControl SetZIndex(float zIndex);
         IControl SetRotationInDegree(float rotationInDegree);
         IControl SetRotation(float rotation);
@@ -37,21 +41,22 @@ namespace MonoGame.GameManager.Controls.Interfaces
         IControl SetOriginRate(Vector2 originRate);
         IControl SetOriginRate(Vector2 originRate, Vector2 size);
         IControl SetColor(Color color);
+        IControl SetOpacity(float opacity);
+        IControl SetIsVisible(bool isVisible);
+        IControl SetIsEnabled(bool isEnabled);
         IControl SetAnchor(Anchor anchor);
-        Vector2 GetPosition();
         IControl SetPosition(float x, float y);
         IControl SetPosition(Vector2 position);
         IControl SetMouseEventsColor(Color hoverColor, Color pressedColor);
-        void OnBeforeDraw();
-        void Draw(SpriteBatch spriteBatch);
         IControl AddOnMouseEnter(CallbackMouseEvent onMouseEnter);
         IControl AddOnMouseLeave(CallbackMouseEvent onMouseLeave);
         IControl AddOnMousePressed(CallbackMouseEvent onMousePressed);
         IControl AddOnMouseMoved(CallbackMouseEvent onMouseMoved);
         IControl AddOnMouseReleased(CallbackMouseEvent onMouseReleased);
         IControl AddOnClick(CallbackMouseEvent onClick);
+        IControl AddOnMouseWheel(CallbackMouseEvent onMouseWheel);
         IControl AddOnMultipleTouchpoints(CallbackMultipleTouchpointsEvent onMultipleTouchpoints);
-        IControl AddOnUpddateDestinationRectangle(Action onUpdateDestinationRectangle);
+        IControl AddOnUpdateDestinationRectangle(Action onUpdateDestinationRectangle);
         IControl AddOnUpdateEvent(Action<GameTime> onUpdateEvent);
         void RemoveOnMouseEnter(CallbackMouseEvent onMouseEnter);
         void RemoveOnMouseLeave(CallbackMouseEvent onMouseLeave);
@@ -59,25 +64,23 @@ namespace MonoGame.GameManager.Controls.Interfaces
         void RemoveOnMouseMoved(CallbackMouseEvent onMouseMoved);
         void RemoveOnMouseReleased(CallbackMouseEvent onMouseReleased);
         void RemoveOnClick(CallbackMouseEvent onClick);
+        void RemoveOnMouseWheel(CallbackMouseEvent onMouseWheel);
         void RemoveOnMultipleTouchpoints(CallbackMultipleTouchpointsEvent onMultipleTouchpoints);
+        void RemoveOnUpdateDestinationRectangle(Action onUpdateDestinationRectangle);
         void RemoveOnUpdateEvent(Action<GameTime> onUpdateEvent);
         void CleanOnUpdateEvent();
-        void SetMouseHover(bool isMouseHover);
-        void SetMousePressed(bool isMousePressed);
+
+        /// <summary>
+        /// Blocks the pointer events so the controls below this one do not receive them.
+        /// </summary>
         IControl BlockMouseEvents();
-        void FireOnMouseEnter(ControlMouseEventArgs args);
-        void FireOnMouseLeave(ControlMouseEventArgs args);
-        void FireOnPressed(ControlMouseEventArgs args);
-        void FireOnMoved(ControlMouseEventArgs args);
-        void FireOnReleased(ControlMouseEventArgs args);
-        void FireOnClick(ControlMouseEventArgs args);
-        void FireOnMultipleTouchpoints(ControlMultipleTouchpointsEventArgs args);
+
         void FireOnUpdateEvent(GameTime gameTime);
-        bool Intersects(Point pointToCompare);
+
+        /// <summary>Adds the control to a container, or to the current screen when no container is given.</summary>
         IControl AddToScreen(IContainer parent = null);
-        void CalculateSizeIfIsDirty();
+
+        /// <summary>Removes the control from its container (the control can be added again).</summary>
         void RemoveFromScreen();
-        Rectangle CalculateDestinationRectangle();
-        Vector2 CalculateNestedScale();
     }
 }

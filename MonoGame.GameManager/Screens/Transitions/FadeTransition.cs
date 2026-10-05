@@ -6,34 +6,86 @@ using System;
 
 namespace MonoGame.GameManager.Screens.Transitions
 {
+    /// <summary>
+    /// Fades to a color, changes the screen and fades back. The input is blocked during the transition.
+    /// </summary>
     public class FadeTransition : ITransition
     {
-        private readonly float duration;
-        private readonly Color color;
+        private RectangleControl blocker;
+        private EasingFunction easingFunction = Easing.Linear;
 
         public FadeTransition() : this(0.4f) { }
 
+        /// <param name="duration">The duration of each half of the transition, in seconds.</param>
+        /// <param name="color">The color of the fade (black by default).</param>
         public FadeTransition(float duration, Color? color = null)
         {
-            this.duration = duration;
-            this.color = color ?? Color.Black;
+            Duration = duration;
+            Color = color ?? Color.Black;
         }
 
-        public void CreateTransitionIn(Action onComplete) => CreateFadeEffect(0, 1, onComplete);
-        public void CreateTransitionOut() => CreateFadeEffect(1, 0, null);
+        public float Duration { get; }
 
-        private void CreateFadeEffect(float transparencyFrom, float transparencyTo, Action onAnimationComplete)
+        public Color Color { get; }
+
+        /// <summary>The easing of the fades (linear by default).</summary>
+        public EasingFunction EasingFunction
         {
-            var recBlocker = new RectangleControl(ServiceProvider.ScreenManager.ScreenRectangle, color * transparencyFrom)
-                .BlockMouseEvents()
-                .AddToScreen()
-                .SetZIndex(float.MaxValue);
+            get => easingFunction;
+            set => easingFunction = value ?? Easing.Linear;
+        }
 
-            new FadeAnimation(recBlocker, duration, transparencyTo)
-                .SetBaseColor(color)
-                .SetTransparencyStart(transparencyFrom)
-                .AddOnAnimationEnd(onAnimationComplete)
-                .SetShouldRemoveControlOnAnimationEnd(true)
+        public void TransitionOut(Action onComplete)
+        {
+            var overlay = GetBlocker(0f);
+            Fade(overlay, overlay.Opacity, 1f, onComplete);
+        }
+
+        public void TransitionIn(Action onComplete)
+        {
+            var overlay = GetBlocker(1f);
+            Fade(overlay, overlay.Opacity, 0f, () =>
+            {
+                RemoveBlocker();
+                onComplete?.Invoke();
+            });
+        }
+
+        [Obsolete("Use TransitionOut instead (it hides the current screen).")]
+        public void CreateTransitionIn(Action onComplete) => TransitionOut(onComplete);
+
+        [Obsolete("Use TransitionIn instead (it reveals the new screen).")]
+        public void CreateTransitionOut() => TransitionIn(null);
+
+        private RectangleControl GetBlocker(float opacity)
+        {
+            if (blocker != null && !blocker.IsDisposed)
+                return blocker;
+
+            var stage = ServiceProvider.ControlManager?.RootPanel
+                ?? throw new InvalidOperationException("Transitions can only run after the ScreenManager was initialized.");
+
+            blocker = new RectangleControl(Vector2.Zero, stage.Size, Color)
+                .BlockMouseEvents()
+                .SetOpacity(opacity)
+                .SetZIndex(ZIndexLayers.Transition);
+            stage.AddChild(blocker);
+            return blocker;
+        }
+
+        private void RemoveBlocker()
+        {
+            blocker?.Dispose();
+            blocker = null;
+        }
+
+        private void Fade(RectangleControl overlay, float from, float to, Action onComplete)
+        {
+            new OpacityAnimation(overlay, Duration, to)
+                .SetOpacityStart(from)
+                .SetEasing(easingFunction)
+                .SetScheduler(ServiceProvider.GlobalScheduler)
+                .AddOnCompleted(() => onComplete?.Invoke())
                 .Play();
         }
     }

@@ -31,9 +31,6 @@
     <!-- Compile-only reference: every game references its own MonoGame platform package (DesktopGL, WindowsDX, Android, iOS...). -->
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.0.1641" PrivateAssets="all" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-    <!-- Temporary: removed together with the Generic Host based service locator. -->
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup>

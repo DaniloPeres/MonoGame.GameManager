@@ -6,9 +6,18 @@ using System.Collections.Generic;
 
 namespace MonoGame.GameManager.Controls.InputEvent
 {
+    /// <summary>
+    /// Data of a multi-touch event (two or more fingers) received by a control.
+    /// </summary>
     public class ControlMultipleTouchpointsEventArgs : MultipleTouchpointsEventArgs
     {
+        /// <summary>The control that receives the event.</summary>
         public readonly IControl Control;
+
+        /// <summary>
+        /// When true (default) the event is not delivered to the controls below. Call
+        /// <see cref="ContinuePropagation"/> to let them receive it too.
+        /// </summary>
         public bool ShouldStopPropagation { get; set; } = true;
 
         public ControlMultipleTouchpointsEventArgs(IControl control, TimeSpan time, List<TouchLocation> touchpoints)
@@ -18,9 +27,7 @@ namespace MonoGame.GameManager.Controls.InputEvent
         }
 
         /// <summary>
-        /// Inform to the caller to continue processing the next event.
-        /// It is used when you would like to invoke the same event in some another control.
-        /// Eg: Event OnMouseMove callback a button in the panel and also callback the panel under this button.
+        /// Lets the controls below receive the same event.
         /// </summary>
         public void ContinuePropagation()
         {
