@@ -17,7 +17,7 @@ namespace Snake
         public void LoadAllContents()
         {
             HoboStdSpriteFont = ServiceProvider.ContentLoaderManager.LoadSpriteFont("HoboStd");
-            TextureFood = ServiceProvider.ContentLoaderManager.LoadTexture2D("Food");
+            TextureFood = ServiceProvider.ContentLoaderManager.LoadTexture2D("food");
         }
     }
 }

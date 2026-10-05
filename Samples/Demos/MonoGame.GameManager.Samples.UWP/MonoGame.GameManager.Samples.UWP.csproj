@@ -115,6 +115,9 @@
     </PackageReference>
     <PackageReference Include="MonoGame.Framework.WindowsUniversal" Version="3.8.0.1641" />
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.0.1641" />
+    <PackageReference Include="MonoGame.ShaderEffects">
+      <Version>1.0.2</Version>
+    </PackageReference>
     <PackageReference Include="MonoGame.StrokeEffect">
       <Version>1.0.7</Version>
     </PackageReference>

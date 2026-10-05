@@ -67,15 +67,14 @@
   <ItemGroup>
     <PackageReference Include="MonoGame.Content.Builder.Task" Version="3.8.0.1641" />
     <PackageReference Include="MonoGame.Framework.Android" Version="3.8.0.1641" />
+    <PackageReference Include="MonoGame.ShaderEffects">
+      <Version>1.0.2</Version>
+    </PackageReference>
     <PackageReference Include="MonoGame.StrokeEffect">
       <Version>1.0.7</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\MonoGame.ShaderEffects\MonoGame.ShaderEffects\MonoGame.ShaderEffects.csproj">
-      <Project>{3e14253e-02c8-41b3-a463-99d468bddd86}</Project>
-      <Name>MonoGame.ShaderEffects</Name>
-    </ProjectReference>
     <ProjectReference Include="..\..\..\MonoGame.GameManager\MonoGame.GameManager.csproj">
       <Project>{f971f365-1acc-4491-b197-8cfc372cd4c4}</Project>
       <Name>MonoGame.GameManager</Name>

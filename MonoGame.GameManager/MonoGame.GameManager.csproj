@@ -1,65 +1,44 @@
-﻿<Project Sdk="MSBuild.Sdk.Extras/3.0.22">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
-		<TargetFrameworks>netstandard2.0;Xamarin.iOS10;MonoAndroid10.0;</TargetFrameworks>
-		<TargetFrameworks Condition="'$(OS)' == 'Windows_NT'">$(TargetFrameworks);uap10.0.18362;</TargetFrameworks>
-		<UseFullSemVerForNuGet>false</UseFullSemVerForNuGet>
-		<EnableDefaultCompileItems>false</EnableDefaultCompileItems>
-		<DebugType>portable</DebugType>
-		<Configurations>Debug;Release</Configurations>
-		<UserSecretsId>e5a3b2e9-34d5-43c1-92e7-c1bca7593b3c</UserSecretsId>
-		<Version>1.0.1</Version>
-		<Description>MonoGame.GameManager is a library to manage the game components that you will use during the creation of your game.</Description>
-		<PackageIcon>Logo.png</PackageIcon>
-		<RepositoryUrl>https://github.com/DaniloPeres/MonoGame.GameManager</RepositoryUrl>
-		<PackageTags>MonoGame, MonoGame GameEngine, GameEngine, Danilo Peres, Game Engine</PackageTags>
-		<PackageLicenseExpression>MIT</PackageLicenseExpression>
-	</PropertyGroup>
-	<ItemGroup>
-		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />
-		<PackageReference Include="Microsoft.Extensions.Logging.EventLog" Version="6.0.0" />
-		<PackageReference Include="MonoGame.ShaderEffects" Version="1.0.2" />
-		<PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
-		<PackageReference Include="Serilog" Version="2.10.0" />
-		<PackageReference Include="System.Numerics.Vectors" Version="4.5.0" />
-		<PackageReference Include="Xamarin.Build.TypeRedirector" Version="0.1.2-preview" PrivateAssets="all" />
-		<Compile Include="**\*.cs" />
-		<Compile Remove="**\*.netstandard.cs" />
-		<Compile Remove="**\*.uwp.cs" />
-		<Compile Remove="**\*.android.cs" />
-		<Compile Remove="**\*.ios.cs" />
-		<Compile Remove="Controls\Extensions\**" />
-		<Compile Remove="obj\**" />
-		<EmbeddedResource Remove="Controls\Extensions\**" />
-		<EmbeddedResource Remove="obj\**" />
-		<None Remove="Controls\Extensions\**" />
-		<None Remove="obj\**" />
-	</ItemGroup>
-	<ItemGroup Condition=" $(TargetFramework.StartsWith('net')) ">
-		<Compile Include="**\*.netstandard.cs" />
-		<PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.0.1641" />
-	</ItemGroup>
-	<ItemGroup Condition=" $(TargetFramework.StartsWith('uap10.0')) ">
-		<Compile Include="**\*.uwp.cs" />
-		<PackageReference Include="MonoGame.Framework.WindowsUniversal" Version="3.8.0.1641" />
-		<SDKReference Include="WindowsMobile, Version=10.0.18362.0">
-			<Name>Windows Mobile Extensions for the UWP</Name>
-		</SDKReference>
-	</ItemGroup>
-	<ItemGroup Condition=" $(TargetFramework.StartsWith('MonoAndroid')) ">
-		<Compile Include="**\*.android.cs" />
-		<PackageReference Include="MonoGame.Framework.Android" Version="3.8.0.1641" />
-	</ItemGroup>
-	<ItemGroup Condition=" $(TargetFramework.StartsWith('Xamarin.iOS')) ">
-		<Compile Include="**\*.ios.cs" />
-		<PackageReference Include="MonoGame.Framework.iOS" Version="3.8.0.1641" />
-	</ItemGroup>
-	<ItemGroup>
-	  <None Include="..\Logo.png">
-	    <Pack>True</Pack>
-	    <PackagePath>\</PackagePath>
-	  </None>
-	</ItemGroup>
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>MonoGame.GameManager</RootNamespace>
+    <AssemblyName>MonoGame.GameManager</AssemblyName>
+    <DebugType>portable</DebugType>
+    <Deterministic>true</Deterministic>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <!-- Existing public members are documented progressively; do not fail the build on missing XML docs. -->
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>MonoGame.GameManager</PackageId>
+    <Version>2.0.0</Version>
+    <Authors>Danilo Peres</Authors>
+    <Description>MonoGame.GameManager is a library to manage the components you need to create a 2D game with MonoGame: screens and transitions, UI controls, animations and tweens, timers, input (mouse, touch, keyboard and gamepad), a 2D camera, collision helpers, particles, audio and save games.</Description>
+    <PackageIcon>Logo.png</PackageIcon>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageProjectUrl>https://github.com/DaniloPeres/MonoGame.GameManager</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/DaniloPeres/MonoGame.GameManager</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>MonoGame;GameEngine;2D;UI;Screens;Animations;Tween;Input;Camera;Particles</PackageTags>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReleaseNotes>See https://github.com/DaniloPeres/MonoGame.GameManager/blob/main/CHANGELOG.md</PackageReleaseNotes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Compile-only reference: every game references its own MonoGame platform package (DesktopGL, WindowsDX, Android, iOS...). -->
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.0.1641" PrivateAssets="all" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+    <!-- Temporary: removed together with the Generic Host based service locator. -->
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\Logo.png" Pack="true" PackagePath="\" />
+    <None Include="..\README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
 </Project>
