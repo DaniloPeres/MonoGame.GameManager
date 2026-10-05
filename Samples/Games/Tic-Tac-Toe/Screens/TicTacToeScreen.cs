@@ -56,11 +56,11 @@ namespace Tic_Tac_Toe.Screens
 
         public override void LoadContent()
         {
-            imgTitle = ContentLoader.LoadTexture2D("Title");
-            imgO = ContentLoader.LoadTexture2D("O");
-            imgX = ContentLoader.LoadTexture2D("X");
+            imgTitle = Content.LoadTexture2D("Title");
+            imgO = Content.LoadTexture2D("O");
+            imgX = Content.LoadTexture2D("X");
 
-            fontArial = ContentLoader.LoadSpriteFont("Arial");
+            fontArial = Content.LoadSpriteFont("Arial");
 
             base.LoadContent();
         }
@@ -308,6 +308,7 @@ namespace Tic_Tac_Toe.Screens
         private void ScaleEffect(IScalableControl control, float finalScale)
         {
             control.Color = Color.White;
+            control.Opacity = 1f; // a darkened field of the previous round
             control.SetScale(0f);
             new ScaleAnimation(control, 0.15f, new Vector2(finalScale * 1.5f))
                 .Play()
@@ -320,8 +321,8 @@ namespace Tic_Tac_Toe.Screens
 
         private void DarkenControl(IControl control)
         {
-            new FadeAnimation(control, 0.2f, 0.5f)
-                .SetTransparencyStart(1f)
+            new OpacityAnimation(control, 0.2f, 0.5f)
+                .SetOpacityStart(1f)
                 .Play();
         }
 

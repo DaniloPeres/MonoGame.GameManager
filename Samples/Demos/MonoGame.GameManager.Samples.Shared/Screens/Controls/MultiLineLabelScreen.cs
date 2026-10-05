@@ -7,7 +7,6 @@ using MonoGame.GameManager.Samples.Services;
 using MonoGame.GameManager.Services;
 using Microsoft.Xna.Framework;
 using MonoGame.GameManager.Enums;
-using static System.Net.Mime.MediaTypeNames;
 using MonoGame.GameManager.Controls.Interfaces;
 
 namespace MonoGame.GameManager.Samples.Screens.Controls
@@ -64,7 +63,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             multiLineLabelPreview = new MultiLineLabel(ContentHandler.Instance.SpriteFontArial, $"My long text example:\n{loremIpsumText}", Vector2.Zero, Color.White, 500)
                 .AddToScreen(labelContainer)
                 .SetAnchor(Enums.Anchor.Center)
-                .AddOnUpddateDestinationRectangle(UpdateRectangleTextBoxPreview);
+                .AddOnUpdateDestinationRectangle(UpdateRectangleTextBoxPreview);
         }
 
         private void CreateOptionsSection()

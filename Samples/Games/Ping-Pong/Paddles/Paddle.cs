@@ -16,7 +16,7 @@ namespace Ping_Pong.Paddles
         private const int margin = 6;
         public readonly PaddlePosition PaddlePosition;
         private readonly float speed = 1000f;
-        private EaseAnimation paddleEaseAnimation;
+        private MoveAnimation paddleMoveAnimation;
         public Rectangle DestinationRectangle => rectanglePaddle.DestinationRectangle;
         private readonly Action onPaddleMoved;
 
@@ -39,15 +39,15 @@ namespace Ping_Pong.Paddles
         {
             var posY = posMiddleY - (height / 2);
             // block the paddle inside of the screen
-            posY = MathExtension.CapValue(posY, 0, ServiceProvider.ScreenManager.ScreenSize.Y - height);
+            posY = MathUtils.Clamp(posY, 0, ServiceProvider.ScreenManager.ScreenSize.Y - height);
 
-            paddleEaseAnimation?.Stop();
+            paddleMoveAnimation?.Stop();
 
             // block the paddle to move with max speed
             var duration = Math.Abs((posY - rectanglePaddle.PositionAnchor.Y) / speed);
             if (duration > 0)
             {
-                paddleEaseAnimation = new EaseAnimation(rectanglePaddle, duration, new Vector2(rectanglePaddle.PositionAnchor.X, posY))
+                paddleMoveAnimation = new MoveAnimation(rectanglePaddle, duration, new Vector2(rectanglePaddle.PositionAnchor.X, posY))
                     .AddOnAnimationEnd(onPaddleMoved)
                     .Play();
             }

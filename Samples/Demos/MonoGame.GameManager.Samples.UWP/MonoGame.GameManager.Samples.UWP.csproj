@@ -121,9 +121,6 @@
     <PackageReference Include="MonoGame.StrokeEffect">
       <Version>1.0.7</Version>
     </PackageReference>
-    <PackageReference Include="System.Text.Json">
-      <Version>6.0.1</Version>
-    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\..\MonoGame.GameManager\MonoGame.GameManager.csproj">

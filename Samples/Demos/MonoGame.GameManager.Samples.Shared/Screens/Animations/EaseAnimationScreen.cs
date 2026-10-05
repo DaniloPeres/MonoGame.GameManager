@@ -10,7 +10,7 @@ using Microsoft.Xna.Framework;
 using MonoGame.GameManager.Animations;
 using MonoGame.GameManager.Controls.InputEvent;
 
-namespace MonoGame.GameManager.Samples.Animations
+namespace MonoGame.GameManager.Samples.Screens.Animations
 {
     public class EaseAnimationScreen : Screen
     {
@@ -18,7 +18,7 @@ namespace MonoGame.GameManager.Samples.Animations
         int sectionHeight = 690;
         int sectionDivisionLeft = 550;
         RectangleControl rectangleControlPreview;
-        EaseAnimation easeAnimationPreview;
+        MoveAnimation easeAnimationPreview;
         Label playStopLabel;
 
         public override void OnInit()
@@ -103,7 +103,7 @@ namespace MonoGame.GameManager.Samples.Animations
             else
             {
                 if (easeAnimationPreview.IsCompleted)
-                    easeAnimationPreview.ResetAnimation();
+                    easeAnimationPreview.Reset();
                 easeAnimationPreview.Play();
             }
 
@@ -122,7 +122,7 @@ namespace MonoGame.GameManager.Samples.Animations
 
         private void ResetAnimationButtonClick(ControlMouseEventArgs args)
         {
-            easeAnimationPreview.ResetAnimation();
+            easeAnimationPreview.Reset();
         }
 
         private void CreatePreviewSection()
@@ -144,7 +144,7 @@ namespace MonoGame.GameManager.Samples.Animations
             rectangleControlPreview = new RectangleControl(new Rectangle(25, 25, 100, 100), Color.White)
                 .AddToScreen(easeAnimationContainer);
 
-            easeAnimationPreview = new EaseAnimation(rectangleControlPreview, 1f, new Vector2(470, 500))
+            easeAnimationPreview = new MoveAnimation(rectangleControlPreview, 1f, new Vector2(470, 500))
                 .SetIsPingPong(true)
                 .SetIsLooping(true)
                 .AddOnAnimationEnd(UpdatePlayStopButtonLabel)

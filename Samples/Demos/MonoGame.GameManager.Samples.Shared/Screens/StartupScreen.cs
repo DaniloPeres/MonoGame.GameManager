@@ -13,7 +13,6 @@ namespace MonoGame.GameManager.Samples.Screens
         protected override void LoadContent()
         {
             Window.AllowUserResizing = true;
-            ServiceProvider.MemoryManager.CleanMemoryType = Enums.CleanMemoryType.Manually;
 
 #if WINDOWS_UAP
             _ = Windows.ApplicationModel.Core.CoreApplication.MainView.CoreWindow.Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal,

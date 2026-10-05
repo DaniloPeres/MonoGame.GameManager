@@ -18,7 +18,7 @@ namespace Ping_Pong.Screens
 
         public override void LoadContent()
         {
-            fontHoboStb = ContentLoader.LoadSpriteFont("HoboStd");
+            fontHoboStb = Content.LoadSpriteFont("HoboStd");
 
             base.LoadContent();
         }
@@ -36,12 +36,10 @@ namespace Ping_Pong.Screens
                 new ComputerPaddle(ball, ProcessBallCollisionWithPaddles)
             };
 
-            ServiceProvider.RootPanel.AddOnUpdateEvent(Update);
-
             base.OnInit();
         }
 
-        private void Update(GameTime gameTime)
+        public override void Update(GameTime gameTime)
         {
             if (ball.IsPlayerGoal())
             {

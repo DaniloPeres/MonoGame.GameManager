@@ -18,7 +18,7 @@ namespace MonoGame.GameManager.Samples.Screens.Animations
         int sectionHeight = 690;
         int sectionDivisionLeft = 550;
         RectangleControl rectangleControlPreview;
-        FadeAnimation fadeAnimationPreview;
+        OpacityAnimation fadeAnimationPreview;
         Label playStopLabel;
 
         public override void OnInit()
@@ -55,13 +55,13 @@ namespace MonoGame.GameManager.Samples.Screens.Animations
 
             var posY = labelOptions.Size.Y + optionMarginTop;
 
-            ColorOption.CreateColorOption(container, posY, color => fadeAnimationPreview.SetBaseColor(color));
+            ColorOption.CreateColorOption(container, posY, color => rectangleControlPreview.SetColor(color));
             posY += 55;
             Vector2Option.CreateVector2Option(container, "Size", posY, rectangleControlPreview.Size, size => rectangleControlPreview.SetSize(size));
             posY += 55;
-            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Transparency Start", posY, 1f, value => fadeAnimationPreview.SetTransparencyStart(value));
+            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Opacity Start", posY, 1f, value => fadeAnimationPreview.SetOpacityStart(value));
             posY += 55;
-            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Transparency End", posY, 0f, value => fadeAnimationPreview.SetTransparencyEnd(value));
+            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Opacity End", posY, 0f, value => fadeAnimationPreview.SetOpacityEnd(value));
             posY += 55;
             TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Duration", posY, fadeAnimationPreview.Duration, value => fadeAnimationPreview.SetDuration(value));
             posY += 55;
@@ -105,7 +105,7 @@ namespace MonoGame.GameManager.Samples.Screens.Animations
             else
             {
                 if (fadeAnimationPreview.IsCompleted)
-                    fadeAnimationPreview.ResetAnimation();
+                    fadeAnimationPreview.Reset();
                 fadeAnimationPreview.Play();
             }
 
@@ -124,7 +124,7 @@ namespace MonoGame.GameManager.Samples.Screens.Animations
 
         private void ResetAnimationButtonClick(ControlMouseEventArgs args)
         {
-            fadeAnimationPreview.ResetAnimation();
+            fadeAnimationPreview.Reset();
         }
 
         private void CreatePreviewSection()
@@ -147,7 +147,8 @@ namespace MonoGame.GameManager.Samples.Screens.Animations
                 .AddToScreen(fadeAnimationContainer)
                 .SetAnchor(Enums.Anchor.Center);
 
-            fadeAnimationPreview = new FadeAnimation(rectangleControlPreview, 1f, 0f)
+            fadeAnimationPreview = new OpacityAnimation(rectangleControlPreview, 1f, 0f)
+                .SetOpacityStart(1f)
                 .SetIsPingPong(true)
                 .SetIsLooping(true)
                 .AddOnAnimationEnd(UpdatePlayStopButtonLabel)

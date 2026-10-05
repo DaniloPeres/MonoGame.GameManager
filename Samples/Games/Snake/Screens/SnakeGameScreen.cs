@@ -77,7 +77,7 @@ namespace Snake.Screens
             board.AddOnClick(OnBoardClick);
             board.AddOnUpdateEvent(CheckPressedKey);
             moveSnakeDelayTime = new DelayTime(snakeSpeedByLevel[level], MoveSnake)
-                .SetIsLoop(true)
+                .SetIsLooping(true)
                 .Play();
 
             CreateFood();
@@ -293,7 +293,7 @@ namespace Snake.Screens
                             .AddOnAnimationEnd(InitiateSnake);
                     }
 
-                    new FadeAnimation(labelTextInfo, fadeAnimationTime, 0f)
+                    new OpacityAnimation(labelTextInfo, fadeAnimationTime, 0f)
                         .Play();
                 })
                 .Play();

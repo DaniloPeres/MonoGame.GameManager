@@ -10,7 +10,6 @@ using MonoGame.GameManager.Samples.ScreenComponents;
 using System.Collections.Generic;
 using MonoGame.GameManager.Animations;
 using MonoGame.GameManager.Samples.Screens.Animations;
-using MonoGame.GameManager.Samples.Animations;
 using MonoGame.GameManager.Samples.Screens.ScreensInfo;
 
 namespace MonoGame.GameManager.Samples.Screens
@@ -112,7 +111,7 @@ namespace MonoGame.GameManager.Samples.Screens
         private void AddSpriteAnimationButton(Vector2 pos)
         {
             var button = AddOptionButton(pos, "Sprite Animations", SpriteAnimationScreen.OpenSpriteAnimation);
-            var dinoAnimation = ServiceProvider.ContentLoaderManager.LoadSpriteAnimationInfo("Images/Sprites/Dino/Dino.sa")
+            var dinoAnimation = ServiceProvider.ContentLoader.LoadSpriteAnimationInfo("Images/Sprites/Dino/Dino.sa")
                 .CreateSpriteAnimation()
                 .AddToScreen(button)
                 .Play(2)
@@ -124,7 +123,7 @@ namespace MonoGame.GameManager.Samples.Screens
         private void AddScrollViewerButton(Vector2 pos)
         {
             var button = AddOptionButton(pos, "Scroll Viewer", ScrollViewerScreen.OpenScrollViewerScreen);
-            var dinoAnimation = ServiceProvider.ContentLoaderManager.LoadSpriteAnimationInfo("Images/Sprites/Scrolling.sa")
+            var dinoAnimation = ServiceProvider.ContentLoader.LoadSpriteAnimationInfo("Images/Sprites/Scrolling.sa")
                 .CreateSpriteAnimation()
                 .AddToScreen(button)
                 .Play()
@@ -154,8 +153,7 @@ namespace MonoGame.GameManager.Samples.Screens
                 .AddToScreen(fadeButton)
                 .SetAnchor(Enums.Anchor.Center);
 
-            new FadeAnimation(fadeRectangle, 1f, 0f)
-                .SetBaseColor(fadeRectangle.Color)
+            new OpacityAnimation(fadeRectangle, 1f, 0f)
                 .SetParent(fadeButton)
                 .SetIsLooping(true)
                 .SetIsPingPong(true)
@@ -170,7 +168,7 @@ namespace MonoGame.GameManager.Samples.Screens
                 .AddToScreen(easeButton)
                 .SetAnchor(Enums.Anchor.Center);
 
-            new EaseAnimation(easeRectangle, 1f, new Vector2(-easeRectangle.PositionAnchor.X, 20))
+            new MoveAnimation(easeRectangle, 1f, new Vector2(-easeRectangle.PositionAnchor.X, 20))
                 .SetParent(easeButton)
                 .SetIsLooping(true)
                 .SetIsPingPong(true)
