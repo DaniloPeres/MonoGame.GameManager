@@ -42,7 +42,8 @@ Version 2.0 is a complete review of the library. [CHANGES.md](https://github.com
 - [Input](#input)
 - [Camera](#camera)
 - [Collision and math](#collision-and-math)
-- [Physics, state machines, pools and particles](#physics-state-machines-pools-and-particles)
+- [Physics, state machines and pools](#physics-state-machines-and-pools)
+- [Particles](#particles)
 - [Audio](#audio)
 - [Save games](#save-games)
 - [Services](#services)
@@ -516,7 +517,7 @@ var spawnPoint = RandomGenerator.Default.NextPointInCircle(new Circle(playerPosi
 
 `RectangleF`, `Circle` and `LineSegment` are the shapes; `Collision` also tests points, polygons, segments and rays. `Primitives` draws lines, rectangles, circles and polygons with a `SpriteBatch`, and `TextureFactory` creates circle and rounded-rectangle textures.
 
-## Physics, state machines, pools and particles
+## Physics, state machines and pools
 
 ```csharp
 var ballMover = new ControlMover(ball) { Velocity = new Vector2(300, -200), Gravity = new Vector2(0, 600), Drag = 0.1f }.Start();
@@ -532,6 +533,16 @@ Scheduler.Add(ai); // updated every frame with the screen
 var bullets = new ObjectPool<Bullet>(() => new Bullet(), initialSize: 32);
 var bullet = bullets.Get();
 bullets.Return(bullet);
+```
+
+## Particles
+
+A `ParticleEmitter` is a control that simulates and draws a `ParticleSystem`. Start from one of the `ParticlePresets` (Fire, Smoke, Explosion, Sparks, Rain, Snow, Confetti, Fireworks, Magic, Fountain, Bubbles, Fireflies, Vortex and Stars) or describe the effect with a `ParticleSettings`:
+
+```csharp
+var campfire = new ParticleEmitter(ParticlePresets.Fire()).SetPosition(400, 500).AddToScreen().Play();
+
+ParticleEmitter.Spawn(ParticlePresets.Explosion(), enemy.PositionAnchor); // removed from the screen when it ends
 
 var sparks = new ParticleEmitter(new ParticleSettings
 {
@@ -542,6 +553,58 @@ var sparks = new ParticleEmitter(new ParticleSettings
 }).SetPosition(400, 300).AddToScreen();
 sparks.Burst(60);
 ```
+
+The presets return new settings that can be changed before or after creating the emitter (`ParticlePresets.Create("snow")` creates them by name), and the settings are read every frame, so an effect can be tuned while it runs. Every value with Min and Max is chosen at random for each particle.
+
+```csharp
+var magic = new ParticleSettings
+{
+    Shape = EmitterShape.Ring, SpawnInnerRadius = 4, SpawnRadius = 18, RadialVelocity = true,
+    SpeedMin = 10, SpeedMax = 40, LifetimeMin = 0.8f, LifetimeMax = 1.6f,
+    Appearance = ParticleShape.Star, Size = 12, ScaleVariation = 0.4f,
+    BlendState = ParticleResources.AdditiveBlendState,                   // lights, fire and magic add up
+    Colors = { Color.Violet, Color.Cyan, Color.White },                   // a palette: one color per particle
+    StartColor = Color.White, EndColor = Color.White,
+    ScaleOverLifetime = ParticleCurve.FadeInOut(0.2f, 0.5f),             // grows, then shrinks
+    AlphaOverLifetime = ParticleCurve.Blink(2),                           // twinkles
+    RotationSpeedMin = -180, RotationSpeedMax = 180,
+    Turbulence = 40,                                                      // wanders
+    EmissionPerDistance = 0.4f                                            // also emits while the emitter moves
+};
+var wand = new ParticleEmitter(magic).SetPosition(100, 100).AddToScreen().Play();
+wand.SetPosition(pointerPosition); // the stars stay behind, a trail follows the pointer
+```
+
+The emission has a timeline: `Duration` (0 = forever), `Loop`, `StartDelay`, `PrewarmSeconds` (the effect is already running when it appears) and `Bursts`, groups of particles emitted at a given time. Sub-emitters emit particles from the particles: `OnDeath` when they die, `Trail` while they live.
+
+```csharp
+var rocket = new ParticleSettings
+{
+    Duration = 1f, Loop = true, EmissionRate = 0,                         // one rocket per second...
+    Bursts = { new ParticleBurst(0f, 1) },
+    AngleMin = -100, AngleMax = -80, SpeedMin = 450, SpeedMax = 550, Gravity = new Vector2(0, 250),
+    LifetimeMin = 1.2f, LifetimeMax = 1.5f,
+    Appearance = ParticleShape.Glow, Size = 10, BlendState = ParticleResources.AdditiveBlendState,
+    Colors = { Color.Red, Color.Gold, Color.Cyan }, StartColor = Color.White, EndColor = Color.White,
+    Trail = new ParticleSubEmitter(ParticlePresets.Smoke()) { Rate = 40 },                                   // ...with a smoke trail...
+    OnDeath = new ParticleSubEmitter(ParticlePresets.Explosion()) { CountMin = 100, CountMax = 150, InheritColor = true } // ...that explodes in its color
+};
+new ParticleEmitter(rocket).SetPosition(640, 700).AddToScreen().Play();
+```
+
+An emitter is an `IPlayable`: `Play` starts the emission (and restarts a finished one), `Stop` stops it while the living particles finish their life, `Pause` and `Resume` freeze everything, `Reset` removes every particle and rewinds the timeline, `Restart` does both. `Burst(count)` emits at once at the control, `Burst(count, position)` anywhere (eg: a pointer position). When the emission ends and the last particle dies the emitter is `IsComplete`, raises `AddOnCompleted` and, with `SetRemoveWhenCompleted(true)`, leaves the screen by itself; `ParticleEmitter.Spawn` and `SpawnBurst` create such one-shot effects in one line.
+
+| Group | Settings |
+|---|---|
+| Emission | `MaxParticles`, `EmissionRate`, `Duration`, `Loop`, `StartDelay`, `PrewarmSeconds`, `Bursts`, `EmissionPerDistance`, `InheritVelocity`, `SimulationSpace` (`World`: the particles stay where they were born; `Local`: they move, rotate and scale with the emitter) |
+| Shape | `Shape` (`Point`, `Circle`, `Ring`, `Rectangle`, `Line`), `SpawnRadius`, `SpawnInnerRadius`, `SpawnSize`, `SpawnRotation`, `EmitFromEdge`, `RadialVelocity` |
+| Initial values | `LifetimeMin/Max`, `SpeedMin/Max`, `AngleMin/Max` (degrees, 0 = right, 90 = down), `RotationMin/Max`, `RotationSpeedMin/Max`, `ScaleVariation`, `Colors`, `RandomFlip` |
+| Over the lifetime | `StartColor`/`EndColor` or `ColorOverLifetime` (a `ParticleGradient`), `StartScale`/`EndScale` or `ScaleOverLifetime` (a `ParticleCurve`), `AlphaOverLifetime`, `ColorEasing`, `ScaleEasing` |
+| Forces | `Gravity`, `Drag`, `Turbulence` and `TurbulenceFrequency`, `AttractionPoint` and `AttractionStrength` (negative repels), `VortexStrength`, `Floor`, `Bounds`, `BoundsMode` (`None`, `Kill`, `Bounce`), `Bounciness`, `Friction` |
+| Drawing | `Texture` or `Textures` (one at random), `Frames` of a sprite sheet with `FrameMode` and `FrameRate`, `Appearance` (`Square`, `Circle`, `Glow`, `Ring`, `Star`, `Diamond`) and `Size` when there is no texture, `BlendState`, `AlignToVelocity`, `VelocityStretch` |
+| Sub-emitters | `OnDeath`, `Trail` (`ParticleSubEmitter`: settings, count, probability, rate, inherited velocity and color) |
+
+`ParticleCurve` (`Linear`, `Constant`, `FadeInOut`, `Peak`, `Blink`, `FromEasing` or `AddKey`) and `ParticleGradient` (`FromColors`, `Fade` or `AddStop`) describe values along the life of a particle, from 0 (born) to 1 (dead). The shape textures and `ParticleResources.AdditiveBlendState` are shared and released with the screen manager. A `ParticleSystem` can also be simulated without a control (`Scheduler.Add(system)`) and drawn by your own code with `Particles`, `ActiveCount`, `GetColor`, `GetDrawScale`, `GetRotation` and `GetSourceRectangle`. Try everything live in the Particles demo.
 
 ## Audio
 
@@ -610,6 +673,8 @@ dotnet run --project Samples/Demos/MonoGame.GameManager.Samples.WinExe
 ```
 
 <img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Demos/SamplesDemosMainScreen.gif" alt="MonoGame.GameManager samples demo main screen" width="600" height="394">
+
+The Particles tile opens a playground: 14 presets, every setting editable live (emission, shape, motion, look, color and timeline), click to burst, right click to move the emitter, a randomizer, and a scenes screen that combines emitters with other controls: a campfire, fireworks, a rainy day, a confetti cannon, a magic cursor, a fountain, a portal and spaceships.
 
 ## Samples - Games
 

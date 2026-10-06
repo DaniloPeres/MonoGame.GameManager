@@ -14,7 +14,7 @@
 
   <PropertyGroup>
     <PackageId>MonoGame.GameManager</PackageId>
-    <Version>2.0.0</Version>
+    <Version>2.1.0</Version>
     <Authors>Danilo Peres</Authors>
     <Description>MonoGame.GameManager is a library to manage the components you need to create a 2D game with MonoGame: screens and transitions, UI controls, animations and tweens, timers, input (mouse, touch, keyboard and gamepad), a 2D camera, collision helpers, particles, audio and save games.</Description>
     <PackageIcon>Logo.png</PackageIcon>
