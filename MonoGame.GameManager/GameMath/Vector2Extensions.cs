@@ -8,8 +8,8 @@ namespace MonoGame.GameManager.GameMath
     /// </summary>
     public static class Vector2Extensions
     {
-        /// <summary>Rotates the vector around the origin.</summary>
-        public static Vector2 Rotate(this Vector2 vector, float radians)
+        /// <summary>Returns the vector rotated around the origin. Unlike MonoGame's <c>Vector2.Rotate</c>, it does not change the vector.</summary>
+        public static Vector2 Rotated(this Vector2 vector, float radians)
         {
             var cos = (float)Math.Cos(radians);
             var sin = (float)Math.Sin(radians);
@@ -17,7 +17,7 @@ namespace MonoGame.GameManager.GameMath
         }
 
         /// <summary>Rotates the point around a pivot.</summary>
-        public static Vector2 RotateAround(this Vector2 point, Vector2 pivot, float radians) => (point - pivot).Rotate(radians) + pivot;
+        public static Vector2 RotateAround(this Vector2 point, Vector2 pivot, float radians) => (point - pivot).Rotated(radians) + pivot;
 
         /// <summary>The angle of the vector in radians (0 = right, positive = clockwise on the screen).</summary>
         public static float ToAngle(this Vector2 vector) => (float)Math.Atan2(vector.Y, vector.X);

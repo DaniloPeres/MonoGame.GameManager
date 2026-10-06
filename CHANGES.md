@@ -7,7 +7,8 @@ Version 2.0 is a complete review of MonoGame.GameManager. The library was refact
 | Source files | 69 | 157 |
 | Lines of code | about 4,550 | about 16,600 |
 | Package dependencies | 9 (Microsoft.Extensions, Serilog, MonoGame, ...) | 1 (Newtonsoft.Json) |
-| Target frameworks | netstandard2.0, Xamarin.iOS10, MonoAndroid10.0, uap10.0 | netstandard2.0 |
+| Target frameworks | netstandard2.0, Xamarin.iOS10, MonoAndroid10.0, uap10.0 | net8.0, net10.0 |
+| MonoGame | 3.8.0.1641 | 3.8.5.1 |
 
 Contents:
 
@@ -21,7 +22,8 @@ Contents:
 
 ### Build and package
 
-- A single `netstandard2.0` target built with the standard SDK. The package works on every MonoGame 3.8 platform.
+- `net8.0` and `net10.0` targets built with the standard SDK, compiled against MonoGame 3.8.5.1 (MonoGame 3.8.1 and later ship no `netstandard2.0` assembly). The package works on every MonoGame platform for games on .NET 8, .NET 9 and .NET 10.
+- The samples run on .NET 10 with MonoGame 3.8.5.1. The Android demo is an SDK-style `net10.0-android` project. The UWP demo was removed, because MonoGame no longer supports UWP. The content builder (`dotnet-mgcb`) is a local .NET tool: run `dotnet tool restore` once before building the samples. Ping-Pong and Snake use the Comic Sans MS font, because Hobo Std is not installed with Windows and the content builder needs the font on the build machine.
 - MonoGame is referenced for compilation only (`PrivateAssets="all"`), so the package no longer forces `MonoGame.Framework.DesktopGL` on Android, iOS or UWP games.
 - The only dependency is `Newtonsoft.Json`. The Generic Host of `Microsoft.Extensions`, Serilog, `System.Numerics.Vectors`, `MonoGame.ShaderEffects` and `Xamarin.Build.TypeRedirector` were removed.
 - XML documentation is generated and shipped in the package; the package includes the README and the logo.

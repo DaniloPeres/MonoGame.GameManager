@@ -528,7 +528,7 @@ namespace MonoGame.GameManager.Controls
             // The control is rotated around its destination location: rotate the point back and test the unrotated area.
             var bounds = DestinationRectangle;
             var pivot = bounds.Location.ToVector2();
-            var point = (pointToCompare.ToVector2() - pivot).Rotate(-Rotation) + pivot;
+            var point = (pointToCompare.ToVector2() - pivot).Rotated(-Rotation) + pivot;
             var origin = Origin;
             var left = bounds.X - origin.X;
             var top = bounds.Y - origin.Y;

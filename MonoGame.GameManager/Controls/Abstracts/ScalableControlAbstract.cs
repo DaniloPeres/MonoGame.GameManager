@@ -81,7 +81,7 @@ namespace MonoGame.GameManager.Controls.Abstracts
         {
             var offset = point - DestinationRectangle.Location.ToVector2();
             if (Rotation != 0f)
-                offset = offset.Rotate(-Rotation);
+                offset = offset.Rotated(-Rotation);
 
             var scale = NestedScale;
             var local = new Vector2(scale.X != 0f ? offset.X / scale.X : 0f, scale.Y != 0f ? offset.Y / scale.Y : 0f);
@@ -93,7 +93,7 @@ namespace MonoGame.GameManager.Controls.Abstracts
         {
             var offset = (localPoint - OriginWithoutScale) * NestedScale;
             if (Rotation != 0f)
-                offset = offset.Rotate(Rotation);
+                offset = offset.Rotated(Rotation);
             return DestinationRectangle.Location.ToVector2() + offset;
         }
 

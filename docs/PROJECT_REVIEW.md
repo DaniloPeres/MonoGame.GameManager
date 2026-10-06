@@ -151,15 +151,16 @@ Every bug below is fixed in 2.0.0.
 | Null object | `SoundHandle.None` when a sound cannot play. |
 | Curiously recurring template | Fluent methods of `Control<T>`, `AnimationAbstract<T>`, `CompositeAnimation<T>` and `ButtonAbstract<T>` return the concrete type. |
 
-## 6. MonoGame 3.8.0 facts
+## 6. MonoGame facts
 
-These facts were checked in the metadata of `MonoGame.Framework.DesktopGL` 3.8.0.1641, the last MonoGame version that ships a `netstandard2.0` assembly (later versions target .NET 6 or .NET 8 only).
+These facts were first checked in the metadata of `MonoGame.Framework.DesktopGL` 3.8.0.1641, the last MonoGame version that ships a `netstandard2.0` assembly (later versions target .NET 6 or .NET 8 only). The library was then moved to `net8.0` and `net10.0` and MonoGame 3.8.5.1.
 
 - Available and used: `GraphicsDevice.ScissorRectangle` with `RasterizerState.ScissorTestEnable` (clipping), `SamplerState.PointClamp` (pixel art), `BlendState.NonPremultiplied`, `GamePad` with `GamePadDeadZone`, `Keyboard`, `MouseState.HorizontalScrollWheelValue`, `Game.IsActive`, `TouchPanel.EnabledGestures` and `ReadGesture`, `SoundEffectInstance`, `MediaPlayer`, `RenderTargetUsage.PreserveContents` and `GraphicsDevice.GetRenderTargets`.
 - `GameWindow.TextInput` exists only in the desktop builds of MonoGame. The library is compiled once for every platform, so `InputManager` subscribes to it through reflection.
 - `ContentManager.UnloadAsset` does not exist in 3.8.0 (only `Unload` of every asset). This is why each screen has its own `ContentManager`.
-- `Color` has no addition operator and `MathF` is not available on `netstandard2.0`.
-- The library is compiled against 3.8.0.1641. Running it with MonoGame 3.8.1 or later was not tested.
+- `Color` has no addition operator. `MathF` was not available on `netstandard2.0`; it is on .NET 8.
+- MonoGame 3.8.1 added an instance method `Vector2.Rotate(float)` that changes the vector and returns nothing. It hides an extension method with the same name, so the extension that returns a rotated copy is named `Vector2Extensions.Rotated`.
+- The library is compiled against 3.8.5.1. The samples run on it: the desktop samples on Windows, the Android demo on an Android 16 emulator.
 
 ## 7. Verification
 
@@ -186,7 +187,7 @@ Not verified here, because it needs a display or a device:
 - Turn the smoke checks into a unit test project and add a CI workflow that builds the library, packs it and compiles the samples.
 - Enable nullable reference types.
 - A content pipeline extension for `.sa` files (they are read as JSON at runtime today).
-- Move the samples to .NET 8 and a newer MonoGame, replace the UWP head (deprecated by MonoGame), and use the new controls in the demos (`Button.SetText` instead of a button with a label).
+- Use the new controls in the demos (`Button.SetText` instead of a button with a label). The samples now run on .NET 10 and MonoGame 3.8.5.1, and the UWP head was removed.
 - Keyboard and gamepad navigation between controls (focus order).
 - Text input on mobile platforms (on-screen keyboard), key repetition and selection in `TextBox`.
 - Tile maps: layers, animated tiles and import of Tiled (`.tmx`) maps; a "move and slide" helper for collisions with solid tiles.

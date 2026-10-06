@@ -5,7 +5,8 @@
 A complete review of the library. See [CHANGES.md](CHANGES.md) for the details and the migration notes, and [docs/PROJECT_REVIEW.md](docs/PROJECT_REVIEW.md) for the review.
 
 ### Improvements
-- Single `netstandard2.0` target; MonoGame is a compile-time reference and Newtonsoft.Json is the only dependency (the Microsoft.Extensions host and Serilog were removed).
+- Targets `net8.0` and `net10.0`, compiled against MonoGame 3.8.5.1; MonoGame is a compile-time reference and Newtonsoft.Json is the only dependency (the Microsoft.Extensions host and Serilog were removed).
+- Samples on .NET 10 and MonoGame 3.8.5.1: desktop samples on `net10.0`, the Android demo converted to an SDK-style `net10.0-android` project, and the content builder restored as a local .NET tool.
 - Services behind interfaces (`ServiceRegistry` + `ServiceProvider` facade), replaceable by the game.
 - Screens own their controls, scheduler and content, all released when they close; screen changes are applied at the end of the frame; screen stack for overlays; `ScreenManagerSettings`.
 - Pointer input without click-through, clipped input, pointer capture, every mouse button and the wheel, touch hover and pressed states.
@@ -24,6 +25,7 @@ A complete review of the library. See [CHANGES.md](CHANGES.md) for the details a
 
 ### Removals
 - Unused `OS` folder, `ControlCounterService`, the memory manager asset states, and the `.bak` files.
+- The UWP demo, because MonoGame no longer supports UWP.
 
 ## [1.0.2] (2022-05-27)
 

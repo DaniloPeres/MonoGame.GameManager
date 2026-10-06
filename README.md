@@ -62,7 +62,7 @@ The NuGet package is available at https://www.nuget.org/packages/MonoGame.GameMa
 dotnet add package MonoGame.GameManager
 ```
 
-The package targets `netstandard2.0` and is compiled against MonoGame 3.8.0.1641. It does not bring a MonoGame platform package: your game references the one it runs on, for example `MonoGame.Framework.DesktopGL`, `MonoGame.Framework.WindowsDX` or `MonoGame.Framework.Android`.
+The package targets `net8.0` and `net10.0` and is compiled against MonoGame 3.8.5.1. Games on .NET 8, .NET 9 and .NET 10 can use it. It does not bring a MonoGame platform package: your game references the one it runs on, for example `MonoGame.Framework.DesktopGL`, `MonoGame.Framework.WindowsDX` or `MonoGame.Framework.Android`.
 
 ## Quick start
 
@@ -599,6 +599,15 @@ ServiceProvider.GameWindowManager.SetMarginTop(40); // in virtual pixels
 
 ## Samples - Demos
 Repository: https://github.com/DaniloPeres/MonoGame.GameManager/tree/main/Samples/Demos
+
+The samples need the .NET 10 SDK. The demos have a desktop head (`MonoGame.GameManager.Samples.WinExe`, DesktopGL, `net10.0`) and an Android head (`MonoGame.GameManager.Samples.Android`, `net10.0-android`, Android 10 or later, needs the `android` workload). The games are desktop only (DesktopGL, `net10.0`).
+
+The content is built by the MonoGame content builder, a local .NET tool. Restore it once, from the repository root, before the first build:
+
+```
+dotnet tool restore
+dotnet run --project Samples/Demos/MonoGame.GameManager.Samples.WinExe
+```
 
 <img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Demos/SamplesDemosMainScreen.gif" alt="MonoGame.GameManager samples demo main screen" width="600" height="394">
 
