@@ -9,6 +9,7 @@ using MonoGame.GameManager.Samples.Screens.Controls;
 using MonoGame.GameManager.Samples.ScreenComponents;
 using System.Collections.Generic;
 using MonoGame.GameManager.Animations;
+using MonoGame.GameManager.Particles;
 using MonoGame.GameManager.Samples.Screens.Animations;
 using MonoGame.GameManager.Samples.Screens.ScreensInfo;
 
@@ -96,8 +97,27 @@ namespace MonoGame.GameManager.Samples.Screens
             posY += textureButtonDefault.Height + MarginOptions;
             posX = Config.ScreenContentMargin;
             AddScrollViewerButton(new Vector2(posX, posY));
+            posX += textureButtonDefault.Width + MarginOptions;
+            AddParticlesButton(new Vector2(posX, posY));
 
             posY += textureButtonDefault.Height;
+        }
+
+        private void AddParticlesButton(Vector2 pos)
+        {
+            var button = AddOptionButton(pos, "Particles", ParticlesScreen.OpenParticlesScreen)
+                .SetHideOverflow(true);
+
+            var settings = ParticlePresets.Magic();
+            settings.MaxParticles = 120;
+            settings.EmissionRate = 35;
+            settings.EmissionPerDistance = 0;
+            new ParticleEmitter(settings)
+                .SetAnchor(Enums.Anchor.Center)
+                .SetPosition(0, -10)
+                .SetZIndex(-1)
+                .AddToScreen(button)
+                .Play();
         }
 
         private void AddRectangleButton(Vector2 pos)

@@ -20,9 +20,11 @@
     <Compile Include="$(MSBuildThisFileDirectory)ScreenComponents\BreadcrumbNavigation.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ScreenComponents\ButtonOption.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ScreenComponents\CheckboxOption.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ScreenComponents\ChoiceOption.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ScreenComponents\ColorOption.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ScreenComponents\FloatValueOption.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ScreenComponents\LastEventsInfo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)ScreenComponents\SliderOption.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ScreenComponents\TextWithFloatValueOption.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)ScreenComponents\Vector2Option.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Screens\Animations\EaseAnimationScreen.cs" />
@@ -34,6 +36,8 @@
     <Compile Include="$(MSBuildThisFileDirectory)Screens\Controls\LabelScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Screens\Controls\MultiLineLabelScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Screens\Controls\PanelScreen.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Screens\Controls\ParticleScenesScreen.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Screens\Controls\ParticlesScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Screens\Controls\RectangleScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Screens\Controls\ScrollViewerScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Screens\Controls\SpriteAnimationScreen.cs" />

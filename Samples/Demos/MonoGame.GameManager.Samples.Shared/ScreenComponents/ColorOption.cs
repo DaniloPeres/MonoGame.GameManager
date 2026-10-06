@@ -11,7 +11,7 @@ namespace MonoGame.GameManager.Samples.ScreenComponents
 {
     public static class ColorOption
     {
-        public static void CreateColorOption(Panel container, float posY, Action<Color> OnColorSelected, string label = "Color", List<Color> colors = null)
+        public static void CreateColorOption(Panel container, float posY, Action<Color> OnColorSelected, string label = "Color", List<Color> colors = null, bool showBorder = false)
         {
             var marginLeft = 10;
             var posX = 0f;
@@ -36,9 +36,11 @@ namespace MonoGame.GameManager.Samples.ScreenComponents
 
             colors.ForEach(color =>
             {
-                new RectangleControl(new Rectangle((int)posX, (int)posY, squareSize, squareSize), color)
+                var square = new RectangleControl(new Rectangle((int)posX, (int)posY, squareSize, squareSize), color)
                     .AddToScreen(container)
                     .AddOnClick(args => OnColorSelected(color));
+                if (showBorder)
+                    square.SetBorder(Color.Gray);
                 posX += squareSize + marginLeft;
             });
         }
