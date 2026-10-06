@@ -5,7 +5,7 @@ using Android.Views;
 using Android.Widget;
 using Microsoft.Xna.Framework;
 using MonoGame.GameManager.Samples.Screens;
-using MonoGame.GameManager.Screens;
+using System;
 
 namespace MonoGame.GameManager.Samples.Android
 {
@@ -24,16 +24,10 @@ namespace MonoGame.GameManager.Samples.Android
         {
             base.OnCreate(bundle);
 
-            var g = new StartupScreen();
-            var view = (View)g.Services.GetService(typeof(View));
-            view.SystemUiVisibility = (StatusBarVisibility)(
-                SystemUiFlags.HideNavigation
-                | SystemUiFlags.LayoutStable
-                | SystemUiFlags.Fullscreen
-                | SystemUiFlags.LayoutFullscreen
-                | SystemUiFlags.LayoutHideNavigation
-                | SystemUiFlags.ImmersiveSticky
-                | SystemUiFlags.Immersive);
+            Window.Attributes.LayoutInDisplayCutoutMode = LayoutInDisplayCutoutMode.ShortEdges;
+
+            var game = new StartupScreen();
+            var view = (View)game.Services.GetService(typeof(View));
             var root = new LinearLayout(this)
             {
                 LayoutParameters = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MatchParent,
@@ -42,27 +36,47 @@ namespace MonoGame.GameManager.Samples.Android
             root.AddView(view);
 
             SetContentView(root);
-            g.Run();
-
-            Window.Attributes.LayoutInDisplayCutoutMode = LayoutInDisplayCutoutMode.ShortEdges;
+            HideSystemBars();
+            game.Run();
         }
 
         public override void OnWindowFocusChanged(bool hasFocus)
         {
             base.OnWindowFocusChanged(hasFocus);
 
-            int uiOptions = (int)Window.DecorView.SystemUiVisibility;
+            if (hasFocus)
+                HideSystemBars();
+        }
 
+        /// <summary>Full-screen immersive mode: hides the status and navigation bars (they come back with a swipe).</summary>
+        private void HideSystemBars()
+        {
+            if (OperatingSystem.IsAndroidVersionAtLeast(30))
+            {
+                // Android 15 (API 35) and later draw edge-to-edge by default.
+                if (!OperatingSystem.IsAndroidVersionAtLeast(35))
+                    Window.SetDecorFitsSystemWindows(false);
+
+                var controller = Window.InsetsController;
+                if (controller == null)
+                    return;
+
+                controller.Hide(WindowInsets.Type.SystemBars());
+                controller.SystemBarsBehavior = (int)WindowInsetsControllerBehavior.ShowTransientBarsBySwipe;
+                return;
+            }
+
+            // Android 10 (API 29) has no WindowInsetsController.
+#pragma warning disable CA1422
             Window.SetFlags(WindowManagerFlags.Fullscreen, WindowManagerFlags.Fullscreen);
-
-            uiOptions |= (int)SystemUiFlags.LayoutStable;
-            uiOptions |= (int)SystemUiFlags.LayoutHideNavigation;
-            uiOptions |= (int)SystemUiFlags.LayoutFullscreen;
-            uiOptions |= (int)SystemUiFlags.HideNavigation;
-            uiOptions |= (int)SystemUiFlags.Fullscreen;
-            uiOptions |= (int)SystemUiFlags.ImmersiveSticky;
-
-            Window.DecorView.SystemUiVisibility = (StatusBarVisibility)uiOptions;
+            Window.DecorView.SystemUiFlags =
+                SystemUiFlags.LayoutStable
+                | SystemUiFlags.LayoutHideNavigation
+                | SystemUiFlags.LayoutFullscreen
+                | SystemUiFlags.HideNavigation
+                | SystemUiFlags.Fullscreen
+                | SystemUiFlags.ImmersiveSticky;
+#pragma warning restore CA1422
         }
     }
 }

@@ -58,11 +58,11 @@ namespace Ping_Pong
         private void EffectToUpdateScore(Label labelScore, int newValue)
         {
             var effectDuration = 0.15f;
-            new FadeAnimation(labelScore, effectDuration, 0f)
+            new OpacityAnimation(labelScore, effectDuration, 0f)
                 .AddOnAnimationEnd(() =>
                 {
                     labelScore.Text = newValue.ToString();
-                    new FadeAnimation(labelScore, effectDuration, 1f)
+                    new OpacityAnimation(labelScore, effectDuration, 1f)
                         .Play();
                 })
                 .Play();

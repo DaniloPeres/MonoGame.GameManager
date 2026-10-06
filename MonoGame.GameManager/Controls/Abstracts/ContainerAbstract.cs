@@ -3,34 +3,33 @@ using Microsoft.Xna.Framework.Graphics;
 using MonoGame.GameManager.Controls.Interfaces;
 using MonoGame.GameManager.Services;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 
 namespace MonoGame.GameManager.Controls.Abstracts
 {
+    /// <summary>
+    /// Base class of the controls that contain other controls (Composite pattern).
+    /// </summary>
+    /// <remarks>
+    /// Children are kept sorted by <see cref="IRenderable.ZIndex"/> (then by creation order). The sorted list is
+    /// rebuilt only when it changes, and it can be modified safely while it is being iterated (for example when a
+    /// click handler removes a control).
+    /// </remarks>
     public abstract class ContainerAbstract<TControl> : ScalableControlAbstract<TControl>, IContainer where TControl : IScalableControl
     {
-        private readonly ConcurrentDictionary<int, IControl> children = new ConcurrentDictionary<int, IControl>();
-        public IEnumerable<IControl> Children => GetSortedChildren();
-        private List<IControl> sortedChildren;
-        private bool needToSortChildren = true;
-        private RenderTarget2D containerRenderTarget; // Used when we hide the overflow
-        private SpriteBatch containerSpriteBatch; // Used when we hide the overflow
+        private readonly Dictionary<int, IControl> children = new Dictionary<int, IControl>();
+        private IControl[] sortedChildren = Array.Empty<IControl>();
+        private bool needToSortChildren;
+        private RenderTarget2D containerRenderTarget; // Used when the overflow is hidden with a render target
+        private SpriteBatch containerSpriteBatch; // Used when the overflow is hidden with a render target
         private Action<IControl> onChildRemoved;
-        private bool hideOnverflow;
-        public bool HideOverflow
-        {
-            get => hideOnverflow;
-            set
-            {
-                hideOnverflow = value;
-                MarkAsDirty();
-            }
-        }
+        private Action<IControl> onChildAdded;
+        private bool hideOverflow;
+        private bool? clipsInput;
 
         public ContainerAbstract() { }
-         
+
         public ContainerAbstract(Rectangle destinationRectangle) : this(destinationRectangle.Location.ToVector2(), destinationRectangle.Size.ToVector2()) { }
 
         public ContainerAbstract(Vector2 position, Vector2 size)
@@ -39,106 +38,227 @@ namespace MonoGame.GameManager.Controls.Abstracts
             Size = size;
         }
 
+        /// <summary>The children sorted by drawing order.</summary>
+        public IEnumerable<IControl> Children => GetSortedChildren();
+
+        /// <summary>The number of children.</summary>
+        public int ChildrenCount => children.Count;
+
+        /// <summary>When true, the children are clipped to the area of the container.</summary>
+        public bool HideOverflow
+        {
+            get => hideOverflow;
+            set
+            {
+                hideOverflow = value;
+                MarkAsDirty();
+            }
+        }
+
+        /// <summary>How the children are clipped when <see cref="HideOverflow"/> is enabled.</summary>
+        public ContainerClipMode ClipMode { get; set; } = ContainerClipMode.Scissor;
+
+        /// <summary>
+        /// When true, the children only receive input inside the area of the container.
+        /// By default it follows <see cref="HideOverflow"/>.
+        /// </summary>
+        public virtual bool ClipsInput
+        {
+            get => clipsInput ?? HideOverflow;
+            set => clipsInput = value;
+        }
+
         public TControl SetSize(Vector2 size)
         {
             Size = size;
-            return (TControl)(object)this;
+            return ThisAsT;
         }
 
         IControl IContainer.AddChild(IControl child) => AddChild(child);
+
+        /// <summary>
+        /// Adds a child. A control that already has another parent is moved to this container.
+        /// </summary>
         public virtual TControl AddChild(IControl child)
         {
+            if (child == null)
+                throw new ArgumentNullException(nameof(child));
+            if (ReferenceEquals(child, this) || IsDescendantOf(child))
+                throw new ArgumentException("A control cannot be added to itself or to one of its children.", nameof(child));
+
+            if (ReferenceEquals(child.Parent, this) && ContainsChild(child))
+                return ThisAsT;
+
+            child.Parent?.RemoveChild(child);
+            children[child.Id] = child;
             child.Parent = this;
-            children.TryAdd(child.Id, child);
-            SetNeedToShortChildren();
-            return (TControl)(object)this;
+            SetNeedToSortChildren();
+            onChildAdded?.Invoke(child);
+            return ThisAsT;
         }
 
-        public bool ContainsChild(IControl child) => children.ContainsKey(child.Id);
+        public bool ContainsChild(IControl child)
+            => child != null && children.TryGetValue(child.Id, out var existing) && ReferenceEquals(existing, child);
 
         IControl IContainer.SetHideOverflow(bool hideOverflow) => SetHideOverflow(hideOverflow);
         public TControl SetHideOverflow(bool hideOverflow)
         {
             HideOverflow = hideOverflow;
-            return (TControl)(object)this;
+            return ThisAsT;
+        }
+
+        public TControl SetClipMode(ContainerClipMode clipMode)
+        {
+            ClipMode = clipMode;
+            return ThisAsT;
+        }
+
+        public TControl SetClipsInput(bool clipsInput)
+        {
+            ClipsInput = clipsInput;
+            return ThisAsT;
         }
 
         public override void MarkAsDirty()
         {
-            IterateChildren(child => child.MarkAsDirty(), false);
+            var items = GetSortedChildren();
+            for (var i = 0; i < items.Length; i++)
+                items[i].MarkAsDirty();
             base.MarkAsDirty();
         }
 
+        /// <summary>
+        /// Removes a child. Nothing happens if the control is not a child of this container.
+        /// </summary>
         public virtual void RemoveChild(IControl child)
         {
-            child.Parent = null;
-            children.TryRemove(child.Id, out _);
+            if (!ContainsChild(child))
+                return;
+
+            children.Remove(child.Id);
+            if (ReferenceEquals(child.Parent, this))
+                child.Parent = null;
+            SetNeedToSortChildren();
             onChildRemoved?.Invoke(child);
-            SetNeedToShortChildren();
         }
 
         public virtual void ClearChildren()
-            => children.Values.ToList().ForEach(RemoveChild);
+        {
+            var items = GetSortedChildren();
+            for (var i = 0; i < items.Length; i++)
+                RemoveChild(items[i]);
+        }
 
-        public void SetNeedToShortChildren()
-            => needToSortChildren = true;
+        public void SetNeedToSortChildren() => needToSortChildren = true;
+
+        [Obsolete("Use SetNeedToSortChildren instead.")]
+        public void SetNeedToShortChildren() => SetNeedToSortChildren();
 
         public override void OnBeforeDraw()
         {
             base.OnBeforeDraw();
-            IterateChildren(x => x.OnBeforeDraw(), false);
+            ArrangeChildren();
 
-            if (HideOverflow)
-                GenerateContainerImage();
+            var items = GetSortedChildren();
+            for (var i = 0; i < items.Length; i++)
+            {
+                var child = items[i];
+                if (child.IsVisible && ReferenceEquals(child.Parent, this))
+                    child.OnBeforeDraw();
+            }
+
+            if (HideOverflow && UsesRenderTargetClipping)
+                RenderChildrenToTarget();
+            else
+                ReleaseRenderTarget();
         }
 
         public override void Draw(SpriteBatch spriteBatch)
         {
             if (HideOverflow)
-                DrawTexture(spriteBatch, containerRenderTarget, DestinationRectangle, DestinationRectangle, OriginWithoutScale);
+                DrawChildrenClipped(spriteBatch);
             else
                 DrawChildren(spriteBatch);
         }
 
+        /// <summary>
+        /// Invokes <paramref name="callback"/> for every child (and the children of the children when
+        /// <paramref name="recursive"/> is true). The children can be modified by the callback.
+        /// </summary>
         public void IterateChildren(Action<IControl> callback, bool recursive = true)
         {
-            var controls = Find(control => true, recursive).ToList();
-            controls.ForEach(callback);
+            var items = GetSortedChildren();
+            for (var i = 0; i < items.Length; i++)
+            {
+                var child = items[i];
+                callback(child);
+                if (recursive && child is IContainer container)
+                    container.IterateChildren(callback, true);
+            }
         }
 
-        public IEnumerable<IControl> GetAllNestedControls()
-        {
-            return Find(control => true, true);
-        }
+        public IEnumerable<IControl> GetAllNestedControls() => Find(control => true, true);
 
         public IEnumerable<IControl> Find(Func<IControl, bool> predicate, bool recursive = true)
         {
-            var childrenTemp = GetSortedChildren();
-            var output = childrenTemp.Where(predicate).ToList();
-
-            if (recursive)
+            var output = new List<IControl>();
+            IterateChildren(control =>
             {
-                var panelItems = FindByType<IContainer>().ToList();
-                panelItems.ForEach(panel =>
-                {
-                    output.AddRange(panel.Find(predicate, recursive));
-                });
-            }
-
+                if (predicate(control))
+                    output.Add(control);
+            }, recursive);
             return output;
         }
 
+        /// <summary>Returns the direct children of the given type.</summary>
         public IEnumerable<T> FindByType<T>() where T : IControl
+            => GetSortedChildren().OfType<T>().ToList();
+
+        /// <inheritdoc />
+        public IControl FindByName(string name, bool recursive = true)
         {
-            var childrenTemp = GetSortedChildren();
-            return childrenTemp
-                .Where(control => control is T)
-                .Cast<T>();
+            if (string.IsNullOrEmpty(name))
+                return null;
+
+            var items = GetSortedChildren();
+            for (var i = 0; i < items.Length; i++)
+            {
+                if (items[i].Name == name)
+                    return items[i];
+            }
+
+            if (!recursive)
+                return null;
+
+            for (var i = 0; i < items.Length; i++)
+            {
+                if (items[i] is IContainer container)
+                {
+                    var found = container.FindByName(name, true);
+                    if (found != null)
+                        return found;
+                }
+            }
+
+            return null;
         }
+
+        /// <summary>Returns the first control with the given name and type, or null.</summary>
+        public T FindByName<T>(string name, bool recursive = true) where T : class, IControl
+            => FindByName(name, recursive) as T;
+
+        /// <inheritdoc />
+        public virtual Point TransformPointToLocal(Point point) => point;
 
         public override void FireOnUpdateEvent(GameTime gameTime)
         {
-            IterateChildren(child => child.FireOnUpdateEvent(gameTime), false);
+            var items = GetSortedChildren();
+            for (var i = 0; i < items.Length; i++)
+            {
+                var child = items[i];
+                if (ReferenceEquals(child.Parent, this))
+                    child.FireOnUpdateEvent(gameTime);
+            }
             base.FireOnUpdateEvent(gameTime);
         }
 
@@ -148,18 +268,114 @@ namespace MonoGame.GameManager.Controls.Abstracts
             base.CleanOnUpdateEvent();
         }
 
-        private void DrawChildren(SpriteBatch spriteBatch)
-            => IterateChildren(child => child.Draw(spriteBatch), false);
+        IControl IContainer.AddOnChildRemoved(Action<IControl> onChildRemoved) => AddOnChildRemoved(onChildRemoved);
+        public TControl AddOnChildRemoved(Action<IControl> onChildRemoved)
+        {
+            this.onChildRemoved += onChildRemoved;
+            return ThisAsT;
+        }
 
-        private List<IControl> GetSortedChildren()
+        public TControl RemoveOnChildRemoved(Action<IControl> onChildRemoved)
+        {
+            this.onChildRemoved -= onChildRemoved;
+            return ThisAsT;
+        }
+
+        public TControl AddOnChildAdded(Action<IControl> onChildAdded)
+        {
+            this.onChildAdded += onChildAdded;
+            return ThisAsT;
+        }
+
+        public TControl RemoveOnChildAdded(Action<IControl> onChildAdded)
+        {
+            this.onChildAdded -= onChildAdded;
+            return ThisAsT;
+        }
+
+        /// <summary>
+        /// Called once per frame before the children are prepared for drawing. Layout containers override it to
+        /// position their children.
+        /// </summary>
+        protected virtual void ArrangeChildren() { }
+
+        /// <summary>Draws the visible children in their drawing order.</summary>
+        protected void DrawChildren(SpriteBatch spriteBatch)
+        {
+            var items = GetSortedChildren();
+            for (var i = 0; i < items.Length; i++)
+            {
+                var child = items[i];
+                if (child.IsVisible && ReferenceEquals(child.Parent, this))
+                    child.Draw(spriteBatch);
+            }
+        }
+
+        /// <summary>Draws the children clipped to the area of the container.</summary>
+        protected void DrawChildrenClipped(SpriteBatch spriteBatch)
+        {
+            if (UsesRenderTargetClipping)
+            {
+                // The children were drawn with their own opacity: the result is drawn without tint.
+                if (containerRenderTarget != null && !containerRenderTarget.IsDisposed)
+                    spriteBatch.Draw(containerRenderTarget, DestinationRectangle, null, Color.White, Rotation, Origin, SpriteEffects.None, LayerDepthDraw);
+                return;
+            }
+
+            var controlManager = ServiceProvider.ControlManager;
+            if (controlManager == null)
+            {
+                DrawChildren(spriteBatch);
+                return;
+            }
+
+            if (!controlManager.TryPushClip(spriteBatch, GetClipBounds()))
+                return; // nothing of the container is visible
+
+            DrawChildren(spriteBatch);
+            controlManager.PopState(spriteBatch);
+        }
+
+        /// <summary>The area of the container on the screen, used for clipping.</summary>
+        protected Rectangle GetClipBounds()
+        {
+            var bounds = DestinationRectangle;
+            var origin = Origin;
+            return new Rectangle(bounds.X - (int)origin.X, bounds.Y - (int)origin.Y, bounds.Width, bounds.Height);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (!IsDisposed && disposing)
+            {
+                onChildRemoved = null;
+                onChildAdded = null;
+
+                var items = GetSortedChildren();
+                for (var i = 0; i < items.Length; i++)
+                    items[i].Dispose();
+
+                ReleaseRenderTarget();
+                containerSpriteBatch?.Dispose();
+                containerSpriteBatch = null;
+            }
+
+            base.Dispose(disposing);
+        }
+
+        /// <summary>True when the overflow is hidden with a render target instead of the scissor rectangle.</summary>
+        protected virtual bool UsesRenderTargetClipping => ClipMode == ContainerClipMode.RenderTarget || Rotation != 0f;
+
+        private IControl[] GetSortedChildren()
         {
             if (needToSortChildren)
             {
+                // A new array is created, so code iterating over the previous one is not affected.
                 sortedChildren = children
                     .Values
                     .OrderBy(x => x.ZIndex)
                     .ThenBy(x => x.Id)
-                    .ToList();
+                    .ToArray();
 
                 needToSortChildren = false;
             }
@@ -167,41 +383,53 @@ namespace MonoGame.GameManager.Controls.Abstracts
             return sortedChildren;
         }
 
-        private void GenerateContainerImage()
+        private bool IsDescendantOf(IControl control)
         {
-            CreateSpriteBatchIfNull();
-
-            var game = ServiceProvider.Game;
-            if (containerRenderTarget == null)
+            for (var current = Parent; current != null; current = current.Parent)
             {
-                containerRenderTarget = new RenderTarget2D(game.GraphicsDevice, (int)ServiceProvider.ScreenManager.ScreenSize.X, (int)ServiceProvider.ScreenManager.ScreenSize.Y);
-                ServiceProvider.MemoryManager.AddAssetToDispose(containerRenderTarget);
+                if (ReferenceEquals(current, control))
+                    return true;
             }
-
-            game.GraphicsDevice.SetRenderTarget(containerRenderTarget);
-            game.GraphicsDevice.Clear(Color.Transparent);
-            containerSpriteBatch.Begin();
-
-            DrawChildren(containerSpriteBatch);
-
-            containerSpriteBatch.End();
-            game.GraphicsDevice.SetRenderTarget(null);
+            return false;
         }
 
-        private void CreateSpriteBatchIfNull()
+        private void RenderChildrenToTarget()
         {
-            if (containerSpriteBatch != null)
+            var controlManager = ServiceProvider.ControlManager;
+            var graphicsDevice = ServiceProvider.GraphicsDevice;
+            var bounds = GetClipBounds(); // the visual area: the render target is drawn back with the origin of the container
+            if (controlManager == null || graphicsDevice == null || bounds.Width <= 0 || bounds.Height <= 0)
                 return;
 
-            containerSpriteBatch = new SpriteBatch(ServiceProvider.GraphicsDevice);
-            ServiceProvider.MemoryManager.AddAssetToDispose(containerSpriteBatch);
+            if (containerRenderTarget == null || containerRenderTarget.IsDisposed
+                || containerRenderTarget.Width != bounds.Width || containerRenderTarget.Height != bounds.Height)
+            {
+                containerRenderTarget?.Dispose();
+                containerRenderTarget = new RenderTarget2D(graphicsDevice, bounds.Width, bounds.Height, false,
+                    SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
+            }
+
+            if (containerSpriteBatch == null)
+                containerSpriteBatch = new SpriteBatch(graphicsDevice);
+
+            var previousRenderTargets = graphicsDevice.GetRenderTargets();
+            graphicsDevice.SetRenderTarget(containerRenderTarget);
+            graphicsDevice.Clear(Color.Transparent);
+
+            var offset = Matrix.CreateTranslation(-bounds.X, -bounds.Y, 0);
+            controlManager.BeginOffscreen(containerSpriteBatch, controlManager.BaseState.WithTransform(offset).WithScissor(null));
+            DrawChildren(containerSpriteBatch);
+            controlManager.EndOffscreen(containerSpriteBatch);
+
+            graphicsDevice.SetRenderTargets(previousRenderTargets);
         }
 
-        IControl IContainer.AddOnChildRemoved(Action<IControl> onChildRemoved) => AddOnChildRemoved(onChildRemoved);
-        public TControl AddOnChildRemoved(Action<IControl> onChildRemoved)
+        private void ReleaseRenderTarget()
         {
-            this.onChildRemoved += onChildRemoved;
-            return (TControl)(object)this;
+            if (containerRenderTarget == null)
+                return;
+            containerRenderTarget.Dispose();
+            containerRenderTarget = null;
         }
     }
 }

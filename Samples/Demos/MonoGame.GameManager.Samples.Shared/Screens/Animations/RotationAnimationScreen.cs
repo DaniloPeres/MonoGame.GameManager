@@ -57,7 +57,7 @@ namespace MonoGame.GameManager.Samples.Screens.Animations
 
             Vector2Option.CreateVector2Option(container, "Size", posY, rectangleControlPreview.Size, size => rectangleControlPreview.SetSize(size));
             posY += 55;
-            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Rotation Start", posY, rotationAnimationPreview.RoationInDegreeStart, value => rotationAnimationPreview.SetRotationInDegreeStart(value), 5);
+            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Rotation Start", posY, rotationAnimationPreview.RotationInDegreeStart, value => rotationAnimationPreview.SetRotationInDegreeStart(value), 5);
             posY += 55;
             TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Rotation End", posY, rotationAnimationPreview.RotationInDegreeEnd, value => rotationAnimationPreview.SetRotationInDegreeEnd(value), 5);
             posY += 55;
@@ -103,7 +103,7 @@ namespace MonoGame.GameManager.Samples.Screens.Animations
             else
             {
                 if (rotationAnimationPreview.IsCompleted)
-                    rotationAnimationPreview.ResetAnimation();
+                    rotationAnimationPreview.Reset();
                 rotationAnimationPreview.Play();
             }
 
@@ -122,7 +122,7 @@ namespace MonoGame.GameManager.Samples.Screens.Animations
 
         private void ResetAnimationButtonClick(ControlMouseEventArgs args)
         {
-            rotationAnimationPreview.ResetAnimation();
+            rotationAnimationPreview.Reset();
         }
 
         private void CreatePreviewSection()

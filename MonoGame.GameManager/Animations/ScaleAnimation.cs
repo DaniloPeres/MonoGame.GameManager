@@ -1,44 +1,63 @@
 ﻿using Microsoft.Xna.Framework;
 using MonoGame.GameManager.Controls.Interfaces;
+using System;
 
 namespace MonoGame.GameManager.Animations
 {
+    /// <summary>
+    /// Scales a control to <see cref="ScaleEnd"/>. Unless <see cref="ScaleStart"/> is set explicitly, it starts
+    /// from the scale of the control when it is played.
+    /// </summary>
     public class ScaleAnimation : AnimationAbstract<ScaleAnimation>
     {
-        public Vector2 ScaleStart { get; set; }
-        public Vector2 ScaleEnd { get; set; }
+        private readonly IScalableControl scalableControl;
+        private Vector2 scaleStart;
+        private bool isStartExplicit;
 
         public ScaleAnimation(IScalableControl control, float duration, Vector2 scaleEnd)
-            : base(control, duration)
+            : base(control ?? throw new ArgumentNullException(nameof(control)), duration)
         {
-            SetScaleStart(control.Scale);
-            SetScaleEnd(scaleEnd);
+            scalableControl = control;
+            scaleStart = control.Scale;
+            ScaleEnd = scaleEnd;
         }
+
+        public ScaleAnimation(IScalableControl control, float duration, float scaleEnd)
+            : this(control, duration, new Vector2(scaleEnd)) { }
+
+        public Vector2 ScaleStart
+        {
+            get => scaleStart;
+            set
+            {
+                scaleStart = value;
+                isStartExplicit = true;
+            }
+        }
+
+        public Vector2 ScaleEnd { get; set; }
 
         public ScaleAnimation SetScaleStart(Vector2 scaleStart)
         {
-            this.ScaleStart = scaleStart;
+            ScaleStart = scaleStart;
             return this;
         }
 
         public ScaleAnimation SetScaleEnd(Vector2 scaleEnd)
         {
-            this.ScaleEnd = scaleEnd;
+            ScaleEnd = scaleEnd;
             return this;
         }
 
-        protected override void OnUpdateAnimation(float durationRate)
+        /// <inheritdoc />
+        protected override void CaptureStartValues()
         {
-            var start = ScaleStart;
-            var end = ScaleEnd;
-            if (IsReverse)
-            {
-                start = ScaleEnd;
-                end = ScaleStart;
-            }
-
-            var scale = start + (end - start) * durationRate;
-            ((IScalableControl)Control).SetScale(scale);
+            if (!isStartExplicit)
+                scaleStart = scalableControl.Scale;
         }
+
+        /// <inheritdoc />
+        protected override void OnUpdateAnimation(float progress)
+            => scalableControl.SetScale(scaleStart + (ScaleEnd - scaleStart) * progress);
     }
 }

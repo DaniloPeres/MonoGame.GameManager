@@ -103,7 +103,7 @@ namespace MonoGame.GameManager.Samples.Screens.Animations
             else
             {
                 if (scaleAnimationPreview.IsCompleted)
-                    scaleAnimationPreview.ResetAnimation();
+                    scaleAnimationPreview.Reset();
                 scaleAnimationPreview.Play();
             }
 
@@ -122,7 +122,7 @@ namespace MonoGame.GameManager.Samples.Screens.Animations
 
         private void ResetAnimationButtonClick(ControlMouseEventArgs args)
         {
-            scaleAnimationPreview.ResetAnimation();
+            scaleAnimationPreview.Reset();
         }
 
         private void CreatePreviewSection()

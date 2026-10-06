@@ -29,7 +29,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
 
         public ScrollViewerScreen()
         {
-            coinSpriteAnimationInfo = ServiceProvider.ContentLoaderManager.LoadSpriteAnimationInfo("Images/Sprites/Coin.sa");
+            coinSpriteAnimationInfo = ServiceProvider.ContentLoader.LoadSpriteAnimationInfo("Images/Sprites/Coin.sa");
         }
 
         public override void OnInit()
@@ -178,18 +178,18 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
         private void MoveToScrollViewerOptions()
         {
             var duration = 0.15f;
-            new EaseAnimation(scrollViewerOptionsContainer, duration, new Vector2(0, scrollViewerOptionsContainer.PositionAnchor.Y))
+            new MoveAnimation(scrollViewerOptionsContainer, duration, new Vector2(0, scrollViewerOptionsContainer.PositionAnchor.Y))
                 .Play();
-            new EaseAnimation(pinchZoomOptionsContainer, duration, new Vector2(scrollViewerOptionsContainer.Size.X, pinchZoomOptionsContainer.PositionAnchor.Y))
+            new MoveAnimation(pinchZoomOptionsContainer, duration, new Vector2(scrollViewerOptionsContainer.Size.X, pinchZoomOptionsContainer.PositionAnchor.Y))
                 .Play();
         }
 
         private void MoveToPinchZoomOptions()
         {
             var duration = 0.15f;
-            new EaseAnimation(scrollViewerOptionsContainer, duration, new Vector2(-scrollViewerOptionsContainer.Size.X, scrollViewerOptionsContainer.PositionAnchor.Y))
+            new MoveAnimation(scrollViewerOptionsContainer, duration, new Vector2(-scrollViewerOptionsContainer.Size.X, scrollViewerOptionsContainer.PositionAnchor.Y))
                 .Play();
-            new EaseAnimation(pinchZoomOptionsContainer, duration, new Vector2(0, pinchZoomOptionsContainer.PositionAnchor.Y))
+            new MoveAnimation(pinchZoomOptionsContainer, duration, new Vector2(0, pinchZoomOptionsContainer.PositionAnchor.Y))
                 .Play();
         }
 
@@ -215,7 +215,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             scrollViewerPreview = new ScrollViewer(Vector2.Zero, panelContainer.Size)
                 .AddToScreen(panelContainer)
                 .SetHideOverflow(true)
-                .AddOnUpddateDestinationRectangle(UpdatePanelBackgroundRectangle)
+                .AddOnUpdateDestinationRectangle(UpdatePanelBackgroundRectangle)
                 .SetHorizontalScrollEnabled(true)
                 .SetAnchor(Enums.Anchor.TopLeft);
 

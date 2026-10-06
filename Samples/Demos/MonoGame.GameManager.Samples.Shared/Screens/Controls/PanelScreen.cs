@@ -81,7 +81,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             panelPreview = new Panel(new Rectangle(0, 0, 300, 200))
                 .AddToScreen(panelContainer)
                 .SetAnchor(Enums.Anchor.Center)
-                .AddOnUpddateDestinationRectangle(UpdatePanelBackgroundRectangle);
+                .AddOnUpdateDestinationRectangle(UpdatePanelBackgroundRectangle);
 
             new Label(ContentHandler.Instance.SpriteFontArial, "My panel text example", Vector2.Zero, Color.LightCyan)
                 .AddToScreen(panelPreview)

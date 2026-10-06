@@ -1,4 +1,4 @@
-﻿using MonoGame.GameManager.Controls.MouseEvent;
+﻿using MonoGame.GameManager.Controls.InputEvent;
 using MonoGame.GameManager.Services;
 using System;
 
@@ -11,7 +11,7 @@ namespace Ping_Pong.Paddles
             ServiceProvider.RootPanel.AddOnMouseMoved(OnMouseMoved);
         }
 
-        private void OnMouseMoved(ControlEventArgs args)
+        private void OnMouseMoved(ControlMouseEventArgs args)
         {
             args.ShouldStopPropagation = false;
             Move(args.Position.Y);

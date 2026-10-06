@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework.Input;
 using MonoGame;
 using MonoGame.GameManager.Animations;
 using MonoGame.GameManager.Controls;
-using MonoGame.GameManager.Controls.MouseEvent;
+using MonoGame.GameManager.Controls.InputEvent;
 using MonoGame.GameManager.Extensions;
 using MonoGame.GameManager.GameMath;
 using MonoGame.GameManager.Screens;
@@ -77,7 +77,7 @@ namespace Snake.Screens
             board.AddOnClick(OnBoardClick);
             board.AddOnUpdateEvent(CheckPressedKey);
             moveSnakeDelayTime = new DelayTime(snakeSpeedByLevel[level], MoveSnake)
-                .SetIsLoop(true)
+                .SetIsLooping(true)
                 .Play();
 
             CreateFood();
@@ -223,7 +223,7 @@ namespace Snake.Screens
                 .AddToScreen(board);
         }
 
-        private void OnBoardClick(ControlEventArgs args)
+        private void OnBoardClick(ControlMouseEventArgs args)
         {
             if (isGameOver)
                 ChangeScreen(new MainMenuScreen());
@@ -293,7 +293,7 @@ namespace Snake.Screens
                             .AddOnAnimationEnd(InitiateSnake);
                     }
 
-                    new FadeAnimation(labelTextInfo, fadeAnimationTime, 0f)
+                    new OpacityAnimation(labelTextInfo, fadeAnimationTime, 0f)
                         .Play();
                 })
                 .Play();

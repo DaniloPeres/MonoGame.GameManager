@@ -2,80 +2,85 @@
 using Microsoft.Xna.Framework.Input.Touch;
 using MonoGame.GameManager.Controls.InputEvent;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 
 namespace MonoGame.GameManager.Controls.ControlsUI
 {
+    /// <summary>
+    /// Zooms and moves the content of a <see cref="ScrollViewer"/> with two fingers (created by the viewer). The
+    /// point of the content between the fingers stays between the fingers.
+    /// </summary>
     public class ScrollViewerPinchZoom
     {
-        public bool IsPinchActive { get; private set; }
+        private const float MinimumFingerDistance = 1f;
+        private const double EventTimeoutSeconds = 0.25;
         private readonly ScrollViewer scrollViewer;
-        private float lastScale;
-        private float nthZoom;
-        private Vector2 lastZoomCenter;
-        private Vector2[] startTouchPositions;
-        private float zoomFactor = 1;
-        private Vector2 offset = Vector2.Zero;
+        private float startDistance;
+        private Vector2 startZoom;
+        private Vector2 contentAnchor;
+        private TimeSpan lastEventTime;
 
         public ScrollViewerPinchZoom(ScrollViewer scrollViewer)
         {
-            this.scrollViewer = scrollViewer;
-
+            this.scrollViewer = scrollViewer ?? throw new ArgumentNullException(nameof(scrollViewer));
             scrollViewer.AddOnMultipleTouchpoints(OnMultipleTouchpointsUpdate);
         }
 
-        private void OnMultipleTouchpointsUpdate(ControlMultipleTouchpointsEventArgs multipleTouchpointsArgs)
+        public bool IsPinchActive { get; private set; }
+
+        /// <summary>When false, two fingers do not zoom the content.</summary>
+        public bool IsEnabled { get; set; } = true;
+
+        public void SetPinchAsInactive() => IsPinchActive = false;
+
+        /// <summary>Ends a pinch whose fingers disappeared without a release event.</summary>
+        public void Update(TimeSpan totalTime)
         {
-            var touchpoints = multipleTouchpointsArgs.Touchpoints.ToArray().Take(2).ToList();
-
-            var isReleased = touchpoints.Any(x => x.State == TouchLocationState.Released);
-
-            if (touchpoints.Count < 2 || !IsPinchActive && isReleased)
-                return;
-
-            var touchPositions = GetTouchpointsPositions(touchpoints);
-
-            if (!IsPinchActive)
-                OnPinchStart(touchPositions);
-            else if (!isReleased)
-                OnPinchMoved(touchPositions);
-            else
+            if (IsPinchActive && (totalTime - lastEventTime).TotalSeconds > EventTimeoutSeconds)
                 OnPinchReleased();
         }
 
-        private void OnPinchStart(Vector2[] touchPositions)
+        private void OnMultipleTouchpointsUpdate(ControlMultipleTouchpointsEventArgs args)
         {
-            IsPinchActive = true;
-            lastScale = 1;
-            nthZoom = 0;
-            startTouchPositions = touchPositions;
-            offset = -scrollViewer.GetScrollPosition();
-            zoomFactor = scrollViewer.Zoom.X / GetInitialZoomFactor();
+            if (!IsEnabled || args.Touchpoints == null || args.Touchpoints.Count < 2)
+            {
+                args.ContinuePropagation();
+                return;
+            }
+
+            lastEventTime = args.Time;
+            var first = args.Touchpoints[0];
+            var second = args.Touchpoints[1];
+            var isReleased = IsEnded(first.State) || IsEnded(second.State);
+            if (isReleased)
+            {
+                if (IsPinchActive)
+                    OnPinchReleased();
+                return;
+            }
+
+            var a = scrollViewer.ToViewportPosition(first.Position);
+            var b = scrollViewer.ToViewportPosition(second.Position);
+            var distance = Vector2.Distance(a, b);
+            var center = (a + b) / 2f;
+
+            if (!IsPinchActive)
+            {
+                if (distance < MinimumFingerDistance)
+                    return;
+                OnPinchStart(distance, center);
+                return;
+            }
+
+            scrollViewer.ZoomFromPinch(startZoom * (distance / startDistance), center, contentAnchor);
         }
 
-        private void OnPinchMoved(Vector2[] touchpositions)
+        private void OnPinchStart(float distance, Vector2 center)
         {
-            var newScale = CalculateScale(startTouchPositions, touchpositions);
-
-            // a relative scale factor is used
-            var touchCenter = GetTouchCenter(touchpositions);
-            var scale = newScale / lastScale;
-            lastScale = newScale;
-
-            // the first touch events are thrown away since they are not precise
-            nthZoom += 1;
-            if (nthZoom > 3)
-            {
-                Scale(scale, touchCenter);
-                Drag(touchCenter, lastZoomCenter);
-            }
-            lastZoomCenter = touchCenter;
-
-            var zoomFactor = GetInitialZoomFactor() * this.zoomFactor;
-
-            scrollViewer.SetZoom(new Vector2(zoomFactor));
-            scrollViewer.MoveContainer(-offset - scrollViewer.ScrollPosition);
+            IsPinchActive = true;
+            startDistance = distance;
+            startZoom = scrollViewer.Zoom;
+            var zoom = new Vector2(Math.Max(startZoom.X, 0.0001f), Math.Max(startZoom.Y, 0.0001f));
+            contentAnchor = (center - scrollViewer.ScrollPosition) / zoom;
         }
 
         private void OnPinchReleased()
@@ -84,55 +89,6 @@ namespace MonoGame.GameManager.Controls.ControlsUI
             scrollViewer.HideBars();
         }
 
-        public void SetPinchAsInactive()
-        {
-            IsPinchActive = false;
-        }
-
-        private void AddOffset(Vector2 offset)
-        {
-            this.offset += offset;
-        }
-
-        private void Scale(float scale, Vector2 center)
-        {
-            scale = ScaleZoomFactor(scale);
-            AddOffset((scale - 1) * (center + offset));
-        }
-
-        private float ScaleZoomFactor(float scale)
-        {
-            var originalZoomFactor = zoomFactor;
-            zoomFactor *= scale;
-            var initialZoomFactor = GetInitialZoomFactor();
-            zoomFactor = MathHelper.Clamp(zoomFactor, scrollViewer.MinZoom.X / initialZoomFactor, scrollViewer.MaxZoom.X / initialZoomFactor);
-            return zoomFactor / originalZoomFactor;
-        }
-
-        private void Drag(Vector2 center, Vector2 lastCenter)
-        {
-            AddOffset(-(center - lastCenter));
-        }
-
-        private float CalculateScale(Vector2[] startTouchpoints, Vector2[] endTouchpoints)
-        {
-            var startDistance = GetDistance(startTouchpoints[0], startTouchpoints[1]);
-            var endDistance = GetDistance(endTouchpoints[0], endTouchpoints[1]);
-            return endDistance / startDistance;
-        }
-
-        private Vector2[] GetTouchpointsPositions(List<TouchLocation> touchpoints)
-        {
-            // Disconsidere the container position
-            var containerPosition = scrollViewer.DestinationRectangle.Location.ToVector2();
-            return touchpoints.Select(touchpoint => touchpoint.Position - containerPosition).ToArray();
-        }
-
-        private float GetInitialZoomFactor()
-            => scrollViewer.Size.X / (scrollViewer.ContainerSize.X / scrollViewer.Zoom.X);
-        private Vector2 GetTouchCenter(Vector2[] touchpoints)
-            => new Vector2(touchpoints.Sum(x => x.X) / touchpoints.Count(), touchpoints.Sum(x => x.Y) / touchpoints.Count());
-        private float GetDistance(Vector2 a, Vector2 b)
-            => (float)Math.Sqrt(Math.Pow(b.X - a.X, 2) + Math.Pow(b.Y - a.Y, 2));
+        private static bool IsEnded(TouchLocationState state) => state == TouchLocationState.Released || state == TouchLocationState.Invalid;
     }
 }

@@ -1,20 +1,13 @@
 ﻿using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using MonoGame.GameManager.Extensions;
+using System;
 
 namespace MonoGame.GameManager.GameMath
 {
+    [Obsolete("Use the Collision class instead.")]
     public static class Intersection
     {
+        [Obsolete("Use Collision.RectangleContainsPoint instead.")]
         public static bool IntersectsWithPoint(Rectangle destinationRectangleControl, Vector2 originControl, Point pointToCompare)
-        {
-            var rec = destinationRectangleControl;
-            rec.X -= (int)(originControl.X);
-            rec.Y -= (int)(originControl.Y);
-
-            var pointRectangleToCompare = new Rectangle(pointToCompare, new Point(1));
-
-            return rec.Intersects(pointRectangleToCompare);
-        }
+            => Collision.RectangleContainsPoint(destinationRectangleControl, originControl, pointToCompare);
     }
 }

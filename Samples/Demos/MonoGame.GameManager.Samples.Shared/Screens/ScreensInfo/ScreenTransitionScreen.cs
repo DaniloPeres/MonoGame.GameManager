@@ -57,7 +57,7 @@ namespace MonoGame.GameManager.Samples.Screens.ScreensInfo
                    MainScreen.OpenMainScreen();
                });
 
-            new Label(ContentHandler.Instance.SpriteFontArial, "No transaction", Vector2.Zero, Color.White)
+            new Label(ContentHandler.Instance.SpriteFontArial, "No transition", Vector2.Zero, Color.White)
                 .AddToScreen(noTransitionButton)
                 .SetScale(0.75f)
                 .SetAnchor(Enums.Anchor.Center);
@@ -111,7 +111,7 @@ namespace MonoGame.GameManager.Samples.Screens.ScreensInfo
                    MainScreen.OpenMainScreen();
                });
 
-            new Label(ContentHandler.Instance.SpriteFontArial, "Fade transaction", Vector2.Zero, Color.White)
+            new Label(ContentHandler.Instance.SpriteFontArial, "Fade transition", Vector2.Zero, Color.White)
                 .AddToScreen(noTransitionButton)
                 .SetScale(0.75f)
                 .SetAnchor(Enums.Anchor.Center);
@@ -150,15 +150,16 @@ namespace MonoGame.GameManager.Samples.Screens.ScreensInfo
                     var fadeBackground = new RectangleControl(Vector2.Zero, transitionContainer.Size, Color.Black)
                         .AddToScreen(transitionContainer);
 
-                    new FadeAnimation(fadeBackground, fadeAnimation, 1f)
+                    new OpacityAnimation(fadeBackground, fadeAnimation, 1f)
+                        .SetOpacityStart(0f)
                         .Play()
                         .AddOnAnimationEnd(() =>
                         {
                             screenBackground.SetColor(screensExamples[index].background);
                             screenText.Text = screensExamples[index].text;
 
-                            new FadeAnimation(fadeBackground, fadeAnimation, 0f)
-                                .SetBaseColor(Color.Black)
+                            new OpacityAnimation(fadeBackground, fadeAnimation, 0f)
+                                .SetShouldRemoveControlOnAnimationEnd(true)
                                 .Play()
                                 .AddOnAnimationEnd(changeScreen);
                         });

@@ -64,13 +64,13 @@ namespace MonoGame.GameManager.Samples.Screens.ScreensInfo
             pos.Y += 55;
             ColorOption.CreateColorOption(container, pos.Y, color => ServiceProvider.ScreenManager.WindowBackgroundColor = color, "Window background", colors);
             pos.Y += 55;
-            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Matin Left", pos.Y, ServiceProvider.GameWindowManager.ScreenMargin.X, value => ServiceProvider.GameWindowManager.SetMarginLeft(value), 5f);
+            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Margin Left", pos.Y, ServiceProvider.GameWindowManager.ScreenMargin.X, value => ServiceProvider.GameWindowManager.SetMarginLeft(value), 5f);
             pos.Y += 55;
-            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Matin Top", pos.Y, ServiceProvider.GameWindowManager.ScreenMargin.Y, value => ServiceProvider.GameWindowManager.SetMarginRight(value), 5f);
+            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Margin Top", pos.Y, ServiceProvider.GameWindowManager.ScreenMargin.Y, value => ServiceProvider.GameWindowManager.SetMarginTop(value), 5f);
             pos.Y += 55;
-            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Matin Right", pos.Y, ServiceProvider.GameWindowManager.ScreenMargin.Z, value => ServiceProvider.GameWindowManager.SetMarginTop(value), 5f);
+            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Margin Right", pos.Y, ServiceProvider.GameWindowManager.ScreenMargin.Z, value => ServiceProvider.GameWindowManager.SetMarginRight(value), 5f);
             pos.Y += 55;
-            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Matin Bottom", pos.Y, ServiceProvider.GameWindowManager.ScreenMargin.W, value => ServiceProvider.GameWindowManager.SetMarginBottom(value), 5f);
+            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Margin Bottom", pos.Y, ServiceProvider.GameWindowManager.ScreenMargin.W, value => ServiceProvider.GameWindowManager.SetMarginBottom(value), 5f);
             pos.Y += 55;
             Vector2Option.CreateVector2Option(container, "Scale", pos.Y, ServiceProvider.GameWindowManager.ScreenScale, value => ServiceProvider.GameWindowManager.ScreenScale = value, 0.1f);
 

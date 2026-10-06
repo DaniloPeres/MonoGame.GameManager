@@ -5,22 +5,32 @@ using System.Globalization;
 
 namespace MonoGame.GameManager.Converters
 {
-    public class Vector2Converter : JsonConverter<Vector2>
+    /// <summary>
+    /// Converts a <see cref="Vector2"/> (or a nullable one) to and from the JSON string "x y".
+    /// </summary>
+    public class Vector2Converter : JsonConverter
     {
-        /// <inheritdoc />
-        public override void WriteJson(JsonWriter writer, Vector2 value, JsonSerializer serializer)
+        public override bool CanConvert(Type objectType) => objectType == typeof(Vector2) || objectType == typeof(Vector2?);
+
+        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
         {
-            writer.WriteValue(value.X.ToString(CultureInfo.InvariantCulture) + " " + value.Y.ToString(CultureInfo.InvariantCulture));
+            if (value == null)
+            {
+                writer.WriteNull();
+                return;
+            }
+
+            var vector = (Vector2)value;
+            writer.WriteValue(vector.X.ToString(CultureInfo.InvariantCulture) + " " + vector.Y.ToString(CultureInfo.InvariantCulture));
         }
 
-        /// <inheritdoc />
-        public override Vector2 ReadJson(JsonReader reader, Type objectType, Vector2 existingValue, bool hasExistingValue, JsonSerializer serializer)
+        public override object ReadJson(JsonReader reader, Type objectType, object existingValue, JsonSerializer serializer)
         {
-            if (reader.Value == null)
-                return default;
+            if (reader.TokenType == JsonToken.Null)
+                return objectType == typeof(Vector2?) ? (object)null : default(Vector2);
 
-            var value = reader.Value.ToString().Split(' ');
-            return new Vector2(float.Parse(value[0], CultureInfo.InvariantCulture), float.Parse(value[1], CultureInfo.InvariantCulture));
+            var values = ConverterHelper.ReadNumbers(reader, 2);
+            return new Vector2((float)values[0], (float)values[1]);
         }
     }
 }

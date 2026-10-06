@@ -9,185 +9,446 @@ using System.Linq;
 
 namespace MonoGame.GameManager.Controls.InputEvent
 {
+    /// <summary>
+    /// Delivers pointer events (mouse and touch) to the controls of a control tree.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The tree is visited from the top-most control to the bottom-most one (children before their container,
+    /// higher <see cref="IRenderable.ZIndex"/> first). Each control under the pointer receives the event until a
+    /// control stops the propagation. A control stops it when it handles the event without calling
+    /// <see cref="ControlMouseEventArgs.ContinuePropagation"/>, or when <see cref="IInputTarget.BlocksMouseEvents"/>
+    /// is true. A control that handles clicks or releases also owns the press, so the controls below are not
+    /// clicked at the same time.
+    /// </para>
+    /// <para>
+    /// Hidden, disposed and disabled controls do not receive events, and the children of a container whose
+    /// <see cref="IContainer.ClipsInput"/> is true only receive events inside the container.
+    /// </para>
+    /// </remarks>
     public class ControlMouseEventHandler
     {
-        private readonly MouseInputListener mouseInputListener;
-        private readonly TouchInputListener touchInputListener;
-        private readonly Panel panelContainer;
+        private const MouseEventKinds PointerReactionKinds = MouseEventKinds.Pressed | MouseEventKinds.Released | MouseEventKinds.Click | MouseEventKinds.Wheel;
 
-        public ControlMouseEventHandler(MouseInputListener mouseInputListener, TouchInputListener touchInputListener)
+        private readonly IControl root;
+        private readonly List<IControl> hoveredControls = new List<IControl>();
+        private readonly Dictionary<MouseButtons, List<IControl>> pressedControls = new Dictionary<MouseButtons, List<IControl>>();
+        private MouseInputListener attachedMouse;
+        private TouchInputListener attachedTouch;
+        private IControl capturedControl;
+
+        /// <param name="root">The root of the control tree that receives the events.</param>
+        public ControlMouseEventHandler(IControl root)
         {
-            this.mouseInputListener = mouseInputListener;
-            this.touchInputListener = touchInputListener;
-
-            // create a container to use root panel events
-            panelContainer = new Panel();
-
-            mouseInputListener.OnMouseDown += OnMouseDown;
-            mouseInputListener.OnMouseMove += OnMouseMove;
-            mouseInputListener.OnMouseUp += OnMouseUp;
-            touchInputListener.OnTouchStarted += OnTouchStarted;
-            touchInputListener.OnTouchReleased += OnTouchReleased;
-            touchInputListener.OnTouchMoved += OnTouchMoved;
-            touchInputListener.OnMultipleTouch += OnMultipleTouchpoints;
+            this.root = root ?? throw new ArgumentNullException(nameof(root));
         }
 
-        public void AddRootPanel(Panel rootPanel)
+        /// <summary>The control that currently captures the pointer, or null.</summary>
+        public IControl CapturedControl => capturedControl;
+
+        /// <summary>The controls currently under the pointer.</summary>
+        public IReadOnlyList<IControl> HoveredControls => hoveredControls;
+
+        /// <summary>
+        /// Subscribes to the events of the input listeners.
+        /// </summary>
+        public void Attach(MouseInputListener mouse, TouchInputListener touch)
         {
-            panelContainer.AddChild(rootPanel);
+            Detach();
+
+            attachedMouse = mouse;
+            if (mouse != null)
+            {
+                mouse.OnMouseDown += HandleMouseDown;
+                mouse.OnMouseMove += HandleMouseMove;
+                mouse.OnMouseUp += HandleMouseUp;
+                mouse.OnMouseWheelMoved += HandleMouseWheel;
+            }
+
+            attachedTouch = touch;
+            if (touch != null)
+            {
+                touch.OnTouchStarted += OnTouchStarted;
+                touch.OnTouchMoved += OnTouchMoved;
+                touch.OnTouchReleased += OnTouchReleased;
+                touch.OnTouchCancelled += OnTouchCancelled;
+                touch.OnMultipleTouch += HandleMultipleTouchpoints;
+            }
         }
 
-        public void Update(GameTime gameTime)
+        /// <summary>
+        /// Unsubscribes from the input listeners.
+        /// </summary>
+        public void Detach()
         {
-            mouseInputListener.Update(gameTime);
-            touchInputListener.Update(gameTime);
+            if (attachedMouse != null)
+            {
+                attachedMouse.OnMouseDown -= HandleMouseDown;
+                attachedMouse.OnMouseMove -= HandleMouseMove;
+                attachedMouse.OnMouseUp -= HandleMouseUp;
+                attachedMouse.OnMouseWheelMoved -= HandleMouseWheel;
+                attachedMouse = null;
+            }
+
+            if (attachedTouch != null)
+            {
+                attachedTouch.OnTouchStarted -= OnTouchStarted;
+                attachedTouch.OnTouchMoved -= OnTouchMoved;
+                attachedTouch.OnTouchReleased -= OnTouchReleased;
+                attachedTouch.OnTouchCancelled -= OnTouchCancelled;
+                attachedTouch.OnMultipleTouch -= HandleMultipleTouchpoints;
+                attachedTouch = null;
+            }
         }
 
-        private void OnMouseDown(MouseEventArgs args)
-            => CheckMouseEvent(args, panelContainer.Children, OnControlMouseDown);
+        /// <summary>
+        /// Makes <paramref name="control"/> receive the move and release events first, even when the pointer is
+        /// outside of it, until the button is released or <see cref="ReleasePointer"/> is called. It is used to
+        /// implement dragging (scroll viewers, sliders...).
+        /// </summary>
+        public void CapturePointer(IControl control) => capturedControl = control;
 
-        private void OnMouseMove(MouseEventArgs args)
+        /// <summary>
+        /// Releases the pointer capture (only if <paramref name="control"/> holds it, when provided).
+        /// </summary>
+        public void ReleasePointer(IControl control = null)
         {
-            // Get all controls that are marked as hover
-            var mouseHoveredControls = panelContainer.Find(control => control.IsMouseHover).ToList();
-
-            SetControlsAsNotHover();
-
-            CheckMouseEvent(args, panelContainer.Children, OnControlMouseMove);
-
-            // Check which controls have received mouse enter or mouse leave
-            var mouseHoveredControlsUpdated = panelContainer.Find(control => control.IsMouseHover).ToList();
-            var controlsMouseEnter = mouseHoveredControlsUpdated.Where(control => !mouseHoveredControls.Contains(control)).ToList();
-            controlsMouseEnter.ForEach(control => control.FireOnMouseEnter(CreateControlEventArgs(control, args)));
-            var controlsMouseLeave = mouseHoveredControls.Where(control => !mouseHoveredControlsUpdated.Contains(control)).ToList();
-            controlsMouseLeave.ForEach(control => control.FireOnMouseLeave(CreateControlEventArgs(control, args)));
+            if (control == null || ReferenceEquals(capturedControl, control))
+                capturedControl = null;
         }
 
-        private void OnMouseUp(MouseEventArgs args)
+        /// <summary>
+        /// Forgets the hovered and pressed controls and the pointer capture, firing the leave events.
+        /// </summary>
+        public void Reset()
+        {
+            capturedControl = null;
+            foreach (var list in pressedControls.Values)
+            {
+                foreach (var control in list)
+                    control.SetMousePressed(false);
+                list.Clear();
+            }
+            ClearHover(null);
+        }
+
+        public void HandleMouseDown(MouseEventArgs args)
         {
             if (args.IsTouchInput)
-                SetControlsAsNotHover();
+                HandleMouseMove(args); // touch has no hover: the finger arrives where it presses
 
-            // get and mark all items as not pressed
-            // use the pressedControls to check click
-            var pressedControls = panelContainer.Find(control => control.IsMousePressed).ToList();
-            pressedControls.ForEach(control => control.SetMousePressed(false));
+            var button = args.Button == MouseButtons.None ? MouseButtons.Left : args.Button;
+            var pressed = GetPressedControls(button);
+            pressed.Clear();
 
-            CheckMouseEvent(args, panelContainer.Children, (control, args2) => OnControlMouseUp(control, args2, pressedControls));
+            Traverse(root, args.Position, (control, position) =>
+            {
+                if ((control.AcceptedMouseButtons & button) == 0)
+                    return control.BlocksMouseEvents;
+
+                var controlArgs = CreateArgs(control, args, position, button);
+                control.SetMousePressed(true);
+                pressed.Add(control);
+                control.FireOnPressed(controlArgs);
+
+                if (control.BlocksMouseEvents || controlArgs.ShouldStopPropagation)
+                    return true;
+
+                // A control that reacts to clicks or releases owns the press: the controls below must not be clicked too.
+                return !control.HasMouseHandlers(MouseEventKinds.Pressed)
+                    && control.HasMouseHandlers(MouseEventKinds.Click | MouseEventKinds.Released);
+            });
         }
 
-        private void SetControlsAsNotHover()
+        public void HandleMouseMove(MouseEventArgs args)
         {
-            // Get all controls that are marked as hover
-            var mouseHoveredControls = panelContainer.Find(control => control.IsMouseHover).ToList();
+            var newHoveredControls = new List<IControl>();
+            var captured = GetValidCapturedControl();
+            var stop = false;
 
-            // Set the controls as not pressed
-            mouseHoveredControls.ForEach(control => control.SetMouseHover(false));
+            if (captured != null)
+            {
+                var controlArgs = CreateArgs(captured, args, ToLocal(captured, args.Position), MouseButtons.None);
+                captured.FireOnMoved(controlArgs);
+                if (captured.BlocksMouseEvents || controlArgs.ShouldStopPropagation)
+                {
+                    stop = true;
+                    captured.SetMouseHover(true);
+                    newHoveredControls.Add(captured);
+                }
+            }
+
+            if (!stop)
+            {
+                Traverse(root, args.Position, (control, position) =>
+                {
+                    control.SetMouseHover(true);
+                    newHoveredControls.Add(control);
+                    var controlArgs = CreateArgs(control, args, position, MouseButtons.None);
+                    control.FireOnMoved(controlArgs);
+                    return control.BlocksMouseEvents || controlArgs.ShouldStopPropagation;
+                }, captured);
+            }
+
+            UpdateHover(newHoveredControls, args);
         }
 
-        private bool OnControlMouseDown(IControl control, MouseEventArgs args)
+        public void HandleMouseUp(MouseEventArgs args)
         {
-            var controlArgs = CreateControlEventArgs(control, args);
-            control.SetMousePressed(true);
-            control.FireOnPressed(controlArgs);
-            return !controlArgs.ShouldStopPropagation;
+            var button = args.Button == MouseButtons.None ? MouseButtons.Left : args.Button;
+            var pressedList = GetPressedControls(button);
+            var pressed = pressedList.ToArray();
+            pressedList.Clear();
+            foreach (var control in pressed)
+                control.SetMousePressed(false);
+
+            var captured = GetValidCapturedControl();
+            var stop = false;
+            if (captured != null)
+                stop = DispatchRelease(captured, args, ToLocal(captured, args.Position), pressed, button, true);
+
+            if (!stop)
+                Traverse(root, args.Position, (control, position) => DispatchRelease(control, args, position, pressed, button, false), captured);
+
+            if (button == MouseButtons.Left || args.IsTouchInput)
+                capturedControl = null; // the capture ends with the release of the pointer
+
+            if (args.IsTouchInput)
+                ClearHover(args); // the finger left the screen
         }
 
-        private bool OnControlMouseMove(IControl control, MouseEventArgs args)
+        public void HandleMouseWheel(MouseEventArgs args)
         {
-            var controlArgs = CreateControlEventArgs(control, args);
+            Traverse(root, args.Position, (control, position) =>
+            {
+                if (!control.HasMouseHandlers(MouseEventKinds.Wheel))
+                    return control.BlocksMouseEvents;
 
-            control.SetMouseHover(true);
-            control.FireOnMoved(controlArgs);
-
-            return !controlArgs.ShouldStopPropagation;
+                var controlArgs = CreateArgs(control, args, position, MouseButtons.None);
+                control.FireOnMouseWheel(controlArgs);
+                return control.BlocksMouseEvents || controlArgs.ShouldStopPropagation;
+            });
         }
 
-        private bool OnControlMouseUp(IControl control, MouseEventArgs args, List<IControl> pressedControls)
+        public void HandleMultipleTouchpoints(MultipleTouchpointsEventArgs args)
         {
-            var controlArgs = CreateControlEventArgs(control, args);
-
-            // Check click action
-            if (pressedControls.Contains(control))
-                control.FireOnClick(controlArgs);
-
-            control.FireOnReleased(controlArgs);
-            return !controlArgs.ShouldStopPropagation;
+            if (args.Touchpoints == null || args.Touchpoints.Count == 0)
+                return;
+            TraverseMultipleTouchpoints(root, args.Touchpoints, args);
         }
 
-        private bool OnControlMultipleTouchpoints(IControl control, MultipleTouchpointsEventArgs args)
+        /// <summary>
+        /// Cancels the current touch: the pressed controls are released without a click and the hover is cleared.
+        /// </summary>
+        public void HandleTouchCancelled(MouseEventArgs args)
         {
-            var controlArgs = new ControlMultipleTouchpointsEventArgs(control, args.Time, args.Touchpoints);
+            var pressedList = GetPressedControls(MouseButtons.Left);
+            foreach (var control in pressedList)
+                control.SetMousePressed(false);
+            pressedList.Clear();
+            capturedControl = null;
+            ClearHover(args);
+        }
 
+        private bool DispatchRelease(IControl control, MouseEventArgs args, Point position, IControl[] pressed, MouseButtons button, bool isCaptured)
+        {
+            if ((control.AcceptedMouseButtons & button) == 0)
+                return control.BlocksMouseEvents;
+
+            var stop = control.BlocksMouseEvents;
+
+            // A click is a press and a release on the same control; a captured control is clicked only when the
+            // pointer is released over it.
+            var isClick = Array.IndexOf(pressed, control) >= 0 && (!isCaptured || control.Intersects(position));
+            if (isClick && control.HasMouseHandlers(MouseEventKinds.Click))
+            {
+                var clickArgs = CreateArgs(control, args, position, button);
+                control.FireOnClick(clickArgs);
+                stop |= clickArgs.ShouldStopPropagation;
+            }
+
+            if (control.HasMouseHandlers(MouseEventKinds.Released))
+            {
+                var releasedArgs = CreateArgs(control, args, position, button);
+                control.FireOnReleased(releasedArgs);
+                stop |= releasedArgs.ShouldStopPropagation;
+            }
+
+            return stop;
+        }
+
+        private void UpdateHover(List<IControl> newHoveredControls, MouseEventArgs args)
+        {
+            var previous = hoveredControls.ToArray();
+            hoveredControls.Clear();
+            foreach (var control in newHoveredControls)
+            {
+                if (!hoveredControls.Contains(control))
+                    hoveredControls.Add(control);
+            }
+
+            foreach (var control in previous)
+            {
+                if (hoveredControls.Contains(control))
+                    continue;
+
+                control.SetMouseHover(false);
+                if (!control.IsDisposed)
+                    control.FireOnMouseLeave(CreateArgs(control, args, ToLocal(control, args.Position), MouseButtons.None));
+            }
+
+            foreach (var control in hoveredControls)
+            {
+                if (Array.IndexOf(previous, control) >= 0)
+                    continue;
+
+                control.SetMouseHover(true);
+                control.FireOnMouseEnter(CreateArgs(control, args, ToLocal(control, args.Position), MouseButtons.None));
+            }
+        }
+
+        private void ClearHover(MouseEventArgs args)
+        {
+            var previous = hoveredControls.ToArray();
+            hoveredControls.Clear();
+            foreach (var control in previous)
+            {
+                control.SetMouseHover(false);
+                if (args != null && !control.IsDisposed)
+                    control.FireOnMouseLeave(CreateArgs(control, args, ToLocal(control, args.Position), MouseButtons.None));
+            }
+        }
+
+        private List<IControl> GetPressedControls(MouseButtons button)
+        {
+            if (!pressedControls.TryGetValue(button, out var list))
+            {
+                list = new List<IControl>();
+                pressedControls[button] = list;
+            }
+            return list;
+        }
+
+        private IControl GetValidCapturedControl()
+        {
+            if (capturedControl != null && (capturedControl.IsDisposed || !IsInTree(capturedControl)))
+                capturedControl = null;
+            return capturedControl;
+        }
+
+        private bool IsInTree(IControl control)
+        {
+            for (IControl current = control; current != null; current = current.Parent)
+            {
+                if (ReferenceEquals(current, root))
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Visits the controls under <paramref name="point"/>, top-most first. Returns true when a visitor stopped
+        /// the propagation.
+        /// </summary>
+        private bool Traverse(IControl control, Point point, Func<IControl, Point, bool> visit, IControl skip = null)
+        {
+            if (!control.IsVisible || control.IsDisposed)
+                return false;
+
+            if (!control.IsEnabled)
+            {
+                // A disabled control absorbs the input it would react to, without receiving it.
+                return control.Intersects(point)
+                    && (control.BlocksMouseEvents || control.HasMouseHandlers(PointerReactionKinds));
+            }
+
+            if (control is IContainer container)
+            {
+                if (container.ClipsInput && !control.Intersects(point))
+                    return false;
+
+                var localPoint = container.TransformPointToLocal(point);
+                var children = container.Children as IList<IControl> ?? container.Children.ToList();
+                for (var i = children.Count - 1; i >= 0; i--)
+                {
+                    var child = children[i];
+                    if (!ReferenceEquals(child.Parent, container))
+                        continue;
+                    if (Traverse(child, localPoint, visit, skip))
+                        return true;
+                }
+            }
+
+            if (ReferenceEquals(control, skip) || !control.Intersects(point))
+                return false;
+
+            return visit(control, point);
+        }
+
+        private bool TraverseMultipleTouchpoints(IControl control, List<TouchLocation> touchpoints, MultipleTouchpointsEventArgs args)
+        {
+            if (!control.IsVisible || control.IsDisposed || !control.IsEnabled)
+                return false;
+
+            var allPointsIntersect = touchpoints.All(touchpoint => control.Intersects(touchpoint.Position.ToPoint()));
+
+            if (control is IContainer container)
+            {
+                if (container.ClipsInput && !allPointsIntersect)
+                    return false;
+
+                var localTouchpoints = touchpoints
+                    .Select(touchpoint => new TouchLocation(touchpoint.Id, touchpoint.State, container.TransformPointToLocal(touchpoint.Position.ToPoint()).ToVector2()))
+                    .ToList();
+
+                var children = container.Children as IList<IControl> ?? container.Children.ToList();
+                for (var i = children.Count - 1; i >= 0; i--)
+                {
+                    var child = children[i];
+                    if (!ReferenceEquals(child.Parent, container))
+                        continue;
+                    if (TraverseMultipleTouchpoints(child, localTouchpoints, args))
+                        return true;
+                }
+            }
+
+            if (!allPointsIntersect)
+                return false;
+
+            var controlArgs = new ControlMultipleTouchpointsEventArgs(control, args.Time, touchpoints);
             control.FireOnMultipleTouchpoints(controlArgs);
-
-            return !controlArgs.ShouldStopPropagation;
+            return control.BlocksMouseEvents || controlArgs.ShouldStopPropagation;
         }
 
-        private bool CheckMouseEvent(MouseEventArgs args, IEnumerable<IControl> controls, Func<IControl, MouseEventArgs, bool> onInteractWithControl)
+        /// <summary>Converts a point from the space of the root to the space of the control's parent.</summary>
+        private static Point ToLocal(IControl control, Point point)
         {
-            foreach (var control in controls.Reverse().ToList())
-            {
-                // First check children elements if the control is a container
-                if (control is IContainer container && !CheckMouseEvent(args, container.Children, onInteractWithControl))
-                    return false;
+            var ancestors = new Stack<IContainer>();
+            for (var parent = control.Parent; parent != null; parent = parent.Parent)
+                ancestors.Push(parent);
 
-                // Check if the mouse events position is hitting this control
-                if (!control.Intersects(args.Position))
-                    continue;
+            while (ancestors.Count > 0)
+                point = ancestors.Pop().TransformPointToLocal(point);
 
-                // call the control event and return if should continue propagation
-                if (!onInteractWithControl(control, args))
-                    return false;
-            }
-
-            return true;
+            return point;
         }
 
-        private bool CheckMultipleTouchpointsEvent(MultipleTouchpointsEventArgs args, IEnumerable<IControl> controls)
+        private ControlMouseEventArgs CreateArgs(IControl control, MouseEventArgs args, Point position, MouseButtons button)
+            => new ControlMouseEventArgs(control, args.Time, args.CurrentState, args.IsTouchInput, button, position, args.ScrollWheelDelta) { Handler = this };
+
+        private void OnTouchStarted(TouchEventArgs args) => HandleMouseDown(ToMouseEventArgs(args, ButtonState.Pressed));
+
+        private void OnTouchMoved(TouchEventArgs args) => HandleMouseMove(ToMouseEventArgs(args, ButtonState.Pressed));
+
+        private void OnTouchReleased(TouchEventArgs args) => HandleMouseUp(ToMouseEventArgs(args, ButtonState.Released));
+
+        private void OnTouchCancelled(TouchEventArgs args) => HandleTouchCancelled(ToMouseEventArgs(args, ButtonState.Released));
+
+        private static MouseEventArgs ToMouseEventArgs(TouchEventArgs touchEventArgs, ButtonState leftButton)
         {
-            foreach (var control in controls.Reverse().ToList())
-            {
-                // First check children elements if the control is a container
-                if (control is IContainer container && !CheckMultipleTouchpointsEvent(args, container.Children))
-                    return false;
-
-                // Check if the mouse events position is hitting this control
-                var allPointsIntersect = args.Touchpoints.Select(touchpoint => control.Intersects(touchpoint.Position.ToPoint()));
-                if (!allPointsIntersect.All(intersects => intersects))
-                    continue;
-
-                // call the control event and return if should continue propagation
-                if (!OnControlMultipleTouchpoints(control, args))
-                    return false;
-            }
-
-            return true;
-
+            var position = touchEventArgs.TouchLocation.Position;
+            var mouseState = new MouseState((int)position.X, (int)position.Y, 0, leftButton, ButtonState.Released, ButtonState.Released, ButtonState.Released, ButtonState.Released);
+            return new MouseEventArgs(touchEventArgs.Time, mouseState, true, MouseButtons.Left);
         }
-
-        private ControlMouseEventArgs CreateControlEventArgs(IControl control, MouseEventArgs args)
-            => new ControlMouseEventArgs(control, args.Time, args.CurrentState);
-
-        private void OnTouchStarted(TouchEventArgs args)
-            => OnMouseDown(ConvertTouchToMouseEventArgs(args, ButtonState.Pressed));
-
-        private void OnTouchMoved(TouchEventArgs args)
-            => OnMouseMove(ConvertTouchToMouseEventArgs(args, ButtonState.Pressed));
-
-        private void OnTouchReleased(TouchEventArgs args)
-            => OnMouseUp(ConvertTouchToMouseEventArgs(args, ButtonState.Released));
-
-        private void OnMultipleTouchpoints(MultipleTouchpointsEventArgs args)
-            => CheckMultipleTouchpointsEvent(args, panelContainer.Children);
-
-        private static MouseEventArgs ConvertTouchToMouseEventArgs(TouchEventArgs touchEventArgs, ButtonState leftButton)
-        {
-            var mouseState = CreateMouseState(touchEventArgs.TouchLocation, leftButton);
-            return new MouseEventArgs(touchEventArgs.Time, mouseState, true);
-        }
-
-        private static MouseState CreateMouseState(TouchLocation touchLocation, ButtonState leftButton)
-            => new MouseState((int)touchLocation.Position.X, (int)touchLocation.Position.Y, 0, leftButton, ButtonState.Released, ButtonState.Released, ButtonState.Released, ButtonState.Released);
     }
 }

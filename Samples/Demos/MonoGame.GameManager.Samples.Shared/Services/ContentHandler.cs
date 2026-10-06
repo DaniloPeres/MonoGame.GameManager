@@ -36,33 +36,32 @@ namespace MonoGame.GameManager.Samples.Services
 
         public void LoadAllContents()
         {
-            SpriteFontArial = ServiceProvider.ContentLoaderManager.LoadSpriteFont("Arial");
+            SpriteFontArial = ServiceProvider.ContentLoader.LoadSpriteFont("Arial");
 
             LoadImages();
         }
 
         public void LoadImages()
         {
-            var contentLoaderManager = ServiceProvider.ContentLoaderManager;
-            TextureButton = contentLoaderManager.LoadTexture2D("Images/Button");
-            TextureButtonBackground = contentLoaderManager.LoadTexture2D("Images/ButtonBackground");
-            TextureButtonBackgroundHover = contentLoaderManager.LoadTexture2D("Images/ButtonBackground-Hover");
-            TextureButtonBackgroundPressed = contentLoaderManager.LoadTexture2D("Images/ButtonBackground-Pressed");
-            TextureCalculator = contentLoaderManager.LoadTexture2D("Images/Calculator");
-            TextureCamera = contentLoaderManager.LoadTexture2D("Images/Camera");
-            TextureImage = contentLoaderManager.LoadTexture2D("Images/Image");
-            TextureMultiLineText = contentLoaderManager.LoadTexture2D("Images/Multi-line-text");
-            TexturePanel = contentLoaderManager.LoadTexture2D("Images/Panel");
-            TextureTextLabel = contentLoaderManager.LoadTexture2D("Images/Text-label");
-            TextureTransition = contentLoaderManager.LoadTexture2D("Images/Transition");
-            TextureWindowApplication = contentLoaderManager.LoadTexture2D("Images/WindowApplication");
-            TextureSpriteAngel = contentLoaderManager.LoadTexture2D("Images/Sprites/Angel");
-            TextureSpriteCharacter = contentLoaderManager.LoadTexture2D("Images/Sprites/Character");
-            TextureSpriteCoin = contentLoaderManager.LoadTexture2D("Images/Sprites/Coin");
-            TextureSpriteDeath = contentLoaderManager.LoadTexture2D("Images/Sprites/Death");
-            TextureSpriteLeviathan = contentLoaderManager.LoadTexture2D("Images/Sprites/Leviathan");
-            TextureSpriteTorchDrippingRed = contentLoaderManager.LoadTexture2D("Images/Sprites/TorchDrippingRed");
-            ServiceProvider.MemoryManager.SetAllAssetsAsFixed();
+            var contentLoader = ServiceProvider.ContentLoader;
+            TextureButton = contentLoader.LoadTexture2D("Images/Button");
+            TextureButtonBackground = contentLoader.LoadTexture2D("Images/ButtonBackground");
+            TextureButtonBackgroundHover = contentLoader.LoadTexture2D("Images/ButtonBackground-Hover");
+            TextureButtonBackgroundPressed = contentLoader.LoadTexture2D("Images/ButtonBackground-Pressed");
+            TextureCalculator = contentLoader.LoadTexture2D("Images/Calculator");
+            TextureCamera = contentLoader.LoadTexture2D("Images/Camera");
+            TextureImage = contentLoader.LoadTexture2D("Images/Image");
+            TextureMultiLineText = contentLoader.LoadTexture2D("Images/Multi-line-text");
+            TexturePanel = contentLoader.LoadTexture2D("Images/Panel");
+            TextureTextLabel = contentLoader.LoadTexture2D("Images/Text-label");
+            TextureTransition = contentLoader.LoadTexture2D("Images/Transition");
+            TextureWindowApplication = contentLoader.LoadTexture2D("Images/WindowApplication");
+            TextureSpriteAngel = contentLoader.LoadTexture2D("Images/Sprites/Angel");
+            TextureSpriteCharacter = contentLoader.LoadTexture2D("Images/Sprites/Character");
+            TextureSpriteCoin = contentLoader.LoadTexture2D("Images/Sprites/Coin");
+            TextureSpriteDeath = contentLoader.LoadTexture2D("Images/Sprites/Death");
+            TextureSpriteLeviathan = contentLoader.LoadTexture2D("Images/Sprites/Leviathan");
+            TextureSpriteTorchDrippingRed = contentLoader.LoadTexture2D("Images/Sprites/TorchDrippingRed");
         }
     }
 }

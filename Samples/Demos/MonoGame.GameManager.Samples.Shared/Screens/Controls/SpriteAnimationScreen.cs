@@ -37,9 +37,9 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
 
             spriteAnimationsInfo = new List<SpriteAnimationInfo>
             {
-                ServiceProvider.ContentLoaderManager.LoadSpriteAnimationInfo("Images/Sprites/Dino/Dino.sa"),
-                ServiceProvider.ContentLoaderManager.LoadSpriteAnimationInfo("Images/Sprites/Coin.sa"),
-                ServiceProvider.ContentLoaderManager.LoadSpriteAnimationInfo("Images/Sprites/TorchDrippingRed.sa"),
+                ServiceProvider.ContentLoader.LoadSpriteAnimationInfo("Images/Sprites/Dino/Dino.sa"),
+                ServiceProvider.ContentLoader.LoadSpriteAnimationInfo("Images/Sprites/Coin.sa"),
+                ServiceProvider.ContentLoader.LoadSpriteAnimationInfo("Images/Sprites/TorchDrippingRed.sa"),
                 CreateSpriteAnimationInfo4Cycles(ContentHandler.Instance.TextureSpriteAngel, new Vector2(48)),
                 CreateSpriteAnimationInfo4Cycles(ContentHandler.Instance.TextureSpriteCharacter, new Vector2(32, 48)),
                 CreateSpriteAnimationInfo4Cycles(ContentHandler.Instance.TextureSpriteDeath, new Vector2(50, 48)),
@@ -254,7 +254,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
 
             selectFramePanel.ClearChildren();
 
-            var frames = spriteAnimationPreview.ActualCycle.Frames;
+            var frames = spriteAnimationPreview.CurrentCycle.Frames;
             AddNumberOptions(selectFramePanel, frames.Length, spriteAnimationPreview.FrameIndex, i => spriteAnimationPreview.SetFrame(i));
         }
 
@@ -268,7 +268,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             AddNumberOptions(
                 selectCyclePanel,
                 spriteAnimationPreview.SpriteAnimationInfo.CyclesCount,
-                spriteAnimationPreview.SpriteAnimationInfo.FindCycleIndex(spriteAnimationPreview.ActualCycle.Name),
+                spriteAnimationPreview.SpriteAnimationInfo.FindCycleIndex(spriteAnimationPreview.CurrentCycle.Name),
                 ChangeCycle);
         }
 
