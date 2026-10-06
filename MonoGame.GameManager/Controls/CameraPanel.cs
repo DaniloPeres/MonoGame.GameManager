@@ -110,10 +110,17 @@ namespace MonoGame.GameManager.Controls
             {
                 if (!child.IsVisible || !ReferenceEquals(child.Parent, this))
                     continue;
-                if (CullChildren && child.Rotation == 0f && !(child is IContainer) && !visibleArea.Intersects(GetBounds(child)))
+                if (CullChildren && child.Rotation == 0f && !(child is IContainer) && !IsUnbounded(child) && !visibleArea.Intersects(GetBounds(child)))
                     continue;
                 child.Draw(spriteBatch);
             }
+        }
+
+        /// <summary>Controls without a size (eg: particle emitters) draw outside of their bounds, so they are never culled.</summary>
+        private static bool IsUnbounded(IControl control)
+        {
+            var bounds = control.DestinationRectangle;
+            return bounds.Width <= 0 || bounds.Height <= 0;
         }
 
         private static RectangleF GetBounds(IControl control)
