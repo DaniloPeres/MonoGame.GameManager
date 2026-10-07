@@ -536,6 +536,7 @@ bullets.Return(bullet);
 ```
 
 ## Particles
+<img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Demos/SamplesDemosParticles.gif" alt="MonoGame.GameManager particles playground: presets and live options" width="600" height="400">
 
 A `ParticleEmitter` is a control that simulates and draws a `ParticleSystem`. Start from one of the `ParticlePresets` (Fire, Smoke, Explosion, Sparks, Rain, Snow, Confetti, Fireworks, Magic, Fountain, Bubbles, Fireflies, Vortex and Stars) or describe the effect with a `ParticleSettings`:
 
@@ -555,6 +556,8 @@ sparks.Burst(60);
 ```
 
 The presets return new settings that can be changed before or after creating the emitter (`ParticlePresets.Create("snow")` creates them by name), and the settings are read every frame, so an effect can be tuned while it runs. Every value with Min and Max is chosen at random for each particle.
+
+<img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Demos/SamplesDemosParticlePresets.png" alt="The 14 particle presets: Fire, Smoke, Explosion, Sparks, Rain, Snow, Confetti, Fireworks, Magic, Fountain, Bubbles, Fireflies, Vortex and Stars" width="600" height="546">
 
 ```csharp
 var magic = new ParticleSettings
@@ -604,7 +607,11 @@ An emitter is an `IPlayable`: `Play` starts the emission (and restarts a finishe
 | Drawing | `Texture` or `Textures` (one at random), `Frames` of a sprite sheet with `FrameMode` and `FrameRate`, `Appearance` (`Square`, `Circle`, `Glow`, `Ring`, `Star`, `Diamond`) and `Size` when there is no texture, `BlendState`, `AlignToVelocity`, `VelocityStretch` |
 | Sub-emitters | `OnDeath`, `Trail` (`ParticleSubEmitter`: settings, count, probability, rate, inherited velocity and color) |
 
-`ParticleCurve` (`Linear`, `Constant`, `FadeInOut`, `Peak`, `Blink`, `FromEasing` or `AddKey`) and `ParticleGradient` (`FromColors`, `Fade` or `AddStop`) describe values along the life of a particle, from 0 (born) to 1 (dead). The shape textures and `ParticleResources.AdditiveBlendState` are shared and released with the screen manager. A `ParticleSystem` can also be simulated without a control (`Scheduler.Add(system)`) and drawn by your own code with `Particles`, `ActiveCount`, `GetColor`, `GetDrawScale`, `GetRotation` and `GetSourceRectangle`. Try everything live in the Particles demo.
+`ParticleCurve` (`Linear`, `Constant`, `FadeInOut`, `Peak`, `Blink`, `FromEasing` or `AddKey`) and `ParticleGradient` (`FromColors`, `Fade` or `AddStop`) describe values along the life of a particle, from 0 (born) to 1 (dead). The shape textures and `ParticleResources.AdditiveBlendState` are shared and released with the screen manager. A `ParticleSystem` can also be simulated without a control (`Scheduler.Add(system)`) and drawn by your own code with `Particles`, `ActiveCount`, `GetColor`, `GetDrawScale`, `GetRotation` and `GetSourceRectangle`.
+
+Try everything live in the Particles demo: the playground above changes every setting of the presets, and its scenes screen combines emitters with other controls, animations and timers.
+
+<img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Demos/SamplesDemosParticleScenes.gif" alt="MonoGame.GameManager particle scenes: campfire, fireworks, rain, confetti, magic cursor, fountain, portal and spaceships" width="600" height="400">
 
 ## Audio
 
