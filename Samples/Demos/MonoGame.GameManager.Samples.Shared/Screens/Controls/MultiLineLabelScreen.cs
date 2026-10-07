@@ -83,11 +83,11 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             posY += 55;
             AnchorOption.CreateAnchorOption(container, posY, anchor => multiLineLabelPreview.SetAnchor(anchor));
             posY += 155;
-            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Scale", posY, 1f, scale => multiLineLabelPreview.SetScale(scale));
+            SliderOption.CreateSliderOption(container, "Scale:", posY, 0.25f, 2f, 1f, scale => multiLineLabelPreview.SetScale(scale), 0.05f, "{0:0.00}", 1f);
             posY += 55;
             Vector2Option.CreateVector2Option(container, "Position", posY, new Vector2(0), newPosition => multiLineLabelPreview.SetPosition(newPosition));
             posY += 55;
-            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Textbox Width", posY, multiLineLabelPreview.TextBoxWidth, value => multiLineLabelPreview.TextBoxWidth = (int)value, 5);
+            SliderOption.CreateSliderOption(container, "Textbox Width:", posY, 100f, 560f, multiLineLabelPreview.TextBoxWidth, value => multiLineLabelPreview.TextBoxWidth = (int)value, 5f, "{0:0}", 1f);
             posY += 55;
             AddTextAlignOption(container, posY, textAlign => multiLineLabelPreview.TextAlign = textAlign);
             posY += 55;

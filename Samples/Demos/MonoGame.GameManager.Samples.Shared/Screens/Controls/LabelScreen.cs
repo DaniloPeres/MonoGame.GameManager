@@ -55,11 +55,11 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             posY += 55;
             AnchorOption.CreateAnchorOption(container, posY, anchor => labelPreview.SetAnchor(anchor));
             posY += 155;
-            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Scale", posY, 1f, scale => labelPreview.SetScale(scale));
+            SliderOption.CreateSliderOption(container, "Scale:", posY, 0.1f, 3f, 1f, scale => labelPreview.SetScale(scale), 0.05f, "{0:0.00}", 1f);
             posY += 55;
             Vector2Option.CreateVector2Option(container, "Position", posY, new Vector2(0), newPosition => labelPreview.SetPosition(newPosition));
             posY += 55;
-            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Rotation", posY, 0, newRotation => labelPreview.SetRotation(newRotation), 0.05f);
+            SliderOption.CreateSliderOption(container, "Rotation:", posY, 0f, 360f, 0f, degrees => labelPreview.SetRotationInDegree(degrees), 1f, "{0:0}", 1f);
             posY += 55;
             Vector2Option.CreateVector2Option(container, "Origin Rate", posY, new Vector2(0), newOrigin => labelPreview.SetOriginRate(newOrigin), 0.1f);
             posY += 55;

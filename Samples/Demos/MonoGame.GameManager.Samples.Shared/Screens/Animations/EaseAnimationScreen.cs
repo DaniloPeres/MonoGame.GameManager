@@ -61,9 +61,9 @@ namespace MonoGame.GameManager.Samples.Screens.Animations
             posY += 55;
             Vector2Option.CreateVector2Option(container, "Position End", posY, easeAnimationPreview.PositionEnd, value => easeAnimationPreview.SetPositionEnd(value));
             posY += 55;
-            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Duration", posY, easeAnimationPreview.Duration, value => easeAnimationPreview.SetDuration(value));
+            SliderOption.CreateSliderOption(container, "Duration:", posY, 0.1f, 5f, easeAnimationPreview.Duration, value => easeAnimationPreview.SetDuration(value), 0.1f, "{0:0.0} s", 1f);
             posY += 55;
-            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Loop Delay", posY, easeAnimationPreview.LoopingDelayTimeDuration, value => easeAnimationPreview.SetLoopingDelayTimeDuration(value));
+            SliderOption.CreateSliderOption(container, "Loop Delay:", posY, 0f, 3f, easeAnimationPreview.LoopingDelayTimeDuration, value => easeAnimationPreview.SetLoopingDelayTimeDuration(value), 0.1f, "{0:0.0} s", 1f);
             posY += 55;
             CheckboxOption.CreateCheckboxOption(container, "Loop", posY, easeAnimationPreview.IsLooping, value => easeAnimationPreview.SetIsLooping(value));
             posY += 55;

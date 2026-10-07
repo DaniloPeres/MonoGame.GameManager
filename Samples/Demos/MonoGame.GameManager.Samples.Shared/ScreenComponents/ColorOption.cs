@@ -11,16 +11,22 @@ namespace MonoGame.GameManager.Samples.ScreenComponents
 {
     public static class ColorOption
     {
-        public static void CreateColorOption(Panel container, float posY, Action<Color> OnColorSelected, string label = "Color", List<Color> colors = null, bool showBorder = false)
+        /// <param name="textScale">The scale of the label (compact pages use 0.75).</param>
+        /// <param name="squareSize">The size of the color squares.</param>
+        /// <param name="squaresLeft">Where the squares start (null = after the label), to align them with other rows.</param>
+        public static void CreateColorOption(Panel container, float posY, Action<Color> OnColorSelected, string label = "Color", List<Color> colors = null, bool showBorder = false,
+            float textScale = 1f, int squareSize = 35, float? squaresLeft = null)
         {
-            var marginLeft = 10;
+            var font = ContentHandler.Instance.SpriteFontArial;
+            var marginLeft = squareSize < 35 ? 6 : 10;
             var posX = 0f;
-            var squareSize = 35;
+            var labelY = textScale < 1f ? posY + (float)System.Math.Round((squareSize - font.LineSpacing * textScale) / 2f) : posY;
 
-            var colorLabel = new Label(ContentHandler.Instance.SpriteFontArial, $"{label}: ", new Vector2(posX, posY), Color.Yellow)
+            var colorLabel = new Label(font, squaresLeft.HasValue ? label : $"{label}: ", new Vector2(posX, labelY), Color.Yellow)
+                .SetScale(textScale)
                 .AddToScreen(container);
 
-            posX += colorLabel.Size.X + marginLeft;
+            posX = squaresLeft ?? colorLabel.Size.X + marginLeft;
 
             colors = colors ?? new List<Color>()
             {

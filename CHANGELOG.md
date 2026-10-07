@@ -13,7 +13,7 @@ A complete particle system, with a playground and scenes in the demos.
 - `ParticleSystem` is an `IPlayable` (`Play`, `Pause`, `Resume`, `Stop`, `Reset`, `Restart`, `Prewarm`) with `Time`, `IsComplete` and `Completed`, replaceable `Settings`, `EmitterVelocity` and helpers for custom renderers (`GetDrawScale`, `GetRotation`, `GetTexture`, `GetSourceRectangle`, `GetEffects`). Still no garbage while emitting.
 - `ParticleEmitter` plays, pauses and restarts like an animation, bursts at any position, removes itself when its effect ends (`RemoveWhenCompleted`, `AddOnCompleted`, `ParticleEmitter.Spawn` and `SpawnBurst`), draws the procedural shapes with additive blending and follows the control in local space.
 - `ParticlePresets`: Fire, Smoke, Explosion, Sparks, Rain, Snow, Confetti, Fireworks, Magic, Fountain, Bubbles, Fireflies, Vortex and Stars. `ParticleResources` holds the shape textures and the additive blend state.
-- Demos: a Particles tile that opens a playground where every option is editable live on the presets, and a scenes screen (campfire, fireworks, rainy day, confetti cannon, magic cursor, fountain, portal and spaceships).
+- Demos: a Particles tile that opens a playground where every option is editable live on the presets, and a scenes screen (campfire, fireworks, rainy day, confetti cannon, magic cursor, fountain, portal and spaceships). A Slider tile with every option of the slider and three examples; the demo pages use sliders for their numeric options.
 
 ## [2.0.0] (2026-10-05)
 

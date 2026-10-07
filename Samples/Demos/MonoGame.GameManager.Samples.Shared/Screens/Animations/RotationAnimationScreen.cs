@@ -57,13 +57,13 @@ namespace MonoGame.GameManager.Samples.Screens.Animations
 
             Vector2Option.CreateVector2Option(container, "Size", posY, rectangleControlPreview.Size, size => rectangleControlPreview.SetSize(size));
             posY += 55;
-            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Rotation Start", posY, rotationAnimationPreview.RotationInDegreeStart, value => rotationAnimationPreview.SetRotationInDegreeStart(value), 5);
+            SliderOption.CreateSliderOption(container, "Rotation Start:", posY, -720f, 720f, rotationAnimationPreview.RotationInDegreeStart, value => rotationAnimationPreview.SetRotationInDegreeStart(value), 15f, "{0:0}", 1f);
             posY += 55;
-            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Rotation End", posY, rotationAnimationPreview.RotationInDegreeEnd, value => rotationAnimationPreview.SetRotationInDegreeEnd(value), 5);
+            SliderOption.CreateSliderOption(container, "Rotation End:", posY, -720f, 720f, rotationAnimationPreview.RotationInDegreeEnd, value => rotationAnimationPreview.SetRotationInDegreeEnd(value), 15f, "{0:0}", 1f);
             posY += 55;
-            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Duration", posY, rotationAnimationPreview.Duration, value => rotationAnimationPreview.SetDuration(value));
+            SliderOption.CreateSliderOption(container, "Duration:", posY, 0.1f, 5f, rotationAnimationPreview.Duration, value => rotationAnimationPreview.SetDuration(value), 0.1f, "{0:0.0} s", 1f);
             posY += 55;
-            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Loop Delay", posY, rotationAnimationPreview.LoopingDelayTimeDuration, value => rotationAnimationPreview.SetLoopingDelayTimeDuration(value));
+            SliderOption.CreateSliderOption(container, "Loop Delay:", posY, 0f, 3f, rotationAnimationPreview.LoopingDelayTimeDuration, value => rotationAnimationPreview.SetLoopingDelayTimeDuration(value), 0.1f, "{0:0.0} s", 1f);
             posY += 55;
             CheckboxOption.CreateCheckboxOption(container, "Loop", posY, rotationAnimationPreview.IsLooping, value => rotationAnimationPreview.SetIsLooping(value));
             posY += 55;

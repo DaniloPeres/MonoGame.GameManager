@@ -28,6 +28,7 @@ Version 2.0 is a complete review of the library. [CHANGES.md](https://github.com
   - [Rectangle](#rectangle)
   - [Sprite Animation](#sprite-animation)
   - [Scroll Viewer](#scroll-viewer)
+  - [Slider](#slider)
   - [Input controls](#input-controls)
   - [Layout panels](#layout-panels)
   - [Shapes, tiles and effects](#shapes-tiles-and-effects)
@@ -282,17 +283,37 @@ for (var i = 0; i < 50; i++)
 levels.ScrollToBottom(duration: 0.5f);
 ```
 
+### Slider
+<img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Demos/SamplesDemosSlider.gif" alt="MonoGame.GameManager samples demo - Slider: options, step, orientation, textures, rotation and examples" width="600" height="400">
+
+A `Slider` chooses a value between a minimum and a maximum by dragging its thumb. Pressing anywhere on the track moves the thumb there, and the drag goes on when the pointer leaves the slider. It is horizontal or vertical (the minimum at the bottom), rounds the value to a step, keeps working when it is rotated or scaled, and is drawn with colors or textures.
+
+```csharp
+var volume = new Slider(new Vector2(20, 20), new Vector2(240, 24))   // from 0 to 1 by default
+    .SetValue(Audio.MusicVolume, notify: false)                       // no callback for the initial value
+    .AddOnValueChanged(value => Audio.MusicVolume = value)
+    .AddToScreen();
+
+var level = new Slider(new Vector2(300, 20), new Vector2(28, 200), 0, 100)
+    .SetOrientation(Orientation.Vertical)
+    .SetStep(10)                                                      // 0, 10, 20... 100
+    .SetColors(track: Color.DimGray, fill: Color.Orange, thumb: Color.White)
+    .SetThumbSize(new Vector2(32))
+    .SetTrackThickness(10)
+    .AddToScreen();
+
+level.SetThumbTexture(starTexture).SetTrackTexture(trackTexture);     // textures instead of colors
+level.IsEnabled = false;                                              // half transparent, ignores the pointer
+```
+
+`Value`, `NormalizedValue` (from 0 to 1), `Minimum`, `Maximum`, `Step` and `IsDragging` describe the state, and `SetRange` changes the limits. Without a texture the thumb is round or square (`IsThumbRound`). The Slider demo shows every option on a live preview with three examples: a color mixer, a stepped volume fader and a slider that resizes an image. The other demo pages use sliders for their numeric options.
+
 ### Input controls
 
 ```csharp
 new Checkbox(new Vector2(20, 20))
     .SetLabel(font, "Full screen")
     .AddOnCheckedChanged(isChecked => ServiceProvider.GameWindowManager.SetFullScreen(isChecked))
-    .AddToScreen();
-
-new Slider(new Vector2(20, 70), new Vector2(240, 24))
-    .SetValue(Audio.MusicVolume, notify: false)
-    .AddOnValueChanged(volume => Audio.MusicVolume = volume)
     .AddToScreen();
 
 new ToggleButton(new Vector2(20, 110), new Vector2(120, 40), Color.DimGray)
@@ -682,6 +703,8 @@ dotnet run --project Samples/Demos/MonoGame.GameManager.Samples.WinExe
 <img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Demos/SamplesDemosMainScreen.gif" alt="MonoGame.GameManager samples demo main screen" width="600" height="394">
 
 The Particles tile opens a playground: 14 presets, every setting editable live (emission, shape, motion, look, color and timeline), click to burst, right click to move the emitter, a randomizer, and a scenes screen that combines emitters with other controls: a campfire, fireworks, a rainy day, a confetti cannon, a magic cursor, a fountain, a portal and spaceships.
+
+The Slider tile shows every option of the slider on a live preview, with a color mixer, a stepped volume fader and a slider that resizes an image. The other pages use sliders for their numeric options (scale, rotation, opacity, durations, speed, zoom limits).
 
 ## Samples - Games
 

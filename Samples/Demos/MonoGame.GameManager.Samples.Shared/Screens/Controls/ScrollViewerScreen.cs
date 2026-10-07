@@ -131,9 +131,9 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             posY += spaceBetweenOptions;
             updateZoomValues = Vector2Option.CreateVector2Option(pinchZoomOptionsContainer, "Zoom", posY, scrollViewerPreview.Zoom, zoom => scrollViewerPreview.SetZoom(zoom), 0.1f);
             posY += spaceBetweenOptions;
-            TextWithFloatValueOption.CreateTextWithFloatValueOption(pinchZoomOptionsContainer, "Min Zoom", posY, scrollViewerPreview.MinZoom.X, newScale => scrollViewerPreview.SetMinZoom(new Vector2(newScale)));
+            SliderOption.CreateSliderOption(pinchZoomOptionsContainer, "Min Zoom:", posY, 0.1f, 1f, scrollViewerPreview.MinZoom.X, newScale => scrollViewerPreview.SetMinZoom(new Vector2(newScale)), 0.05f, "{0:0.00}", 1f);
             posY += spaceBetweenOptions;
-            TextWithFloatValueOption.CreateTextWithFloatValueOption(pinchZoomOptionsContainer, "Max Zoom", posY, scrollViewerPreview.MaxZoom.X, newScale => scrollViewerPreview.SetMaxZoom(new Vector2(newScale)));
+            SliderOption.CreateSliderOption(pinchZoomOptionsContainer, "Max Zoom:", posY, 1f, 8f, scrollViewerPreview.MaxZoom.X, newScale => scrollViewerPreview.SetMaxZoom(new Vector2(newScale)), 0.25f, "{0:0.00}", 1f);
             posY += spaceBetweenOptions;
 
             scrollViewerPreview.AddOnZoomChanged(OnScrollViewerZoomChanged);

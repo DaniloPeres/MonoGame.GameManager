@@ -460,8 +460,8 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
         private void BuildColorPage(Panel page)
         {
             var s = settings;
-            ColorOption.CreateColorOption(page, 0, color => s.StartColor = color, "Start", Palette, true);
-            ColorOption.CreateColorOption(page, RowHeight, color => s.EndColor = color, "End", Palette, true);
+            ColorOption.CreateColorOption(page, 0, color => s.StartColor = color, "Start color", Palette, true, 0.75f, 26, SliderOption.SliderLeft);
+            ColorOption.CreateColorOption(page, RowHeight, color => s.EndColor = color, "End color", Palette, true, 0.75f, 26, SliderOption.SliderLeft);
             var colorModes = new[] { "Start to end", "Preset gradient", "Fire", "Rainbow", "Ice" };
             Choice(page, 2, "Color over life", colorModes, s.ColorOverLifetime != null ? 1 : 0, SetColorMode);
             Toggle(page, 3, "Palette tints", s.Colors.Count > 0, value =>
@@ -474,7 +474,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             Choice(page, 4, "Alpha over life", alphaCurves, s.AlphaOverLifetime != null ? 1 : 0, SetAlphaCurve);
             Choice(page, 5, "Blend", new[] { "Alpha", "Additive" }, s.BlendState != null ? 1 : 0, index => s.BlendState = index == 1 ? ParticleResources.AdditiveBlendState : null);
             Slider(page, 6, "Emitter opacity", 0, 1, emitter.Opacity, value => emitter.SetOpacity(value), 0.05f);
-            ColorOption.CreateColorOption(page, 7 * RowHeight, color => emitter.SetColor(color), "Tint", Palette, true);
+            ColorOption.CreateColorOption(page, 7 * RowHeight, color => emitter.SetColor(color), "Emitter tint", Palette, true, 0.75f, 26, SliderOption.SliderLeft);
         }
 
         private void BuildTimelinePage(Panel page)

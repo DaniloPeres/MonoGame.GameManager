@@ -12,20 +12,25 @@ namespace MonoGame.GameManager.Samples.ScreenComponents
     {
         public const int SliderLeft = 200;
         public const int SliderWidth = 245;
+        public const int SliderHeight = 26;
 
         /// <summary>Creates the row and returns an action that updates the displayed value without raising the callback.</summary>
+        /// <param name="textScale">The scale of the label: 0.75 for compact pages, 1 to match the other option rows.</param>
         public static Action<float> CreateSliderOption(Panel container, string text, float posY, float minimum, float maximum, float value,
-            Action<float> onValueChanged, float step = 0f, string format = "{0:0.##}")
+            Action<float> onValueChanged, float step = 0f, string format = "{0:0.##}", float textScale = 0.75f)
         {
-            new Label(ContentHandler.Instance.SpriteFontArial, text, new Vector2(0, posY + 3), Color.Yellow)
-                .SetScale(0.75f)
+            var font = ContentHandler.Instance.SpriteFontArial;
+            var valueScale = textScale >= 1f ? 0.8f : 0.7f;
+
+            new Label(font, text, new Vector2(0, CenteredTop(posY, font.LineSpacing * textScale)), Color.Yellow)
+                .SetScale(textScale)
                 .AddToScreen(container);
 
-            var valueLabel = new Label(ContentHandler.Instance.SpriteFontArial, string.Format(format, value), new Vector2(SliderLeft + SliderWidth + 24, posY + 3), Color.White)
-                .SetScale(0.7f)
+            var valueLabel = new Label(font, string.Format(format, value), new Vector2(SliderLeft + SliderWidth + 24, CenteredTop(posY, font.LineSpacing * valueScale)), Color.White)
+                .SetScale(valueScale)
                 .AddToScreen(container);
 
-            var slider = new Slider(new Vector2(SliderLeft, posY), new Vector2(SliderWidth, 26), minimum, maximum)
+            var slider = new Slider(new Vector2(SliderLeft, posY), new Vector2(SliderWidth, SliderHeight), minimum, maximum)
                 .SetStep(step)
                 .SetValue(value, notify: false)
                 .AddOnValueChanged(newValue =>
@@ -41,5 +46,8 @@ namespace MonoGame.GameManager.Samples.ScreenComponents
                 valueLabel.Text = string.Format(format, slider.Value);
             };
         }
+
+        /// <summary>The top of a text of the given height centered on the slider row.</summary>
+        private static float CenteredTop(float posY, float textHeight) => posY + (float)Math.Round((SliderHeight - textHeight) / 2f);
     }
 }

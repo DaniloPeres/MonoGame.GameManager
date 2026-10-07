@@ -59,13 +59,13 @@ namespace MonoGame.GameManager.Samples.Screens.Animations
             posY += 55;
             Vector2Option.CreateVector2Option(container, "Size", posY, rectangleControlPreview.Size, size => rectangleControlPreview.SetSize(size));
             posY += 55;
-            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Opacity Start", posY, 1f, value => fadeAnimationPreview.SetOpacityStart(value));
+            SliderOption.CreateSliderOption(container, "Opacity Start:", posY, 0f, 1f, 1f, value => fadeAnimationPreview.SetOpacityStart(value), 0.05f, "{0:0.00}", 1f);
             posY += 55;
-            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Opacity End", posY, 0f, value => fadeAnimationPreview.SetOpacityEnd(value));
+            SliderOption.CreateSliderOption(container, "Opacity End:", posY, 0f, 1f, 0f, value => fadeAnimationPreview.SetOpacityEnd(value), 0.05f, "{0:0.00}", 1f);
             posY += 55;
-            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Duration", posY, fadeAnimationPreview.Duration, value => fadeAnimationPreview.SetDuration(value));
+            SliderOption.CreateSliderOption(container, "Duration:", posY, 0.1f, 5f, fadeAnimationPreview.Duration, value => fadeAnimationPreview.SetDuration(value), 0.1f, "{0:0.0} s", 1f);
             posY += 55;
-            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Loop Delay", posY, fadeAnimationPreview.LoopingDelayTimeDuration, value => fadeAnimationPreview.SetLoopingDelayTimeDuration(value));
+            SliderOption.CreateSliderOption(container, "Loop Delay:", posY, 0f, 3f, fadeAnimationPreview.LoopingDelayTimeDuration, value => fadeAnimationPreview.SetLoopingDelayTimeDuration(value), 0.1f, "{0:0.0} s", 1f);
             posY += 55;
             CheckboxOption.CreateCheckboxOption(container, "Loop", posY, fadeAnimationPreview.IsLooping, value => fadeAnimationPreview.SetIsLooping(value));
             posY += 55;

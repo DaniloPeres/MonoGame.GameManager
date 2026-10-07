@@ -9,7 +9,9 @@ using MonoGame.GameManager.Samples.Screens.Controls;
 using MonoGame.GameManager.Samples.ScreenComponents;
 using System.Collections.Generic;
 using MonoGame.GameManager.Animations;
+using MonoGame.GameManager.Layout;
 using MonoGame.GameManager.Particles;
+using MonoGame.GameManager.Services.Inputs;
 using MonoGame.GameManager.Samples.Screens.Animations;
 using MonoGame.GameManager.Samples.Screens.ScreensInfo;
 
@@ -99,6 +101,8 @@ namespace MonoGame.GameManager.Samples.Screens
             AddScrollViewerButton(new Vector2(posX, posY));
             posX += textureButtonDefault.Width + MarginOptions;
             AddParticlesButton(new Vector2(posX, posY));
+            posX += textureButtonDefault.Width + MarginOptions;
+            AddSliderButton(new Vector2(posX, posY));
 
             posY += textureButtonDefault.Height;
         }
@@ -149,6 +153,35 @@ namespace MonoGame.GameManager.Samples.Screens
                 .Play()
                 .SetAnchor(Enums.Anchor.Center)
                 .SetPosition(0, -12);
+        }
+
+        private void AddSliderButton(Vector2 pos)
+        {
+            var button = AddOptionButton(pos, "Slider", SliderScreen.OpenSliderScreen);
+            var fills = new[] { new Color(80, 160, 230), Color.Orange, Color.LimeGreen, Color.DeepPink };
+            var motions = new[] { (0.15f, 0.9f, 0.8f), (0.85f, 0.25f, 1.1f), (0.3f, 1f, 0.95f), (0.95f, 0.1f, 1.3f) };
+
+            for (var i = 0; i < fills.Length; i++)
+            {
+                // The faders ignore the pointer, so a click anywhere on the tile opens the screen.
+                var fader = new Slider(Vector2.Zero, new Vector2(18, 70))
+                    .SetOrientation(Orientation.Vertical)
+                    .SetColors(new Color(70, 70, 70), fills[i], Color.White)
+                    .SetThumbSize(new Vector2(18))
+                    .SetTrackThickness(6)
+                    .SetAcceptedMouseButtons(MouseButtons.None)
+                    .SetAnchor(Enums.Anchor.Center)
+                    .SetPosition(-39 + i * 26, -14)
+                    .AddToScreen(button);
+
+                var (from, to, duration) = motions[i];
+                fader.SetValue(from, notify: false);
+                Tween.Float(value => fader.SetValue(value, notify: false), from, to, duration, fader)
+                    .SetEasing(Easing.SineInOut)
+                    .SetIsLooping(true)
+                    .SetIsPingPong(true)
+                    .Play();
+            }
         }
 
         private void AddAnimationsSection(ref int posY)
