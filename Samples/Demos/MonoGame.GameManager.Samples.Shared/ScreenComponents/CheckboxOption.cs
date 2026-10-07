@@ -36,5 +36,18 @@ namespace MonoGame.GameManager.Samples.ScreenComponents
             internalCheckRectangle = new RectangleControl(pos + new Vector2((checkboxSize - checkboxSizeInternal) / 2), new Vector2(checkboxSizeInternal), value ? Color.Black : Color.Transparent)
                 .AddToScreen(container);
         }
+
+        /// <summary>An option row built with the <see cref="Checkbox"/> control of the library.</summary>
+        public static Checkbox CreateCheckboxControlOption(Panel container, string text, float posY, bool value, Action<bool> onValueChanged)
+        {
+            new Label(ContentHandler.Instance.SpriteFontArial, text, new Vector2(0, posY + 3), Color.Yellow)
+                .SetScale(0.75f)
+                .AddToScreen(container);
+
+            return new Checkbox(new Vector2(SliderOption.SliderLeft, posY), 26)
+                .SetIsChecked(value, notify: false)
+                .AddOnCheckedChanged(onValueChanged)
+                .AddToScreen(container);
+        }
     }
 }

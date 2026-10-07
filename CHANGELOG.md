@@ -1,5 +1,20 @@
 # Changelog
 
+## [2.1.0] (2026-10-06)
+
+A complete particle system, with a playground and scenes in the demos.
+
+### Improvements
+- `CameraPanel` no longer culls controls without a size (such as particle emitters), so what they draw outside of their bounds stays visible.
+- `TextureFactory` generates glows, rings, stars and diamonds; `ColorExtensions.Multiply` tints a color with another.
+
+### New features
+- `ParticleSettings` grew from 18 to more than 60 options: emitter shapes (`EmitterShape`), emission duration, loop, delay and prewarm, `ParticleBurst`s, emission per distance and inherited velocity, world or local `SimulationSpace`, palettes, random scale, rotation and flips, `ParticleCurve` and `ParticleGradient` over the lifetime with easings, turbulence, attraction and vortex forces, `Floor` and `Bounds` with `ParticleBoundsMode`, sprite-sheet `Frames` with `ParticleFrameMode`, procedural `ParticleShape`s, a `BlendState` per system, velocity alignment and stretch, and `ParticleSubEmitter`s on death and as trails.
+- `ParticleSystem` is an `IPlayable` (`Play`, `Pause`, `Resume`, `Stop`, `Reset`, `Restart`, `Prewarm`) with `Time`, `IsComplete` and `Completed`, replaceable `Settings`, `EmitterVelocity` and helpers for custom renderers (`GetDrawScale`, `GetRotation`, `GetTexture`, `GetSourceRectangle`, `GetEffects`). Still no garbage while emitting.
+- `ParticleEmitter` plays, pauses and restarts like an animation, bursts at any position, removes itself when its effect ends (`RemoveWhenCompleted`, `AddOnCompleted`, `ParticleEmitter.Spawn` and `SpawnBurst`), draws the procedural shapes with additive blending and follows the control in local space.
+- `ParticlePresets`: Fire, Smoke, Explosion, Sparks, Rain, Snow, Confetti, Fireworks, Magic, Fountain, Bubbles, Fireflies, Vortex and Stars. `ParticleResources` holds the shape textures and the additive blend state.
+- Demos: a Particles tile that opens a playground where every option is editable live on the presets, and a scenes screen (campfire, fireworks, rainy day, confetti cannon, magic cursor, fountain, portal and spaceships). A Slider tile with every option of the slider and three examples; the demo pages use sliders for their numeric options.
+
 ## [2.0.0] (2026-10-05)
 
 A complete review of the library. See [CHANGES.md](CHANGES.md) for the details and the migration notes, and [docs/PROJECT_REVIEW.md](docs/PROJECT_REVIEW.md) for the review.

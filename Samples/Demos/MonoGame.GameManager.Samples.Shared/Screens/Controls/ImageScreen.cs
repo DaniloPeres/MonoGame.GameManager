@@ -56,11 +56,11 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             posY += spaceBetweenRows;
             AnchorOption.CreateAnchorOption(container, posY, anchor => imagePreview.SetAnchor(anchor));
             posY += 100 + spaceBetweenRows;
-            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Scale", posY, 1f, scale => imagePreview.SetScale(scale));
+            SliderOption.CreateSliderOption(container, "Scale:", posY, 0.1f, 3f, 1f, scale => imagePreview.SetScale(scale), 0.05f, "{0:0.00}", 1f);
             posY += spaceBetweenRows;
             Vector2Option.CreateVector2Option(container, "Position", posY, new Vector2(0), newPosition => imagePreview.SetPosition(newPosition));
             posY += spaceBetweenRows;
-            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Rotation", posY, 0, newRotation => imagePreview.SetRotation(newRotation), 0.05f);
+            SliderOption.CreateSliderOption(container, "Rotation:", posY, 0f, 360f, 0f, degrees => imagePreview.SetRotationInDegree(degrees), 1f, "{0:0}", 1f);
             posY += spaceBetweenRows;
             Vector2Option.CreateVector2Option(container, "Origin Rate", posY, new Vector2(0), newOrigin => imagePreview.SetOriginRate(newOrigin), 0.1f);
             posY += spaceBetweenRows;

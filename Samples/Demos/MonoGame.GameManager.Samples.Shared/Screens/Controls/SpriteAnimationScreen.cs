@@ -104,15 +104,15 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
 
             AnchorOption.CreateAnchorOption(container, posY, anchor => spriteAnimationPreview.SetAnchor(anchor));
             posY += 142;
-            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Scale", posY, spriteAnimationPreview.Scale.X, scale => spriteAnimationPreview.SetScale(scale), 0.1f);
+            SliderOption.CreateSliderOption(container, "Scale:", posY, 0.1f, 4f, spriteAnimationPreview.Scale.X, scale => spriteAnimationPreview.SetScale(scale), 0.05f, "{0:0.00}", 1f);
             posY += marginTop;
             Vector2Option.CreateVector2Option(container, "Position", posY, new Vector2(0), scale => spriteAnimationPreview.SetPosition(scale), 1);
             posY += marginTop;
-            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Rotation", posY, 0, newRotation => spriteAnimationPreview.SetRotation(newRotation), 0.05f);
+            SliderOption.CreateSliderOption(container, "Rotation:", posY, 0f, 360f, 0f, degrees => spriteAnimationPreview.SetRotationInDegree(degrees), 1f, "{0:0}", 1f);
             posY += marginTop;
             Vector2Option.CreateVector2Option(container, "Origin Rate", posY, new Vector2(0), newOrigin => spriteAnimationPreview.SetOriginRate(newOrigin), 0.1f);
             posY += marginTop;
-            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Speed", posY, 1, speed => spriteAnimationPreview.Speed = speed, 0.1f);
+            SliderOption.CreateSliderOption(container, "Speed:", posY, 0f, 3f, 1f, speed => spriteAnimationPreview.Speed = speed, 0.1f, "{0:0.0}x", 1f);
             posY += marginTop;
             CheckboxOption.CreateCheckboxOption(container, "Loop", posY, true, isLooping => spriteAnimationPreview.IsLooping = isLooping);
             posY += marginTop;

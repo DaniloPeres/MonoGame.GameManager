@@ -104,7 +104,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             posY += spaceBetweenRows;
             CheckboxOption.CreateCheckboxOption(container, "Hide Overflow", posY, false, hideOverflow => buttonPreview.HideOverflow = hideOverflow);
             posY += spaceBetweenRows;
-            TextWithFloatValueOption.CreateTextWithFloatValueOption(container, "Rotation", posY, 0, newRotation => buttonPreview.SetRotation(newRotation), 0.05f);
+            SliderOption.CreateSliderOption(container, "Rotation:", posY, 0f, 360f, 0f, degrees => buttonPreview.SetRotationInDegree(degrees), 1f, "{0:0}", 1f);
             posY += spaceBetweenRows;
             CheckboxOption.CreateCheckboxOption(container, "Display Icon", posY, true, displayIcon =>
             {

@@ -383,6 +383,7 @@ namespace MonoGame.GameManager.Screens
 
             ShapeExtension.Reset();
             Primitives.Reset();
+            Particles.ParticleResources.Reset();
         }
 
         private enum NavigationKind
