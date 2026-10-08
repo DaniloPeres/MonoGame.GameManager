@@ -38,7 +38,7 @@ namespace MonoGame.GameManager.Samples.ScreenComponents
         private static Label CreatePathLabel(string text, int posX)
         {
             const int posY = Config.ScreenContentMargin;
-            return new Label(ContentHandler.Instance.SpriteFontArial, text, new Vector2(posX, posY), color)
+            return new Label(ContentHandler.Instance.Font, text, new Vector2(posX, posY), color)
                 .AddToScreen();
         }
 

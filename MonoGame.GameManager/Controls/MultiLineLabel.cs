@@ -1,7 +1,9 @@
-﻿using Microsoft.Xna.Framework;
+﻿using FontStashSharp;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.GameManager.Controls.Abstracts;
 using MonoGame.GameManager.Enums;
+using MonoGame.GameManager.GameMath;
 using MonoGame.GameManager.Text;
 using System;
 using System.Collections.Generic;
@@ -21,17 +23,20 @@ namespace MonoGame.GameManager.Controls
         private const float MinimumScaleToWrap = 0.0001f;
         private readonly List<string> lines = new List<string>();
         private readonly List<float> lineWidths = new List<float>();
-        private SpriteFont spriteFont;
+        private SpriteFontBase font;
         private string text = string.Empty;
         private TextAlign textAlign;
         private int textBoxWidth;
         private float lineSpacing;
+        private float characterSpacing;
+        private Color outlineColor = Color.Black;
+        private float outlineThickness;
         private bool areLinesDirty = true;
         private float wrappedScaleX = float.NaN;
 
-        public MultiLineLabel(SpriteFont spriteFont, string text, Vector2 position, Color color, int textBoxWidth)
+        public MultiLineLabel(SpriteFontBase font, string text, Vector2 position, Color color, int textBoxWidth)
         {
-            SpriteFont = spriteFont;
+            Font = font;
             Text = text;
             SetPosition(position);
             Color = color;
@@ -52,12 +57,13 @@ namespace MonoGame.GameManager.Controls
             }
         }
 
-        public SpriteFont SpriteFont
+        /// <summary>The font of the text (a size of a FontStashSharp <see cref="FontSystem"/>).</summary>
+        public SpriteFontBase Font
         {
-            get => spriteFont;
+            get => font;
             set
             {
-                spriteFont = value;
+                font = value;
                 MarkLinesAsDirty();
             }
         }
@@ -94,6 +100,47 @@ namespace MonoGame.GameManager.Controls
             }
         }
 
+        /// <summary>
+        /// Extra space between the characters, in font pixels (0 = the spacing of the font, negative values bring them
+        /// closer). The lines are wrapped with it.
+        /// </summary>
+        public float CharacterSpacing
+        {
+            get => characterSpacing;
+            set
+            {
+                if (value == characterSpacing)
+                    return;
+                characterSpacing = value;
+                MarkLinesAsDirty();
+            }
+        }
+
+        /// <summary>The color of the outline drawn around the glyphs.</summary>
+        public Color OutlineColor
+        {
+            get => outlineColor;
+            set
+            {
+                outlineColor = value;
+                MarkAsDirty();
+            }
+        }
+
+        /// <summary>
+        /// The thickness of the outline in font pixels (0 = no outline). It grows with the scale of the label and is
+        /// rounded to whole pixels of the font drawn. The outline does not change the size of the label.
+        /// </summary>
+        public float OutlineThickness
+        {
+            get => outlineThickness;
+            set
+            {
+                outlineThickness = Math.Max(0f, value);
+                MarkAsDirty();
+            }
+        }
+
         /// <summary>The lines after wrapping.</summary>
         public IReadOnlyList<string> Lines
         {
@@ -110,9 +157,9 @@ namespace MonoGame.GameManager.Controls
             return this;
         }
 
-        public MultiLineLabel SetSpriteFont(SpriteFont spriteFont)
+        public MultiLineLabel SetFont(SpriteFontBase font)
         {
-            SpriteFont = spriteFont;
+            Font = font;
             return this;
         }
 
@@ -134,41 +181,98 @@ namespace MonoGame.GameManager.Controls
             return this;
         }
 
+        /// <summary>Sets the extra space between the characters, in font pixels (letter spacing).</summary>
+        public MultiLineLabel SetCharacterSpacing(float characterSpacing)
+        {
+            CharacterSpacing = characterSpacing;
+            return this;
+        }
+
+        /// <summary>Draws an outline around the glyphs (thickness in font pixels, 0 = no outline).</summary>
+        public MultiLineLabel SetOutline(Color color, float thickness)
+        {
+            OutlineColor = color;
+            OutlineThickness = thickness;
+            return this;
+        }
+
         public override void Draw(SpriteBatch spriteBatch)
         {
             EnsureLines();
-            if (spriteFont == null || lines.Count == 0)
+            if (font == null || lines.Count == 0)
                 return;
 
             var color = DrawColor;
             var position = GetPosition();
             var width = SizeWithoutScale.X;
-            var lineHeight = spriteFont.LineSpacing + lineSpacing;
+            var lineHeight = font.LineHeight + lineSpacing;
+            var scale = NestedScale;
+            var drawFont = FontScaling.Resolve(font, ref scale, out var originFactor);
+            var spacing = characterSpacing * originFactor;
+
+            // The outlines of every line first, so an outline never covers the text of the line above (negative line spacing).
+            if (outlineThickness > 0f)
+            {
+                var outline = outlineColor * NestedOpacity;
+                for (var i = 0; i < lines.Count; i++)
+                {
+                    if (lines[i].Length > 0)
+                        TextOutline.Draw(spriteBatch, drawFont, lines[i], position, outline, outlineThickness * originFactor, Rotation,
+                            GetLineOrigin(i, width, lineHeight) * originFactor, scale, LayerDepthDraw, spacing);
+                }
+            }
+
+            for (var i = 0; i < lines.Count; i++)
+            {
+                if (lines[i].Length > 0)
+                    drawFont.DrawText(spriteBatch, lines[i], position, color, Rotation, GetLineOrigin(i, width, lineHeight) * originFactor, scale, LayerDepthDraw, spacing);
+            }
+        }
+
+        /// <inheritdoc />
+        protected override int? GetContentSignature()
+            => HashCode.Combine(font, text, textAlign, textBoxWidth, lineSpacing, NestedScale.X, HashCode.Combine(characterSpacing, outlineColor, outlineThickness));
+
+        /// <summary>The box of the glyphs of every line, in local units.</summary>
+        protected override RectangleF GetContentBounds()
+        {
+            EnsureLines();
+            if (font == null || lines.Count == 0)
+                return base.GetContentBounds();
+
+            var width = SizeWithoutScale.X;
+            var lineHeight = font.LineHeight + lineSpacing;
+            RectangleF? area = null;
             for (var i = 0; i < lines.Count; i++)
             {
                 if (lines[i].Length == 0)
                     continue;
-
-                var offsetX = textAlign == TextAlign.Center ? (width - lineWidths[i]) / 2f
-                    : textAlign == TextAlign.Right ? width - lineWidths[i]
-                    : 0f;
-
-                // Every line rotates and scales around the origin of the whole control.
-                var lineOrigin = OriginWithoutScale - new Vector2(offsetX, i * lineHeight);
-                spriteBatch.DrawString(spriteFont, lines[i], position, color, Rotation, lineOrigin, NestedScale, SpriteEffects, LayerDepthDraw);
+                var line = TextInk.GetBounds(font, lines[i], OriginWithoutScale - GetLineOrigin(i, width, lineHeight), characterSpacing);
+                area = area.HasValue ? RectangleF.Union(area.Value, line) : line;
             }
+
+            return area.HasValue && !area.Value.IsEmpty ? area.Value : base.GetContentBounds();
+        }
+
+        /// <summary>The origin of a line (unscaled): every line rotates and scales around the origin of the whole control.</summary>
+        private Vector2 GetLineOrigin(int index, float width, float lineHeight)
+        {
+            var offsetX = textAlign == TextAlign.Center ? (width - lineWidths[index]) / 2f
+                : textAlign == TextAlign.Right ? width - lineWidths[index]
+                : 0f;
+            return OriginWithoutScale - new Vector2(offsetX, index * lineHeight);
         }
 
         protected override Vector2 CalculateSize()
         {
             EnsureLines();
-            if (spriteFont == null || lines.Count == 0)
+            if (font == null || lines.Count == 0)
                 return Vector2.Zero;
 
             var width = 0f;
             foreach (var lineWidth in lineWidths)
                 width = Math.Max(width, lineWidth);
-            var height = lines.Count * spriteFont.LineSpacing + (lines.Count - 1) * lineSpacing;
+            var height = lines.Count * font.LineHeight + (lines.Count - 1) * lineSpacing;
             return new Vector2(width, Math.Max(0f, height));
         }
 
@@ -189,7 +293,7 @@ namespace MonoGame.GameManager.Controls
             lineWidths.Clear();
             areLinesDirty = false;
             wrappedScaleX = scaleX;
-            if (spriteFont == null)
+            if (font == null)
                 return;
 
             // The width is in the units of the parent: the scale of the label changes how much text fits.
@@ -201,6 +305,6 @@ namespace MonoGame.GameManager.Controls
             }
         }
 
-        private float Measure(string value) => value.Length == 0 ? 0f : spriteFont.MeasureString(value).X;
+        private float Measure(string value) => value.Length == 0 ? 0f : font.MeasureString(value, characterSpacing: characterSpacing).X;
     }
 }

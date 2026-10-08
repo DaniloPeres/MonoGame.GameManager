@@ -43,7 +43,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             var container = new Panel(new Rectangle(Config.ScreenContentMargin, sectionTop, sectionDivisionLeft - (Config.ScreenContentMargin * 2), sectionHeight))
                 .AddToScreen();
 
-            var labelOptions = new Label(ContentHandler.Instance.SpriteFontArial, "Options", Vector2.Zero, Color.Yellow)
+            var labelOptions = new Label(ContentHandler.Instance.Font, "Options", Vector2.Zero, Color.Yellow)
                 .SetAnchor(Enums.Anchor.TopCenter)
                 .AddToScreen(container);
 
@@ -55,7 +55,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             posY += 55;
             AnchorOption.CreateAnchorOption(container, posY, anchor => labelPreview.SetAnchor(anchor));
             posY += 155;
-            SliderOption.CreateSliderOption(container, "Scale:", posY, 0.1f, 3f, 1f, scale => labelPreview.SetScale(scale), 0.05f, "{0:0.00}", 1f);
+            SliderOption.CreateSliderOption(container, "Scale:", posY, 0.1f, 5f, 1f, scale => labelPreview.SetScale(scale), 0.05f, "{0:0.00}", 1f);
             posY += 55;
             Vector2Option.CreateVector2Option(container, "Position", posY, new Vector2(0), newPosition => labelPreview.SetPosition(newPosition));
             posY += 55;
@@ -63,6 +63,22 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             posY += 55;
             Vector2Option.CreateVector2Option(container, "Origin Rate", posY, new Vector2(0), newOrigin => labelPreview.SetOriginRate(newOrigin), 0.1f);
             posY += 55;
+            ColorOption.CreateColorOption(container, posY, color => labelPreview.OutlineColor = color, "Outline", new List<Color>
+            {
+                Color.Black,
+                Color.White,
+                Color.Red,
+                Color.Orange,
+                Color.Yellow,
+                Color.LimeGreen,
+                Color.DodgerBlue,
+                Color.Purple
+            }, showBorder: true);
+            posY += 55;
+            SliderOption.CreateSliderOption(container, "Thickness:", posY, 0f, 10f, 0f, thickness => labelPreview.OutlineThickness = thickness, 0.5f, "{0:0.0}", 1f);
+            posY += 45;
+            SliderOption.CreateSliderOption(container, "Letter spacing:", posY, -5f, 20f, 0f, spacing => labelPreview.CharacterSpacing = spacing, 0.5f, "{0:0.0}", 1f);
+            posY += 50;
             LastEventsInfo.AddLastEventsInfo(container, posY, labelPreview);
         }
 
@@ -71,7 +87,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             var container = new Panel(new Rectangle(sectionDivisionLeft + Config.ScreenContentMargin, sectionTop, 600, sectionHeight))
                 .AddToScreen();
 
-            new Label(ContentHandler.Instance.SpriteFontArial, "Preview", Vector2.Zero, Color.Yellow)
+            new Label(ContentHandler.Instance.Font, "Preview", Vector2.Zero, Color.Yellow)
                 .SetAnchor(Enums.Anchor.TopCenter)
                 .AddToScreen(container);
 
@@ -82,7 +98,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             new RectangleControl(Vector2.Zero, labelContainer.Size, new Color(15, 15, 15))
                 .AddToScreen(labelContainer);
 
-            labelPreview = new Label(ContentHandler.Instance.SpriteFontArial, "My text example", Vector2.Zero, Color.White)
+            labelPreview = new Label(ContentHandler.Instance.Font, "My text example", Vector2.Zero, Color.White)
                 .AddToScreen(labelContainer)
                 .SetAnchor(Enums.Anchor.Center);
         }

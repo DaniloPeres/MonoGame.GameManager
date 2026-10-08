@@ -18,14 +18,14 @@ namespace MonoGame.GameManager.Samples.ScreenComponents
         /// <summary>Creates the row and returns an action that selects a choice without raising the callback.</summary>
         public static Action<int> CreateChoiceOption(Panel container, string text, float posY, IList<string> choices, int selected, Action<int> onChanged)
         {
-            new Label(ContentHandler.Instance.SpriteFontArial, text, new Vector2(0, posY + 3), Color.Yellow)
+            new Label(ContentHandler.Instance.Font, text, new Vector2(0, posY + 3), Color.Yellow)
                 .SetScale(0.75f)
                 .AddToScreen(container);
 
             var index = Math.Max(0, Math.Min(choices.Count - 1, selected));
             var button = new Button(new Vector2(SliderOption.SliderLeft, posY), new Vector2(SliderOption.SliderWidth, 28), ButtonColor)
                 .SetBorder(Color.Gray)
-                .SetText(ContentHandler.Instance.SpriteFontArial, choices[index], Color.White)
+                .SetText(ContentHandler.Instance.Font, choices[index], Color.White)
                 .SetAcceptedMouseButtons(MouseButtons.Left | MouseButtons.Right)
                 .AddToScreen(container);
             button.TextLabel.SetScale(0.65f);

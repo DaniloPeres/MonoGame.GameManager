@@ -12,7 +12,7 @@ namespace MonoGame.GameManager.Samples.ScreenComponents
             var marginLeft = 10;
             var posX = 0f;
 
-            var optionLabel = new Label(ContentHandler.Instance.SpriteFontArial, $"{text}: ", new Vector2(posX, posY), Color.Yellow)
+            var optionLabel = new Label(ContentHandler.Instance.Font, $"{text}: ", new Vector2(posX, posY), Color.Yellow)
                 .AddToScreen(container);
 
             posX += optionLabel.Size.X + marginLeft;

@@ -180,7 +180,7 @@ Not verified here, because it needs a display or a device:
 
 - Drawing: scissor clipping, render-target clipping of rotated containers, camera transforms, nine-slice and tiled images, particles, primitives and text rendering.
 - Audio playback, real touch screens and gestures, window resizing and full screen.
-- Running the sample games (building their content needs the fonts used by the `.spritefont` files).
+- Running the sample games.
 
 ## 8. Future work
 

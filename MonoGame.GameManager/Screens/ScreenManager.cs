@@ -384,6 +384,8 @@ namespace MonoGame.GameManager.Screens
             ShapeExtension.Reset();
             Primitives.Reset();
             Particles.ParticleResources.Reset();
+            Controls.Effects.ButtonEffectResources.Reset();
+            Controls.Shading.ShadingResources.Reset();
         }
 
         private enum NavigationKind

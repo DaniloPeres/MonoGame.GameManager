@@ -19,14 +19,14 @@ namespace MonoGame.GameManager.Samples.ScreenComponents
         public static Action<float> CreateSliderOption(Panel container, string text, float posY, float minimum, float maximum, float value,
             Action<float> onValueChanged, float step = 0f, string format = "{0:0.##}", float textScale = 0.75f)
         {
-            var font = ContentHandler.Instance.SpriteFontArial;
+            var font = ContentHandler.Instance.Font;
             var valueScale = textScale >= 1f ? 0.8f : 0.7f;
 
-            new Label(font, text, new Vector2(0, CenteredTop(posY, font.LineSpacing * textScale)), Color.Yellow)
+            new Label(font, text, new Vector2(0, CenteredTop(posY, font.LineHeight * textScale)), Color.Yellow)
                 .SetScale(textScale)
                 .AddToScreen(container);
 
-            var valueLabel = new Label(font, string.Format(format, value), new Vector2(SliderLeft + SliderWidth + 24, CenteredTop(posY, font.LineSpacing * valueScale)), Color.White)
+            var valueLabel = new Label(font, string.Format(format, value), new Vector2(SliderLeft + SliderWidth + 24, CenteredTop(posY, font.LineHeight * valueScale)), Color.White)
                 .SetScale(valueScale)
                 .AddToScreen(container);
 

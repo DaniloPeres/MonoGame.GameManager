@@ -29,7 +29,7 @@ namespace Snake.Screens
 
         public void AddTitle()
         {
-            new Label(ContentHandler.Instance.HoboStdSpriteFont, "SNAKE", new Vector2(0, 60), UiHelper.DarkBackgroundColor)
+            new Label(ContentHandler.Instance.Font, "SNAKE", new Vector2(0, 60), UiHelper.DarkBackgroundColor)
                 .SetAnchor(Anchor.TopCenter)
                 .SetScale(1.25f)
                 .AddToScreen(board);
@@ -53,7 +53,7 @@ namespace Snake.Screens
 
         public void AddChooseLevel()
         {
-            new Label(ContentHandler.Instance.HoboStdSpriteFont, "CHOOSE LEVEL:", new Vector2(0, 170), UiHelper.DarkBackgroundColor)
+            new Label(ContentHandler.Instance.Font, "CHOOSE LEVEL:", new Vector2(0, 170), UiHelper.DarkBackgroundColor)
                .SetAnchor(Anchor.TopCenter)
                .SetScale(0.6f)
                .AddToScreen(board);
@@ -75,7 +75,7 @@ namespace Snake.Screens
             var labels = new List<Label>();
             for (var i = 0; i < options.Count; i++)
             {
-                labels.Add(new Label(ContentHandler.Instance.HoboStdSpriteFont, options[i], Vector2.Zero, UiHelper.DarkBackgroundColor)
+                labels.Add(new Label(ContentHandler.Instance.Font, options[i], Vector2.Zero, UiHelper.DarkBackgroundColor)
                     .SetInfo(i) // save the level difficulty in the info of label
                     .SetScale(scale));
             }

@@ -49,6 +49,9 @@ namespace MonoGame.GameManager.Controls
             return this;
         }
 
+        /// <inheritdoc />
+        protected override int? GetContentSignature() => System.HashCode.Combine(BorderColor, BorderThickness);
+
         public override void Draw(SpriteBatch spriteBatch)
         {
             var size = SizeWithoutScale;

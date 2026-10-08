@@ -1,6 +1,8 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+﻿using FontStashSharp;
+using Microsoft.Xna.Framework.Graphics;
 using MonoGame.GameManager.Services;
 using System;
+using System.Collections.Generic;
 
 namespace MonoGame.GameManager.Samples.Services
 {
@@ -9,7 +11,29 @@ namespace MonoGame.GameManager.Samples.Services
         private static readonly Lazy<ContentHandler> lazyInstance = new Lazy<ContentHandler>(() => new ContentHandler());
         public static ContentHandler Instance => lazyInstance.Value;
 
-        public SpriteFont SpriteFontArial { get; private set; }
+        public FontSystem FontSystem { get; private set; }
+        public SpriteFontBase Font { get; private set; }
+
+        /// <summary>The fonts of the demos, by name (Roboto first), at size 36.</summary>
+        public IReadOnlyList<(string Name, SpriteFontBase Font)> Fonts { get; private set; }
+
+        public SpriteFontBase FontAlfaSlabOne { get; private set; }
+        public SpriteFontBase FontLilitaOne { get; private set; }
+        public SpriteFontBase FontBangers { get; private set; }
+        public SpriteFontBase FontPressStart { get; private set; }
+        public SpriteFontBase FontAudiowide { get; private set; }
+        public SpriteFontBase FontCreepster { get; private set; }
+        public SpriteFontBase FontPacifico { get; private set; }
+        public SpriteFontBase FontLuckiestGuy { get; private set; }
+        public SpriteFontBase FontRye { get; private set; }
+        public SpriteFontBase FontBlackOpsOne { get; private set; }
+        public SpriteFontBase FontMonoton { get; private set; }
+        public SpriteFontBase FontPermanentMarker { get; private set; }
+        public SpriteFontBase FontCinzelDecorative { get; private set; }
+        public SpriteFontBase FontBungee { get; private set; }
+        public SpriteFontBase FontSpecialElite { get; private set; }
+        public SpriteFontBase FontKaushanScript { get; private set; }
+        public SpriteFontBase FontUnifraktur { get; private set; }
 
         #region Images
         public Texture2D TextureButton { get; private set; }
@@ -36,7 +60,49 @@ namespace MonoGame.GameManager.Samples.Services
 
         public void LoadAllContents()
         {
-            SpriteFontArial = ServiceProvider.ContentLoader.LoadSpriteFont("Arial");
+            FontSystem = ServiceProvider.ContentLoader.LoadFontSystem("Fonts/Roboto-Regular.ttf");
+            Font = FontSystem.GetFont(36);
+
+            // Display fonts (SIL Open Font License or Apache 2.0, see the license files next to them), with Roboto for missing characters.
+            SpriteFontBase Load(string file) => ServiceProvider.ContentLoader.LoadFontSystem($"Fonts/{file}", "Fonts/Roboto-Regular.ttf").GetFont(36);
+            FontAlfaSlabOne = Load("AlfaSlabOne-Regular.ttf");
+            FontLilitaOne = Load("LilitaOne-Regular.ttf");
+            FontBangers = Load("Bangers-Regular.ttf");
+            FontPressStart = Load("PressStart2P-Regular.ttf");
+            FontAudiowide = Load("Audiowide-Regular.ttf");
+            FontCreepster = Load("Creepster-Regular.ttf");
+            FontPacifico = Load("Pacifico-Regular.ttf");
+            FontLuckiestGuy = Load("LuckiestGuy-Regular.ttf");
+            FontRye = Load("Rye-Regular.ttf");
+            FontBlackOpsOne = Load("BlackOpsOne-Regular.ttf");
+            FontMonoton = Load("Monoton-Regular.ttf");
+            FontPermanentMarker = Load("PermanentMarker-Regular.ttf");
+            FontCinzelDecorative = Load("CinzelDecorative-Bold.ttf");
+            FontBungee = Load("Bungee-Regular.ttf");
+            FontSpecialElite = Load("SpecialElite-Regular.ttf");
+            FontKaushanScript = Load("KaushanScript-Regular.ttf");
+            FontUnifraktur = Load("UnifrakturMaguntia-Book.ttf");
+            Fonts = new List<(string, SpriteFontBase)>
+            {
+                ("Roboto", Font),
+                ("Alfa Slab One", FontAlfaSlabOne),
+                ("Lilita One", FontLilitaOne),
+                ("Bangers", FontBangers),
+                ("Press Start 2P", FontPressStart),
+                ("Audiowide", FontAudiowide),
+                ("Creepster", FontCreepster),
+                ("Pacifico", FontPacifico),
+                ("Luckiest Guy", FontLuckiestGuy),
+                ("Rye", FontRye),
+                ("Black Ops One", FontBlackOpsOne),
+                ("Monoton", FontMonoton),
+                ("Permanent Marker", FontPermanentMarker),
+                ("Cinzel Decorative", FontCinzelDecorative),
+                ("Bungee", FontBungee),
+                ("Special Elite", FontSpecialElite),
+                ("Kaushan Script", FontKaushanScript),
+                ("UnifrakturMaguntia", FontUnifraktur)
+            };
 
             LoadImages();
         }

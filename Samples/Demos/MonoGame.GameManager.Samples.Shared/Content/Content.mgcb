@@ -13,12 +13,59 @@
 
 #---------------------------------- Content ---------------------------------#
 
-#begin Arial.spritefont
-/importer:FontDescriptionImporter
-/processor:FontDescriptionProcessor
-/processorParam:PremultiplyAlpha=True
-/processorParam:TextureFormat=Compressed
-/build:Arial.spritefont
+#begin Fonts/AlfaSlabOne-Regular.ttf
+/copy:Fonts/AlfaSlabOne-Regular.ttf
+
+#begin Fonts/Audiowide-Regular.ttf
+/copy:Fonts/Audiowide-Regular.ttf
+
+#begin Fonts/Bangers-Regular.ttf
+/copy:Fonts/Bangers-Regular.ttf
+
+#begin Fonts/BlackOpsOne-Regular.ttf
+/copy:Fonts/BlackOpsOne-Regular.ttf
+
+#begin Fonts/Bungee-Regular.ttf
+/copy:Fonts/Bungee-Regular.ttf
+
+#begin Fonts/CinzelDecorative-Bold.ttf
+/copy:Fonts/CinzelDecorative-Bold.ttf
+
+#begin Fonts/KaushanScript-Regular.ttf
+/copy:Fonts/KaushanScript-Regular.ttf
+
+#begin Fonts/LuckiestGuy-Regular.ttf
+/copy:Fonts/LuckiestGuy-Regular.ttf
+
+#begin Fonts/Monoton-Regular.ttf
+/copy:Fonts/Monoton-Regular.ttf
+
+#begin Fonts/PermanentMarker-Regular.ttf
+/copy:Fonts/PermanentMarker-Regular.ttf
+
+#begin Fonts/Rye-Regular.ttf
+/copy:Fonts/Rye-Regular.ttf
+
+#begin Fonts/SpecialElite-Regular.ttf
+/copy:Fonts/SpecialElite-Regular.ttf
+
+#begin Fonts/UnifrakturMaguntia-Book.ttf
+/copy:Fonts/UnifrakturMaguntia-Book.ttf
+
+#begin Fonts/Creepster-Regular.ttf
+/copy:Fonts/Creepster-Regular.ttf
+
+#begin Fonts/LilitaOne-Regular.ttf
+/copy:Fonts/LilitaOne-Regular.ttf
+
+#begin Fonts/Pacifico-Regular.ttf
+/copy:Fonts/Pacifico-Regular.ttf
+
+#begin Fonts/PressStart2P-Regular.ttf
+/copy:Fonts/PressStart2P-Regular.ttf
+
+#begin Fonts/Roboto-Regular.ttf
+/copy:Fonts/Roboto-Regular.ttf
 
 #begin Images/Button.png
 /importer:TextureImporter

@@ -154,7 +154,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
 
         private void CreatePreviewSection()
         {
-            var font = ContentHandler.Instance.SpriteFontArial;
+            var font = ContentHandler.Instance.Font;
             var container = new Panel(new Rectangle(PreviewLeft, SectionTop, PreviewWidth, SectionHeight))
                 .AddToScreen();
 
@@ -240,7 +240,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
 
         private void CreateOptionsSection()
         {
-            var font = ContentHandler.Instance.SpriteFontArial;
+            var font = ContentHandler.Instance.Font;
             var container = new Panel(new Rectangle(Config.ScreenContentMargin, SectionTop, OptionsWidth, SectionHeight))
                 .AddToScreen();
 
@@ -273,7 +273,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
         {
             var button = new Button(position, size, color)
                 .SetBorder(BorderColor)
-                .SetText(ContentHandler.Instance.SpriteFontArial, text, Color.White)
+                .SetText(ContentHandler.Instance.Font, text, Color.White)
                 .AddOnClick(args => onClick())
                 .AddToScreen(container);
             button.TextLabel.SetScale(textScale);

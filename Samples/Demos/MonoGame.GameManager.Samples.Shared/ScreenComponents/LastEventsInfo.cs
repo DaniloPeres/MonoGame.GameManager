@@ -15,12 +15,12 @@ namespace MonoGame.GameManager.Samples.ScreenComponents
             var marginLeft = 10;
             var posX = 0f;
 
-            var lastEventsLabel = new Label(ContentHandler.Instance.SpriteFontArial, "Last events: ", new Vector2(posX, posY), Color.Yellow)
+            var lastEventsLabel = new Label(ContentHandler.Instance.Font, "Last events: ", new Vector2(posX, posY), Color.Yellow)
                 .AddToScreen(container);
 
             posX += lastEventsLabel.Size.X + marginLeft;
 
-            var lastEventsValue = new Label(ContentHandler.Instance.SpriteFontArial, "", new Vector2(posX, posY), Color.White)
+            var lastEventsValue = new Label(ContentHandler.Instance.Font, "", new Vector2(posX, posY), Color.White)
                 .AddToScreen(container)
                 .SetScale(0.75f);
 

@@ -14,15 +14,15 @@
 
   <PropertyGroup>
     <PackageId>MonoGame.GameManager</PackageId>
-    <Version>2.1.0</Version>
+    <Version>3.0.0</Version>
     <Authors>Danilo Peres</Authors>
-    <Description>MonoGame.GameManager is a library to manage the components you need to create a 2D game with MonoGame: screens and transitions, UI controls, animations and tweens, timers, input (mouse, touch, keyboard and gamepad), a 2D camera, collision helpers, particles, audio and save games.</Description>
+    <Description>MonoGame.GameManager is a library to manage the components you need to create a 2D game with MonoGame: screens and transitions, UI controls, animations and tweens, timers, input (mouse, touch, keyboard and gamepad), a 2D camera, TrueType text with FontStashSharp, collision helpers, particles, audio and save games.</Description>
     <PackageIcon>Logo.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageProjectUrl>https://github.com/DaniloPeres/MonoGame.GameManager</PackageProjectUrl>
     <RepositoryUrl>https://github.com/DaniloPeres/MonoGame.GameManager</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
-    <PackageTags>MonoGame;GameEngine;2D;UI;Screens;Animations;Tween;Input;Camera;Particles</PackageTags>
+    <PackageTags>MonoGame;GameEngine;2D;UI;Screens;Animations;Tween;Input;Camera;Particles;Fonts</PackageTags>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReleaseNotes>See https://github.com/DaniloPeres/MonoGame.GameManager/blob/main/CHANGELOG.md</PackageReleaseNotes>
   </PropertyGroup>
@@ -30,6 +30,7 @@
   <ItemGroup>
     <!-- Compile-only reference: every game references its own MonoGame platform package (DesktopGL, WindowsDX, Android, iOS...). -->
     <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.5.1" PrivateAssets="all" />
+    <PackageReference Include="FontStashSharp.MonoGame" Version="1.6.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
   </ItemGroup>
 

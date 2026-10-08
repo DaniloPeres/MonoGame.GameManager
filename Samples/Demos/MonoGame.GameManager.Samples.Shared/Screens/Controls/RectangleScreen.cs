@@ -43,7 +43,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             var container = new Panel(new Rectangle(Config.ScreenContentMargin, sectionTop, sectionDivisionLeft - (Config.ScreenContentMargin * 2), sectionHeight))
                 .AddToScreen();
 
-            var labelOptions = new Label(ContentHandler.Instance.SpriteFontArial, "Options", Vector2.Zero, Color.Yellow)
+            var labelOptions = new Label(ContentHandler.Instance.Font, "Options", Vector2.Zero, Color.Yellow)
                 .SetAnchor(Enums.Anchor.TopCenter)
                 .AddToScreen(container);
 
@@ -73,7 +73,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             var marginLeft = 10;
             var posX = 0f;
 
-            var imageLabel = new Label(ContentHandler.Instance.SpriteFontArial, "Texture: ", new Vector2(posX, posY), Color.Yellow)
+            var imageLabel = new Label(ContentHandler.Instance.Font, "Texture: ", new Vector2(posX, posY), Color.Yellow)
                 .AddToScreen(container);
 
             posX += imageLabel.Size.X + marginLeft;
@@ -108,7 +108,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             var container = new Panel(new Rectangle(sectionDivisionLeft + Config.ScreenContentMargin, sectionTop, 600, sectionHeight))
                 .AddToScreen();
 
-            new Label(ContentHandler.Instance.SpriteFontArial, "Preview", Vector2.Zero, Color.Yellow)
+            new Label(ContentHandler.Instance.Font, "Preview", Vector2.Zero, Color.Yellow)
                 .SetAnchor(Enums.Anchor.TopCenter)
                 .AddToScreen(container);
 

@@ -12,7 +12,7 @@ namespace MonoGame.GameManager.Samples.ScreenComponents
             var marginLeft = 10 * textScale;
             var pos = new Vector2(0, posY);
 
-            var vector2Label = new Label(ContentHandler.Instance.SpriteFontArial, $"{text}: X:", pos, Color.Yellow)
+            var vector2Label = new Label(ContentHandler.Instance.Font, $"{text}: X:", pos, Color.Yellow)
                 .SetScale(textScale)
                 .AddToScreen(container);
 
@@ -25,7 +25,7 @@ namespace MonoGame.GameManager.Samples.ScreenComponents
             }, step, format);
 
             pos.X += (10 * textScale);
-            vector2Label = new Label(ContentHandler.Instance.SpriteFontArial, $"Y:", pos, Color.Yellow)
+            vector2Label = new Label(ContentHandler.Instance.Font, $"Y:", pos, Color.Yellow)
                 .SetScale(textScale)
                 .AddToScreen(container);
 

@@ -64,6 +64,9 @@ namespace MonoGame.GameManager.Controls
             return this;
         }
 
+        /// <inheritdoc />
+        protected override int? GetContentSignature() => HashCode.Combine(Texture, SourceRectangle, Offset, TileScale);
+
         public override void Draw(SpriteBatch spriteBatch)
         {
             if (Texture == null || Texture.IsDisposed)

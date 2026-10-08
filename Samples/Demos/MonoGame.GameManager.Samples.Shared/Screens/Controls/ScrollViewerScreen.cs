@@ -59,7 +59,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
                 .SetHideOverflow(true)
                 .AddToScreen();
 
-            var labelOptions = new Label(ContentHandler.Instance.SpriteFontArial, "Options", Vector2.Zero, Color.Yellow)
+            var labelOptions = new Label(ContentHandler.Instance.Font, "Options", Vector2.Zero, Color.Yellow)
                 .SetAnchor(Enums.Anchor.TopCenter)
                 .AddToScreen(container);
 
@@ -105,7 +105,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
                 .SetHoverTexture(ContentHandler.Instance.TextureButtonBackgroundHover)
                 .SetMousePressedTexture(ContentHandler.Instance.TextureButtonBackgroundPressed);
 
-            new Label(ContentHandler.Instance.SpriteFontArial, "Pinch zoom\noptions >", Vector2.Zero, Color.White)
+            new Label(ContentHandler.Instance.Font, "Pinch zoom\noptions >", Vector2.Zero, Color.White)
                 .AddToScreen(btnShowPinchZoomOptions)
                 .SetScale(0.75f)
                 .SetAnchor(Enums.Anchor.Center);
@@ -147,7 +147,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
                 .SetHoverTexture(ContentHandler.Instance.TextureButtonBackgroundHover)
                 .SetMousePressedTexture(ContentHandler.Instance.TextureButtonBackgroundPressed);
 
-            new Label(ContentHandler.Instance.SpriteFontArial, "Scroll viewer\noptions <", Vector2.Zero, Color.White)
+            new Label(ContentHandler.Instance.Font, "Scroll viewer\noptions <", Vector2.Zero, Color.White)
                 .AddToScreen(btnShowPinchZoomOptions)
                 .SetScale(0.75f)
                 .SetAnchor(Enums.Anchor.Center);
@@ -169,7 +169,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
                 .SetHoverTexture(ContentHandler.Instance.TextureButtonBackgroundHover)
                 .SetMousePressedTexture(ContentHandler.Instance.TextureButtonBackgroundPressed);
 
-            new Label(ContentHandler.Instance.SpriteFontArial, text, Vector2.Zero, Color.White)
+            new Label(ContentHandler.Instance.Font, text, Vector2.Zero, Color.White)
                 .AddToScreen(myButton)
                 .SetScale(0.75f)
                 .SetAnchor(Enums.Anchor.Center);
@@ -198,7 +198,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             var container = new Panel(new Rectangle(sectionDivisionLeft + Config.ScreenContentMargin, sectionTop, 600, sectionHeight))
                 .AddToScreen();
 
-            new Label(ContentHandler.Instance.SpriteFontArial, "Preview", Vector2.Zero, Color.Yellow)
+            new Label(ContentHandler.Instance.Font, "Preview", Vector2.Zero, Color.Yellow)
                 .SetAnchor(Enums.Anchor.TopCenter)
                 .AddToScreen(container);
 
@@ -286,7 +286,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
         {
             var container = new Panel(new Vector2(totalColumns, totalRows) * (containerSize + new Vector2(10)), containerSize);
 
-            new Label(ContentHandler.Instance.SpriteFontArial, "This is my scroll viewer content example", new Vector2(5, 0), Color.Yellow)
+            new Label(ContentHandler.Instance.Font, "This is my scroll viewer content example", new Vector2(5, 0), Color.Yellow)
                 .SetScale(0.9f)
                 .AddToScreen(container);
 
@@ -297,7 +297,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
                 .SetMousePressedTexture(ContentHandler.Instance.TextureButtonBackgroundPressed)
                 .SetPosition(new Vector2(15, 60));
 
-            new Label(ContentHandler.Instance.SpriteFontArial, "MY BUTTON", Vector2.Zero, Color.White)
+            new Label(ContentHandler.Instance.Font, "MY BUTTON", Vector2.Zero, Color.White)
                 .AddToScreen(myButton)
                 .SetScale(0.75f)
                 .SetAnchor(Enums.Anchor.Center);
@@ -316,7 +316,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
                 .SetPosition(25, 45);
 
             var loremIpsumText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
-            new MultiLineLabel(ContentHandler.Instance.SpriteFontArial, loremIpsumText, new Vector2(5, 150), Color.White, (int)container.Size.X - 10)
+            new MultiLineLabel(ContentHandler.Instance.Font, loremIpsumText, new Vector2(5, 150), Color.White, (int)container.Size.X - 10)
                 .AddToScreen(container)
                 .SetScale(0.7f);
 

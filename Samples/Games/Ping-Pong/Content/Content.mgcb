@@ -13,10 +13,6 @@
 
 #---------------------------------- Content ---------------------------------#
 
-#begin HoboStd.spritefont
-/importer:FontDescriptionImporter
-/processor:LocalizedFontProcessor
-/processorParam:PremultiplyAlpha=True
-/processorParam:TextureFormat=Compressed
-/build:HoboStd.spritefont
+#begin Fonts/Roboto-Regular.ttf
+/copy:Fonts/Roboto-Regular.ttf
 

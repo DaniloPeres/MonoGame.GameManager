@@ -217,7 +217,7 @@ namespace Snake.Screens
             isGameOver = true;
             Pause();
 
-            new Label(ContentHandler.Instance.HoboStdSpriteFont, "GAME OVER!", Vector2.Zero, UiHelper.DarkBackgroundColor)
+            new Label(ContentHandler.Instance.Font, "GAME OVER!", Vector2.Zero, UiHelper.DarkBackgroundColor)
                 .SetAnchor(MonoGame.GameManager.Enums.Anchor.Center)
                 .SetScale(1.8f)
                 .AddToScreen(board);
@@ -266,7 +266,7 @@ namespace Snake.Screens
         private void DisplayCountDownInfo(int number)
         {
             var text = number == 0 ? "GO!" : number.ToString();
-            var labelTextInfo = new Label(ContentHandler.Instance.HoboStdSpriteFont, text, Vector2.Zero, UiHelper.DarkBackgroundColor)
+            var labelTextInfo = new Label(ContentHandler.Instance.Font, text, Vector2.Zero, UiHelper.DarkBackgroundColor)
                 .SetAnchor(MonoGame.GameManager.Enums.Anchor.Center)
                 .SetScale(1.8f)
                 .AddToScreen(board);

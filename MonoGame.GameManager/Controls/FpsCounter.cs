@@ -1,6 +1,8 @@
-﻿using Microsoft.Xna.Framework;
+﻿using FontStashSharp;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.GameManager.Controls.Abstracts;
+using MonoGame.GameManager.Text;
 using System.Diagnostics;
 using System.Globalization;
 
@@ -20,15 +22,15 @@ namespace MonoGame.GameManager.Controls
         private int frames;
         private string text = string.Empty;
 
-        public FpsCounter(SpriteFont spriteFont, Vector2 position, Color color)
+        public FpsCounter(SpriteFontBase font, Vector2 position, Color color)
         {
-            SpriteFont = spriteFont;
+            Font = font;
             SetPosition(position);
             Color = color;
             UpdateText();
         }
 
-        public SpriteFont SpriteFont { get; set; }
+        public SpriteFontBase Font { get; set; }
 
         /// <summary>How often the value is updated, in seconds.</summary>
         public float UpdateInterval { get; set; } = 0.5f;
@@ -52,11 +54,14 @@ namespace MonoGame.GameManager.Controls
                 UpdateText();
             }
 
-            if (SpriteFont != null && text.Length > 0)
-                spriteBatch.DrawString(SpriteFont, text, GetPosition(), DrawColor, Rotation, OriginWithoutScale, NestedScale, SpriteEffects, LayerDepthDraw);
+            if (Font == null || text.Length == 0)
+                return;
+            var scale = NestedScale;
+            var origin = OriginWithoutScale;
+            FontScaling.Resolve(Font, ref scale, ref origin).DrawText(spriteBatch, text, GetPosition(), DrawColor, Rotation, origin, scale, LayerDepthDraw);
         }
 
-        protected override Vector2 CalculateSize() => SpriteFont == null || text.Length == 0 ? Vector2.Zero : SpriteFont.MeasureString(text);
+        protected override Vector2 CalculateSize() => Font == null || text.Length == 0 ? Vector2.Zero : new Vector2(Font.MeasureString(text).X, Font.LineHeight);
 
         private void UpdateText()
         {

@@ -14,7 +14,7 @@ namespace MonoGame.GameManager.Samples.ScreenComponents
         {
             var marginLeft = 10;
 
-            var vector2Label = new Label(ContentHandler.Instance.SpriteFontArial, $"{text}: ", pos, Color.Yellow)
+            var vector2Label = new Label(ContentHandler.Instance.Font, $"{text}: ", pos, Color.Yellow)
                 .AddToScreen(container);
 
             pos.X += vector2Label.Size.X + marginLeft;
@@ -40,7 +40,7 @@ namespace MonoGame.GameManager.Samples.ScreenComponents
         /// <summary>An option row built with the <see cref="Checkbox"/> control of the library.</summary>
         public static Checkbox CreateCheckboxControlOption(Panel container, string text, float posY, bool value, Action<bool> onValueChanged)
         {
-            new Label(ContentHandler.Instance.SpriteFontArial, text, new Vector2(0, posY + 3), Color.Yellow)
+            new Label(ContentHandler.Instance.Font, text, new Vector2(0, posY + 3), Color.Yellow)
                 .SetScale(0.75f)
                 .AddToScreen(container);
 

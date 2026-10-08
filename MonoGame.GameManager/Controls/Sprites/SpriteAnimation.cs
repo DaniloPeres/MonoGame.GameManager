@@ -222,6 +222,13 @@ namespace MonoGame.GameManager.Controls.Sprites
 
         protected override Vector2 CalculateSize() => CurrentFrame?.SourceRectangle.Size.ToVector2() ?? Vector2.Zero;
 
+        /// <inheritdoc />
+        protected override int? GetContentSignature()
+        {
+            var frame = CurrentFrame;
+            return frame == null ? 0 : HashCode.Combine(frame.Texture, frame.SourceRectangle);
+        }
+
         protected override void Dispose(bool disposing)
         {
             if (disposing)

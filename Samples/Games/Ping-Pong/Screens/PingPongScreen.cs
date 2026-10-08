@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using FontStashSharp;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.GameManager.Controls;
 using MonoGame.GameManager.Screens;
@@ -10,7 +11,7 @@ namespace Ping_Pong.Screens
 {
     public class PingPongScreen : Screen
     {
-        private SpriteFont fontHoboStb;
+        private SpriteFontBase font;
         private Score score;
         private Ball ball;
 
@@ -18,14 +19,14 @@ namespace Ping_Pong.Screens
 
         public override void LoadContent()
         {
-            fontHoboStb = Content.LoadSpriteFont("HoboStd");
+            font = Content.LoadFont("Fonts/Roboto-Regular.ttf", 57);
 
             base.LoadContent();
         }
 
         public override void OnInit()
         {
-            score = new Score(fontHoboStb);
+            score = new Score(font);
             ball = new Ball(CheckBallCollisionWithPaddles);
 
             AddMiddleStrippedLine();

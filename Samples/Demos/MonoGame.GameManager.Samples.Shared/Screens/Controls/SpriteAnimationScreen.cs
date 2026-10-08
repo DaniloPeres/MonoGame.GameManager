@@ -66,7 +66,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             var container = new Panel(new Rectangle(sectionDivisionLeft + Config.ScreenContentMargin, sectionTop, sectionWidth - sectionDivisionLeft - Config.ScreenContentMargin, sectionDivisionBottom - sectionTop - 15))
                 .AddToScreen();
 
-            new Label(ContentHandler.Instance.SpriteFontArial, "Preview", Vector2.Zero, Color.Yellow)
+            new Label(ContentHandler.Instance.Font, "Preview", Vector2.Zero, Color.Yellow)
                 .SetAnchor(Enums.Anchor.TopCenter)
                 .AddToScreen(container);
 
@@ -92,7 +92,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             var container = new Panel(new Rectangle(Config.ScreenContentMargin, sectionTop, sectionDivisionLeft - (Config.ScreenContentMargin * 2), sectionHeight))
                 .AddToScreen();
 
-            var labelOptions = new Label(ContentHandler.Instance.SpriteFontArial, "Options", Vector2.Zero, Color.Yellow)
+            var labelOptions = new Label(ContentHandler.Instance.Font, "Options", Vector2.Zero, Color.Yellow)
                 .SetAnchor(Enums.Anchor.TopCenter)
                 .AddToScreen(container);
 
@@ -132,7 +132,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
                 .SetMousePressedTexture(ContentHandler.Instance.TextureButtonBackgroundPressed)
                 .AddOnClick(PlayStopButtonClick);
 
-            playStopLabel = new Label(ContentHandler.Instance.SpriteFontArial, "Stop", Vector2.Zero, Color.White)
+            playStopLabel = new Label(ContentHandler.Instance.Font, "Stop", Vector2.Zero, Color.White)
                 .AddToScreen(playStopButton)
                 .SetScale(0.75f)
                 .SetAnchor(Enums.Anchor.Center);
@@ -144,14 +144,14 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
                 .SetMousePressedTexture(ContentHandler.Instance.TextureButtonBackgroundPressed)
                 .AddOnClick(ResetAnimationButtonClick);
 
-            new Label(ContentHandler.Instance.SpriteFontArial, "Reset Animation", Vector2.Zero, Color.White)
+            new Label(ContentHandler.Instance.Font, "Reset Animation", Vector2.Zero, Color.White)
                 .AddToScreen(resetAnimationButton)
                 .SetScale(0.75f)
                 .SetAnchor(Enums.Anchor.Center);
 
             posY += playStopButton.Size.Y + 5;
 
-            var setFrameLabel = new Label(ContentHandler.Instance.SpriteFontArial, "Set Frame: ", new Vector2(0, posY), Color.Yellow)
+            var setFrameLabel = new Label(ContentHandler.Instance.Font, "Set Frame: ", new Vector2(0, posY), Color.Yellow)
                 .AddToScreen(container);
             selectFramePanel = new Panel()
                 .AddToScreen(container)
@@ -159,7 +159,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             UpdateSelectFramePanel();
             posY += marginTop;
 
-            var setCycleLabel = new Label(ContentHandler.Instance.SpriteFontArial, "Set Cycle: ", new Vector2(0, posY), Color.Yellow)
+            var setCycleLabel = new Label(ContentHandler.Instance.Font, "Set Cycle: ", new Vector2(0, posY), Color.Yellow)
                 .AddToScreen(container);
             selectCyclePanel = new Panel()
                 .AddToScreen(container)
@@ -167,7 +167,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             UpdateSelectCyclePanel();
             posY += marginTop;
 
-            var setSpriteAnimationInfoLabel = new Label(ContentHandler.Instance.SpriteFontArial, "Set Sprite: ", new Vector2(0, posY), Color.Yellow)
+            var setSpriteAnimationInfoLabel = new Label(ContentHandler.Instance.Font, "Set Sprite: ", new Vector2(0, posY), Color.Yellow)
                 .AddToScreen(container);
             var posX = setSpriteAnimationInfoLabel.Size.X + 5;
             for (var i = 0; i < spriteAnimationsInfo.Count; i++)
@@ -298,7 +298,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
                         .AddOnClick(args => onClick(index));
                 }
 
-                new Label(ContentHandler.Instance.SpriteFontArial, i.ToString(), Vector2.Zero, Color.White)
+                new Label(ContentHandler.Instance.Font, i.ToString(), Vector2.Zero, Color.White)
                     .AddToScreen(framePanel)
                     .SetScale(0.5f)
                     .SetAnchor(Enums.Anchor.Center);

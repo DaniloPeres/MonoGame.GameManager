@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework.Audio;
+﻿using FontStashSharp;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Media;
@@ -26,7 +27,17 @@ namespace MonoGame.GameManager.Managers
 
         Texture2D LoadTexture2D(string assetName);
 
-        SpriteFont LoadSpriteFont(string assetName);
+        /// <summary>
+        /// Loads (and caches) a FontStashSharp font system from TrueType/OpenType files copied to the content folder
+        /// (eg: <c>/copy:Fonts/Roboto-Regular.ttf</c> in the .mgcb). The first file is the main font and the others
+        /// are fallbacks for the characters it does not have. The font system supports colored outlines
+        /// (<see cref="Text.TextOutline"/>) and is released with the loader.
+        /// </summary>
+        /// <param name="relativePaths">The font files, relative to the content root directory.</param>
+        FontSystem LoadFontSystem(params string[] relativePaths);
+
+        /// <summary>Loads a font file with <see cref="LoadFontSystem"/> and returns the font of <paramref name="size"/> pixels.</summary>
+        SpriteFontBase LoadFont(string relativePath, float size);
 
         SoundEffect LoadSoundEffect(string assetName);
 

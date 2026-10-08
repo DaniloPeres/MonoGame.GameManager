@@ -1,12 +1,15 @@
-﻿using Microsoft.Xna.Framework;
+﻿using FontStashSharp;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Media;
 using MonoGame.GameManager.Controls.Sprites;
 using MonoGame.GameManager.Pipeline;
+using MonoGame.GameManager.Text;
 using System;
 using System.IO;
+using System.Linq;
 
 namespace MonoGame.GameManager.Managers
 {
@@ -17,6 +20,7 @@ namespace MonoGame.GameManager.Managers
     {
         private const string SpriteAnimationCachePrefix = "sprite-animation:";
         private const string FileTextureCachePrefix = "file-texture:";
+        private const string FontSystemCachePrefix = "font-system:";
 
         private readonly bool ownsContentManager;
         private bool isDisposed;
@@ -44,7 +48,40 @@ namespace MonoGame.GameManager.Managers
 
         public Texture2D LoadTexture2D(string assetName) => Load<Texture2D>(assetName);
 
-        public SpriteFont LoadSpriteFont(string assetName) => Load<SpriteFont>(assetName);
+        public FontSystem LoadFontSystem(params string[] relativePaths)
+        {
+            if (relativePaths == null || relativePaths.Length == 0 || relativePaths.Any(string.IsNullOrEmpty))
+                throw new ArgumentException("Set at least one font file, without empty paths.", nameof(relativePaths));
+
+            var key = FontSystemCachePrefix + string.Join("|", relativePaths.Select(NormalizePath));
+            if (Cache.TryGet(key, out FontSystem fontSystem))
+                return fontSystem;
+
+            fontSystem = new FontSystem(TextOutline.CreateFontSystemSettings());
+            try
+            {
+                foreach (var relativePath in relativePaths)
+                {
+                    using (var stream = OpenStream(relativePath))
+                        fontSystem.AddFont(stream);
+                }
+            }
+            catch
+            {
+                fontSystem.Dispose();
+                throw;
+            }
+
+            Cache.Add(key, fontSystem, disposeOnClear: true);
+            return fontSystem;
+        }
+
+        public SpriteFontBase LoadFont(string relativePath, float size)
+        {
+            if (size <= 0f)
+                throw new ArgumentOutOfRangeException(nameof(size), "Set a font size greater than zero.");
+            return LoadFontSystem(relativePath).GetFont(size);
+        }
 
         public SoundEffect LoadSoundEffect(string assetName) => Load<SoundEffect>(assetName);
 

@@ -6,7 +6,7 @@ namespace MonoGame.GameManager.Text
 {
     /// <summary>
     /// Splits a text into lines that fit a width (word wrap). It does not depend on a font: the width of a text is
-    /// measured by a function, eg: <c>text =&gt; spriteFont.MeasureString(text).X</c>.
+    /// measured by a function, eg: <c>text =&gt; font.MeasureString(text).X</c>.
     /// </summary>
     public static class TextWrapper
     {

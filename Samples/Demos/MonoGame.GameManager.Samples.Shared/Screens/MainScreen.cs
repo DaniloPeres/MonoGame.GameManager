@@ -1,6 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.GameManager.Controls;
+using MonoGame.GameManager.Controls.Effects;
+using MonoGame.GameManager.Controls.Shading;
 using MonoGame.GameManager.Services;
 using MonoGame.GameManager.Screens;
 using MonoGame.GameManager.Samples.Services;
@@ -103,8 +105,112 @@ namespace MonoGame.GameManager.Samples.Screens
             AddParticlesButton(new Vector2(posX, posY));
             posX += textureButtonDefault.Width + MarginOptions;
             AddSliderButton(new Vector2(posX, posY));
+            posX += textureButtonDefault.Width + MarginOptions;
+            AddButtonEffectsButton(new Vector2(posX, posY));
+            posX += textureButtonDefault.Width + MarginOptions;
+            AddGlowAndShadowButton(new Vector2(posX, posY));
+            posX += textureButtonDefault.Width + MarginOptions;
+            AddButtonCatalogButton(new Vector2(posX, posY));
+            posX += textureButtonDefault.Width + MarginOptions;
+            AddTextEffectsButton(new Vector2(posX, posY));
 
             posY += textureButtonDefault.Height;
+        }
+
+        private void AddTextEffectsButton(Vector2 pos)
+        {
+            var button = AddOptionButton(pos, "Text Effects", TextEffectsScreen.OpenTextEffectsScreen);
+
+            // The glow is added to what is below it: it shines better on a dark background.
+            new RectangleControl(new Rectangle(0, -12, 132, 84), new Color(55, 105, 150))
+                .SetAnchor(Enums.Anchor.Center)
+                .AddToScreen(button);
+
+            new Label(ContentHandler.Instance.FontAlfaSlabOne, "Map", Vector2.Zero, Color.White)
+                .SetScale(1.3f)
+                .SetOriginRate(new Vector2(0.5f))
+                .SetAnchor(Enums.Anchor.Center)
+                .SetPosition(0, -14)
+                .AddShadings(ShadingPresets.GoldMap())
+                .AddToScreen(button);
+        }
+
+        private void AddButtonCatalogButton(Vector2 pos)
+        {
+            var button = AddOptionButton(pos, $"{ButtonCatalog.Count} Buttons", ButtonCatalogScreen.OpenButtonCatalogScreen);
+
+            // The lights are added to what is below them: they shine better on a dark background.
+            new RectangleControl(new Rectangle(0, -12, 132, 84), new Color(12, 14, 28))
+                .SetAnchor(Enums.Anchor.Center)
+                .AddToScreen(button);
+
+            // One small button per color family, in two columns. They ignore the pointer, so a click anywhere on the
+            // tile opens the screen.
+            var presets = new[] { "Galaxy", "Starlight", "Fairy", "Ornate", "Treasure" };
+            for (var i = 0; i < ButtonCatalog.Families.Length; i++)
+            {
+                var family = ButtonCatalog.Families[i];
+                var x = i == ButtonCatalog.Families.Length - 1 && i % 2 == 0 ? 0 : (i % 2 == 0 ? -31 : 31);
+                var sample = new Button(Vector2.Zero, new Vector2(56, 18), family.Swatch)
+                    .SetCornerRadius(9)
+                    .SetText(ContentHandler.Instance.Font, family.Name, Color.White)
+                    .AddEffects(ButtonEffectPresets.Create(presets[i]))
+                    .SetAcceptedMouseButtons(MouseButtons.None)
+                    .SetAnchor(Enums.Anchor.Center)
+                    .SetPosition(x, -38 + i / 2 * 26)
+                    .AddToScreen(button);
+                sample.TextLabel.SetScale(0.34f)
+                    .AddShadings(new Shadow(new Vector2(0, 2), 2, Color.Black * 0.6f), new Glow(Color.White, 6).SetIntensity(0.5f));
+            }
+        }
+
+        private void AddButtonEffectsButton(Vector2 pos)
+        {
+            var button = AddOptionButton(pos, "Button Effects", ButtonEffectsScreen.OpenButtonEffectsScreen);
+
+            // The lights are added to what is below them: they shine better on a dark background.
+            new RectangleControl(new Rectangle(0, -12, 132, 84), new Color(12, 16, 30))
+                .SetAnchor(Enums.Anchor.Center)
+                .AddToScreen(button);
+
+            // The glowing button ignores the pointer, so a click anywhere on the tile opens the screen.
+            var playButton = new Button(Vector2.Zero, new Vector2(100, 40), new Color(150, 90, 20))
+                .SetCornerRadius(20)
+                .SetText(ContentHandler.Instance.Font, "PLAY", Color.White)
+                .AddEffects(ButtonEffectPresets.Gold())
+                .SetAcceptedMouseButtons(MouseButtons.None)
+                .SetAnchor(Enums.Anchor.Center)
+                .SetPosition(0, -12)
+                .AddToScreen(button);
+            playButton.TextLabel.SetScale(0.7f);
+        }
+
+        private void AddGlowAndShadowButton(Vector2 pos)
+        {
+            var button = AddOptionButton(pos, "Glow & Shadow", GlowAndShadowScreen.OpenGlowAndShadowScreen);
+            var font = ContentHandler.Instance.Font;
+
+            // The glows are added to what is below them: they shine better on a dark background.
+            new RectangleControl(new Rectangle(0, -12, 132, 84), new Color(12, 10, 24))
+                .SetAnchor(Enums.Anchor.Center)
+                .AddToScreen(button);
+
+            new Label(font, "GLOW", Vector2.Zero, new Color(255, 225, 250))
+                .SetScale(1.1f)
+                .SetOriginRate(new Vector2(0.5f))
+                .SetAnchor(Enums.Anchor.Center)
+                .SetPosition(0, -30)
+                .AddShadings(ShadingPresets.Neon(ShadingPresets.NeonPink))
+                .AddToScreen(button);
+
+            new Label(font, "Shadow", Vector2.Zero, new Color(255, 220, 40))
+                .SetScale(1.05f)
+                .SetOriginRate(new Vector2(0.5f))
+                .SetRotationInDegree(-5)
+                .SetAnchor(Enums.Anchor.Center)
+                .SetPosition(0, 4)
+                .AddShadings(ShadingPresets.Comic())
+                .AddToScreen(button);
         }
 
         private void AddParticlesButton(Vector2 pos)
@@ -274,7 +380,7 @@ namespace MonoGame.GameManager.Samples.Screens
 
         private void AddTitle(int posY, string title)
         {
-            new Label(ContentHandler.Instance.SpriteFontArial, title, new Vector2(Config.ScreenContentMargin, posY), Color.Yellow)
+            new Label(ContentHandler.Instance.Font, title, new Vector2(Config.ScreenContentMargin, posY), Color.Yellow)
                 .SetScale(1.1f)
                 .AddToScreen();
         }
@@ -299,7 +405,7 @@ namespace MonoGame.GameManager.Samples.Screens
                 .AddOnClick(env => onClick())
                 .AddToScreen();
 
-            new MultiLineLabel(ContentHandler.Instance.SpriteFontArial, title, new Vector2(0, 5), Color.DarkBlue,(int)optionButton.Size.X)
+            new MultiLineLabel(ContentHandler.Instance.Font, title, new Vector2(0, 5), Color.DarkBlue,(int)optionButton.Size.X)
                 .SetTextAlign(Enums.TextAlign.Center)
                 .SetScale(0.75f)
                 .SetAnchor(Enums.Anchor.BottomCenter)

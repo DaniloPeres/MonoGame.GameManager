@@ -28,7 +28,7 @@ namespace MonoGame.GameManager.Samples.ScreenComponents
             var textPanel = new Panel(position, new Vector2(35, 35))
                 .AddToScreen(container);
 
-            labelValue = new Label(ContentHandler.Instance.SpriteFontArial, value.ToString(), Vector2.Zero, Color.White)
+            labelValue = new Label(ContentHandler.Instance.Font, value.ToString(), Vector2.Zero, Color.White)
                 .AddToScreen(textPanel)
                 .SetScale(0.7f)
                 .SetAnchor(Enums.Anchor.Center);

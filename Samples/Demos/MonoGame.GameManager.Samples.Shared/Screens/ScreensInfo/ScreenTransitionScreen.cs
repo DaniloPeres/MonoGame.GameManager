@@ -57,7 +57,7 @@ namespace MonoGame.GameManager.Samples.Screens.ScreensInfo
                    MainScreen.OpenMainScreen();
                });
 
-            new Label(ContentHandler.Instance.SpriteFontArial, "No transition", Vector2.Zero, Color.White)
+            new Label(ContentHandler.Instance.Font, "No transition", Vector2.Zero, Color.White)
                 .AddToScreen(noTransitionButton)
                 .SetScale(0.75f)
                 .SetAnchor(Enums.Anchor.Center);
@@ -77,7 +77,7 @@ namespace MonoGame.GameManager.Samples.Screens.ScreensInfo
 
             var screenBackground = new RectangleControl(Vector2.Zero, transitionContainer.Size, Color.White)
                 .AddToScreen(transitionContainer);
-            var screenText = new Label(ContentHandler.Instance.SpriteFontArial, "", Vector2.Zero, Color.Black)
+            var screenText = new Label(ContentHandler.Instance.Font, "", Vector2.Zero, Color.Black)
                 .AddToScreen(transitionContainer)
                 .SetScale(1.6f)
                 .SetAnchor(Enums.Anchor.Center);
@@ -111,7 +111,7 @@ namespace MonoGame.GameManager.Samples.Screens.ScreensInfo
                    MainScreen.OpenMainScreen();
                });
 
-            new Label(ContentHandler.Instance.SpriteFontArial, "Fade transition", Vector2.Zero, Color.White)
+            new Label(ContentHandler.Instance.Font, "Fade transition", Vector2.Zero, Color.White)
                 .AddToScreen(noTransitionButton)
                 .SetScale(0.75f)
                 .SetAnchor(Enums.Anchor.Center);
@@ -131,7 +131,7 @@ namespace MonoGame.GameManager.Samples.Screens.ScreensInfo
 
             var screenBackground = new RectangleControl(Vector2.Zero, transitionContainer.Size, Color.White)
                 .AddToScreen(transitionContainer);
-            var screenText = new Label(ContentHandler.Instance.SpriteFontArial, "", Vector2.Zero, Color.Black)
+            var screenText = new Label(ContentHandler.Instance.Font, "", Vector2.Zero, Color.Black)
                 .AddToScreen(transitionContainer)
                 .SetScale(1.6f)
                 .SetAnchor(Enums.Anchor.Center);

@@ -100,7 +100,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
 
         private void CreateMenu()
         {
-            var font = ContentHandler.Instance.SpriteFontArial;
+            var font = ContentHandler.Instance.Font;
             var menu = new Panel(new Rectangle(Config.ScreenContentMargin, SectionTop, MenuWidth, SectionHeight))
                 .AddToScreen();
 
@@ -245,7 +245,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
 
             var fire = new Button(new Vector2(StageWidth / 2f - 70, 16), new Vector2(140, 44), new Color(200, 60, 60))
                 .SetBorder(Color.White, 2)
-                .SetText(ContentHandler.Instance.SpriteFontArial, "Fire!", Color.White)
+                .SetText(ContentHandler.Instance.Font, "Fire!", Color.White)
                 .AddOnClick(args => FireConfetti(muzzle, -40f))
                 .AddToScreen(sceneRoot);
             fire.TextLabel.SetScale(0.8f);
@@ -393,7 +393,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
                 .SetIsPingPong(true)
                 .Play();
 
-            new Label(ContentHandler.Instance.SpriteFontArial, text, new Vector2(20, position.Y - 60), Color.Gray)
+            new Label(ContentHandler.Instance.Font, text, new Vector2(20, position.Y - 60), Color.Gray)
                 .SetScale(0.65f)
                 .AddToScreen(sceneRoot);
         }
@@ -419,7 +419,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
 
         private void Hint(string text)
         {
-            new Label(ContentHandler.Instance.SpriteFontArial, text, new Vector2(12, 10), Color.Gray)
+            new Label(ContentHandler.Instance.Font, text, new Vector2(12, 10), Color.Gray)
                 .SetScale(0.65f)
                 .AddToScreen(sceneRoot);
         }

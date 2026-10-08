@@ -13,7 +13,7 @@ namespace MonoGame.GameManager.Samples.ScreenComponents
             var marginLeft = 10;
             var posX = 0f;
 
-            var anchorLabel = new Label(ContentHandler.Instance.SpriteFontArial, $"{text}: ", new Vector2(posX, posY + 46), Color.Yellow)
+            var anchorLabel = new Label(ContentHandler.Instance.Font, $"{text}: ", new Vector2(posX, posY + 46), Color.Yellow)
                 .AddToScreen(container);
             posX += anchorLabel.Size.X + marginLeft;
 
@@ -44,7 +44,7 @@ namespace MonoGame.GameManager.Samples.ScreenComponents
                             OnAnchorSelected(anchor);
                         });
 
-                    new Label(ContentHandler.Instance.SpriteFontArial, anchor.ToString(), Vector2.Zero, Color.White)
+                    new Label(ContentHandler.Instance.Font, anchor.ToString(), Vector2.Zero, Color.White)
                         .AddToScreen(anchorContainer)
                         .SetScale(0.65f)
                         .SetAnchor(Anchor.Center);

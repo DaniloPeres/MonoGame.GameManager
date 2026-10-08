@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using FontStashSharp;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.GameManager.Controls.InputEvent;
 using MonoGame.GameManager.Controls.Interfaces;
@@ -25,10 +26,10 @@ namespace MonoGame.GameManager.Controls
         private Label label;
         private ScheduledAction pendingShow;
 
-        private Tooltip(IControl target, SpriteFont spriteFont, string text, float delaySeconds)
+        private Tooltip(IControl target, SpriteFontBase font, string text, float delaySeconds)
         {
             this.target = target;
-            SpriteFont = spriteFont;
+            Font = font;
             Text = text ?? string.Empty;
             DelaySeconds = delaySeconds;
 
@@ -37,7 +38,7 @@ namespace MonoGame.GameManager.Controls
             target.Disposed += OnTargetDisposed;
         }
 
-        public SpriteFont SpriteFont { get; set; }
+        public SpriteFontBase Font { get; set; }
 
         public string Text { get; set; }
 
@@ -59,13 +60,13 @@ namespace MonoGame.GameManager.Controls
         public bool IsVisible => panel != null && !panel.IsDisposed;
 
         /// <summary>Shows <paramref name="text"/> near <paramref name="target"/> while the pointer stays over it.</summary>
-        public static Tooltip Attach(IControl target, SpriteFont spriteFont, string text, float delaySeconds = 0.5f)
+        public static Tooltip Attach(IControl target, SpriteFontBase font, string text, float delaySeconds = 0.5f)
         {
             if (target == null)
                 throw new ArgumentNullException(nameof(target));
-            if (spriteFont == null)
-                throw new ArgumentNullException(nameof(spriteFont));
-            return new Tooltip(target, spriteFont, text, delaySeconds);
+            if (font == null)
+                throw new ArgumentNullException(nameof(font));
+            return new Tooltip(target, font, text, delaySeconds);
         }
 
         public Tooltip SetStyle(Color background, Color text, Color border)
@@ -96,7 +97,7 @@ namespace MonoGame.GameManager.Controls
             if (root == null || target.IsDisposed || string.IsNullOrEmpty(Text))
                 return;
 
-            label = new Label(SpriteFont, Text, new Vector2(Padding.Left, Padding.Top), TextColor).SetScale(TextScale);
+            label = new Label(Font, Text, new Vector2(Padding.Left, Padding.Top), TextColor).SetScale(TextScale);
             var size = label.Size + new Vector2(Padding.Horizontal, Padding.Vertical);
             panel = new Panel(GetPosition(size, root), size)
                 .SetBackgroundColor(BackgroundColor)

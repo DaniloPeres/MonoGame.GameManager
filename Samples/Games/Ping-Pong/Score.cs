@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using FontStashSharp;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.GameManager.Animations;
 using MonoGame.GameManager.Controls;
@@ -8,7 +9,7 @@ namespace Ping_Pong
 {
     public class Score
     {
-        private readonly SpriteFont spriteFont;
+        private readonly SpriteFontBase font;
         private int playerScore;
         private int computerScore;
 
@@ -16,9 +17,9 @@ namespace Ping_Pong
             labelPlayerScore,
             labelComputerScore;
 
-        public Score(SpriteFont spriteFont)
+        public Score(SpriteFontBase font)
         {
-            this.spriteFont = spriteFont;
+            this.font = font;
             CreateScoreUI();
         }
 
@@ -32,13 +33,13 @@ namespace Ping_Pong
 
             var panelPlayerScore = new Panel(new Rectangle(0, 0, panelWidth, screenSize.Y))
                 .AddToScreen();
-            labelPlayerScore = new Label(spriteFont, "0", new Vector2(0, textMarginTop), Color.White)
+            labelPlayerScore = new Label(font, "0", new Vector2(0, textMarginTop), Color.White)
                 .SetAnchor(MonoGame.GameManager.Enums.Anchor.TopCenter)
                 .AddToScreen(panelPlayerScore);
 
             var panelComputerScore = new Panel(new Rectangle(panelWidth, 0, panelWidth, screenSize.Y))
                 .AddToScreen();
-            labelComputerScore = new Label(spriteFont, "0", new Vector2(0, textMarginTop), Color.White)
+            labelComputerScore = new Label(font, "0", new Vector2(0, textMarginTop), Color.White)
                 .SetAnchor(MonoGame.GameManager.Enums.Anchor.TopCenter)
                 .AddToScreen(panelComputerScore);
         }

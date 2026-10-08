@@ -17,10 +17,10 @@ namespace MonoGame.GameManager.Samples.ScreenComponents
         public static void CreateColorOption(Panel container, float posY, Action<Color> OnColorSelected, string label = "Color", List<Color> colors = null, bool showBorder = false,
             float textScale = 1f, int squareSize = 35, float? squaresLeft = null)
         {
-            var font = ContentHandler.Instance.SpriteFontArial;
+            var font = ContentHandler.Instance.Font;
             var marginLeft = squareSize < 35 ? 6 : 10;
             var posX = 0f;
-            var labelY = textScale < 1f ? posY + (float)System.Math.Round((squareSize - font.LineSpacing * textScale) / 2f) : posY;
+            var labelY = textScale < 1f ? posY + (float)System.Math.Round((squareSize - font.LineHeight * textScale) / 2f) : posY;
 
             var colorLabel = new Label(font, squaresLeft.HasValue ? label : $"{label}: ", new Vector2(posX, labelY), Color.Yellow)
                 .SetScale(textScale)

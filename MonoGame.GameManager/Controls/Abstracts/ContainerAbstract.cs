@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.GameManager.Controls.Interfaces;
+using MonoGame.GameManager.Controls.Shading;
 using MonoGame.GameManager.Services;
 using System;
 using System.Collections.Generic;
@@ -171,6 +172,9 @@ namespace MonoGame.GameManager.Controls.Abstracts
                 RenderChildrenToTarget();
             else
                 ReleaseRenderTarget();
+
+            // After the children: the silhouette of the container includes them.
+            PrepareShading();
         }
 
         public override void Draw(SpriteBatch spriteBatch)
@@ -307,7 +311,7 @@ namespace MonoGame.GameManager.Controls.Abstracts
             {
                 var child = items[i];
                 if (child.IsVisible && ReferenceEquals(child.Parent, this))
-                    child.Draw(spriteBatch);
+                    ShadingRenderer.DrawControl(child, spriteBatch);
             }
         }
 

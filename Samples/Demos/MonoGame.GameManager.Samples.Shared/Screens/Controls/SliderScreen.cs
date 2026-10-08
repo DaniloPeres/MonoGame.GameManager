@@ -105,7 +105,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             var container = new Panel(new Rectangle(Config.ScreenContentMargin, SectionTop, OptionsWidth, SectionHeight))
                 .AddToScreen();
 
-            new Label(ContentHandler.Instance.SpriteFontArial, "Options", Vector2.Zero, Color.Yellow)
+            new Label(ContentHandler.Instance.Font, "Options", Vector2.Zero, Color.Yellow)
                 .SetAnchor(Enums.Anchor.TopCenter)
                 .AddToScreen(container);
 
@@ -152,7 +152,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
 
         private void CreatePreviewSection()
         {
-            var font = ContentHandler.Instance.SpriteFontArial;
+            var font = ContentHandler.Instance.Font;
             var container = new Panel(new Rectangle(PreviewLeft, SectionTop, PreviewWidth, SectionHeight))
                 .AddToScreen();
 
@@ -221,7 +221,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
 
         private void CreateExamples(Panel container)
         {
-            var font = ContentHandler.Instance.SpriteFontArial;
+            var font = ContentHandler.Instance.Font;
             var examples = new Panel(new Rectangle(0, ExamplesTop, PreviewWidth, SectionHeight - ExamplesTop))
                 .AddToScreen(container);
             new RectangleControl(Vector2.Zero, examples.Size, StageColor)
@@ -237,7 +237,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
 
         private void CreateColorMixer(Panel examples)
         {
-            var font = ContentHandler.Instance.SpriteFontArial;
+            var font = ContentHandler.Instance.Font;
             new Label(font, "Color mixer", new Vector2(16, 44), Color.Gray)
                 .SetScale(0.65f)
                 .AddToScreen(examples);
@@ -289,7 +289,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
 
         private void CreateVolumeFader(Panel examples)
         {
-            var font = ContentHandler.Instance.SpriteFontArial;
+            var font = ContentHandler.Instance.Font;
             new Label(font, "Stepped volume", new Vector2(268, 44), Color.Gray)
                 .SetScale(0.65f)
                 .AddToScreen(examples);
@@ -309,7 +309,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
 
         private void CreateImageSize(Panel examples)
         {
-            var font = ContentHandler.Instance.SpriteFontArial;
+            var font = ContentHandler.Instance.Font;
             var title = new Label(font, "Image size: 1.00x", new Vector2(412, 44), Color.Gray)
                 .SetScale(0.65f)
                 .AddToScreen(examples);
