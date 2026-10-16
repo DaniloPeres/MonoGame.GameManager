@@ -76,7 +76,9 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             }, showBorder: true);
             posY += 55;
             SliderOption.CreateSliderOption(container, "Thickness:", posY, 0f, 10f, 0f, thickness => labelPreview.OutlineThickness = thickness, 0.5f, "{0:0.0}", 1f);
-            posY += 55;
+            posY += 45;
+            SliderOption.CreateSliderOption(container, "Letter spacing:", posY, -5f, 20f, 0f, spacing => labelPreview.CharacterSpacing = spacing, 0.5f, "{0:0.0}", 1f);
+            posY += 50;
             LastEventsInfo.AddLastEventsInfo(container, posY, labelPreview);
         }
 

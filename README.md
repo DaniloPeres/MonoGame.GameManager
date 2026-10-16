@@ -23,6 +23,7 @@ Version 2.0 is a complete review of the library. [CHANGES.md](https://github.com
   - [Button](#button)
   - [Button effects](#button-effects)
   - [Glow and shadow](#glow-and-shadow)
+  - [Casual game titles](#casual-game-titles-gradients-bevels-stacked-outlines)
   - [Image](#image)
   - [Fonts](#fonts)
   - [Label](#label)
@@ -298,6 +299,59 @@ title.SetShadings(ShadingPresets.Create("Gold Title"));
 | `Glow` | behind, added light | A halo that fades over a `Radius` around the silhouette (`Spread` makes its core thicker). `SetLayer(ShadingLayer.Front)` also draws it over the control (a bloom); `SetBlend(ShadingBlend.Normal)` paints it (a dark aura on light backgrounds). |
 | `Outline` | behind, painted | A border of a `Thickness` around the silhouette, crisp or soft (`Softness`). Stack two outlines for a double border. |
 | `Shine` | front, added light | A slanted band of light (`Width`, `Angle`) that sweeps across the silhouette every few seconds (`SetTiming(duration, interval)`): gold titles, coins, gems, scan lines. |
+| `GradientFill` | content (instead of the control), painted | Paints the silhouette with a gradient of two or more colors (`SetColors`, `SetPositions`), at an `Angle` (90 = top to bottom), over the box of the glyphs (`GradientBounds.Content`) or the whole control, between `SetRange(start, end)`. `SetHardness` makes hard edges (two-tone, stripes); `SetScroll` makes it flow. |
+| `InnerShadow` | front, painted | A shadow inside the silhouette, on the edges its `Offset` moves away from (the default offset, down, shades the top of the letters). With a light color and `ShadingBlend.Light` it is an inner highlight. |
+| `InnerGlow` | front, added light | A glow inside the silhouette, along all its edges, over a `Radius` (ice, glass, magic rims). |
+| `GradientOverlay` | front, painted | A gradient of transparent colors over the silhouette: the glossy band of game titles (`GradientOverlay.Band`, `ShadingPresets.Gloss()`), a darker bottom, gem facets, and stripes or scan lines with `SetRepeat()` (and `SetScroll` to move them). |
+| `PatternOverlay` | front, painted | A tiled pattern over the silhouette (`ShadingPattern`: `Noise`, `Dots`, `Checker`, `Diagonal`, `Grid`, `Scales`, `ScanLines`, `Blotches`), sized by `TileSize`, that can move (`SetScroll`): stone and metal grain, polka dots, halftone, dragon scales, sci-fi panels. |
+| `Sparkles` | front, added light | Star glints scattered over the glyphs (`Count`, `Size`, `Seed`) that twinkle (`SetTwinkle`); their rays can go a little outside the letters (`Spill`). |
+
+### Casual game titles: gradients, bevels, stacked outlines
+
+`GradientFill`, `InnerShadow` and `InnerGlow` build the titles of casual games. `ShadingPresets.Bevel(highlight, shade, depth, softness)` returns two inner shadows: a light top edge and a dark bottom edge. Outlines stack: add the thickest first.
+
+```csharp
+// The golden "Map" of a casual game: a cream to gold to orange gradient, a light bevel, a thick dark brown outline,
+// a dark shadow below and a warm glow around (this is ShadingPresets.GoldMap()).
+new Label(alfaSlabOne, "Map", new Vector2(200, 100), Color.White)
+    .SetScale(3f)
+    .AddShading(new Shadow(new Vector2(0, 5), 3, Color.Black * 0.55f).SetSpread(3.5f))
+    .AddShading(new Glow(new Color(255, 170, 40), 14).SetIntensity(0.8f))
+    .AddShading(new Outline(new Color(75, 32, 6), 3.5f))
+    .AddShading(new GradientFill(new Color(255, 252, 220), new Color(255, 222, 100), new Color(242, 150, 22)).SetPositions(0f, 0.45f, 1f))
+    .AddShadings(ShadingPresets.Bevel(new Color(255, 255, 240) * 0.85f, new Color(150, 60, 0) * 0.55f, 1.5f, 1.2f))
+    .AddToScreen();
+
+// Ice: two stacked outlines, a gradient and an inner glow
+new Label(font, "FROZEN", new Vector2(200, 250), Color.White)
+    .AddShadings(
+        new Outline(new Color(20, 60, 130), 3),
+        new Outline(new Color(210, 245, 255), 1.5f),
+        new GradientFill(Color.White, new Color(150, 230, 255), new Color(40, 130, 230)),
+        new InnerGlow(new Color(200, 245, 255), 3))
+    .AddToScreen();
+
+// Many effects inside the letters: a metal fill, grain, a gloss band, a bevel, a light rim and twinkling stars.
+new Label(cinzelDecorative, "Nimavora", new Vector2(200, 400), Color.White)
+    .AddShadings(
+        new Shadow(new Vector2(0, 5), 5, Color.Black * 0.6f).SetSpread(4),
+        new Glow(new Color(60, 120, 255), 18),
+        new Outline(new Color(12, 16, 50), 5),
+        new Outline(new Color(120, 70, 20), 2.5f),
+        new GradientFill(new Color(255, 252, 215), new Color(245, 190, 70), new Color(150, 80, 20), new Color(255, 225, 130), new Color(200, 120, 30))
+            .SetPositions(0f, 0.42f, 0.5f, 0.62f, 1f).SetHardness(0.3f),
+        new PatternOverlay(ShadingPattern.Noise, new Color(120, 60, 0) * 0.25f, 6),
+        ShadingPresets.Gloss(0.4f, 0.45f),
+        new InnerGlow(new Color(255, 250, 220), 1.5f).SetIntensity(0.7f),
+        new Sparkles(Color.White, 12, 20).SetTwinkle(0.6f))
+    .AddToScreen();
+
+// Fill presets: Gold Map, Chrome, Ice Crystal, Candy Fill, Emerald, Sunset Fill, Lava (flowing), Holographic (flowing),
+// and the layered Fantasy Logo, Arena Title and Hero Title
+title.SetShadings(ShadingPresets.Create("Chrome"));
+```
+
+The fill is drawn in the `ShadingLayer.Content` layer, instead of the control: the colors of the control do not show, only its silhouette is used. It is rendered into a render target with the other shapes (the silhouette as alpha, the colors of a small gradient texture written over the whole target, so the edges of the glyphs never blend with another color) and kept until the text or the options change; its intensity, pulse and flicker are free, and a scrolling fill is rendered again in small steps. The angle of a fill and the offset of an inner shadow are in the local space of the control: they turn with it. The built-in outline of a label (`Label.SetOutline`) is part of the silhouette, so a fill covers it: use an `Outline` effect with a fill. `GradientOverlay`, `PatternOverlay` and `Sparkles` are rendered the same way and only change when their options change (a scrolling overlay or pattern and twinkling sparkles are rendered again in small steps). The silhouette is captured with the swashes of decorative fonts that go past the measured width of the text. No shader is used, so the effects work the same on DesktopGL and Android.
 
 Every effect has a color (or a `ColorCycle`), an `Intensity` (above 1 makes soft glows and shadows denser) and an `Offset` that keeps its direction on the screen when the control rotates. Animations: `SetPulse` (dims and brightens), `SetFlicker` (smooth noise, like flames and old neon tubes), `SetBreathe` (grows and shrinks), `SetOrbit` (turns around a circle) and `SetColorCycle`; `SetTimeOffset` shifts them so stacked glows do not move in lockstep. The shape of each effect is rendered once into a render target (big blurs at a lower resolution) and drawn every frame until the control changes: its text, texture, frame, size, scale or alpha, or the shape options of the effect. The color, the animations and the rotation cost nothing. A custom control overrides `GetContentSignature` so its shading is not rendered every frame. The effects are drawn when the parent draws the control, and are skipped while a scroll viewer (or any parent that hides its overflow) hides it.
 
@@ -342,10 +396,13 @@ scoreLabel.SetText("Score: 100");
 // An outline around the glyphs, in font pixels: it grows with the scale and takes any color.
 new Label(font, "GAME OVER", new Vector2(0, 0), Color.Yellow)
     .SetOutline(Color.Black, 3)
+    .SetCharacterSpacing(4) // letter spacing, in font pixels (negative values bring the letters closer)
     .SetScale(2f)
     .SetAnchor(Anchor.Center)
     .AddToScreen();
 ```
+
+`CharacterSpacing` is part of the size of the label and grows with its scale. `MultiLineLabel` has the same `SetCharacterSpacing` (the lines are wrapped with it) and `SetOutline`. For gradients, bevels and stacked outlines, see [Casual game titles](#casual-game-titles-gradients-bevels-stacked-outlines).
 
 The fonts loaded with `LoadFontSystem`/`LoadFont` rasterize the outline once per size and thickness (round, any color, one draw). For a `FontSystem` created by hand, pass `TextOutline.CreateFontSystemSettings()` to get the same; otherwise the outline is drawn by repeating the text around its position.
 
@@ -863,6 +920,7 @@ Repository: https://github.com/DaniloPeres/MonoGame.GameManager/tree/main/Sample
 The samples need the .NET 10 SDK. The demos have a desktop head (`MonoGame.GameManager.Samples.WinExe`, DesktopGL, `net10.0`) and an Android head (`MonoGame.GameManager.Samples.Android`, `net10.0-android`, Android 10 or later, needs the `android` workload). The games are desktop only (DesktopGL, `net10.0`).
 
 The samples use the Roboto font (Apache 2.0), copied to the content folders. The content is built by the MonoGame content builder, a local .NET tool. Restore it once, from the repository root, before the first build:
+The samples use the Roboto font (Apache 2.0), copied to the content folders. The demos also use display fonts (license files next to them) under the SIL Open Font License: Alfa Slab One, Lilita One, Bangers, Press Start 2P, Audiowide, Creepster, Pacifico, Rye, Black Ops One, Monoton, Cinzel Decorative, Bungee, Kaushan Script and UnifrakturMaguntia, plus Luckiest Guy, Permanent Marker and Special Elite under the Apache 2.0 license. The content is built by the MonoGame content builder, a local .NET tool. Restore it once, from the repository root, before the first build:
 
 ```
 dotnet tool restore
@@ -887,6 +945,11 @@ The Glow & Shadow tile opens a preview where shadows, glows and outlines can be 
 - A scrolling gallery of 51 looks in four sections can be clicked to edit them: animated ones (a flickering neon sign, fire with three glows, a shining gold title, breathing ice, a rainbow, orbiting plasma, magic, toxic, a heartbeat, lightning, a sunset, a glitch), still ones (comic, candy, retro, emboss, long shadow), images and sprites (a shining golden star, a shiny coin, a burning torch, a plasma orb, a gem, a hologram with a scan line, stickers, a card), and a section of shadows and outlines without animation (drop, hard, floating and dark aura shadows, extruded 3D, letterpress, pop art, thin, thick, soft and triple outlines, outlined icons, sprites and stamps).
 
 A scrolling gallery shows 124 buttons in three sections: 27 rich static buttons, 60 glossy, candy and cartoon buttons, and 37 animated ones. They use every preset and some hand-made combinations (VIP, Mythic, Frozen, Soft UI, Wood, Comic) on buttons of many sizes, shapes and colors, and a toggle button whose lights turn on with it.
+
+The Text Effects tile opens a preview of a title whose text, font (Roboto and 17 display fonts: slab serif, rounded, comic, pixel, sci-fi, horror, script, western, stencil, neon tubes, marker, typewriter, blackletter...), size, rotation, opacity, letter spacing and stage color can be changed live, with a page per effect: Fill (gradient palettes, top, middle and bottom colors, angle, range, hardness, bounds and scroll), Outline (three stacked outlines), Inner (bevel, inner shadow and inner glow), Detail (three gradient overlays as gloss bands or stripes, a pattern and sparkles), Shadow (two), Glow (two), Shine and Motion (pulse, flicker, breathe and color cycles, an orbiting shadow, a moving bevel light, the game speed).
+- Reset goes back to the selected style, Random picks a style, a text, a font and a stage, and Plain text removes every effect.
+- A scrolling gallery of 205 styles in thirteen sections can be clicked to edit them. It opens with 50 layered titles that stack many effects inside the letters: 29 still ones (a fantasy gold logo with grain, rim and star glints, chunky arena and hero titles with gloss bands, a crown title, candy with polka dots, jelly, chrome with stripes, a racing checker, dragon scales, carved stone, wood grain, lava rock, a glacier, a sci-fi panel grid, a retro TV with scan lines, comic halftone, zebra stripes, marble, camouflage, cut gems, bronze, bubblegum, a golden plaque, spooky mist and toy plastic) and 21 animated ones (twinkling stars, moving casino lights, scrolling candy stripes, flowing magma, a hacker screen, a holographic grid, a cosmos, arcane runes, electric stripes, waves, treasure, a rainbow party, toxic bubbles, a royal shine, a disco checker, legendary loot and fairy dust). Then come 40 static ones (the golden "Map", silver, bronze, ruby, emerald, sapphire, ice, fire, poison, purple magic, candy, cartoon, comic pop, steel, chocolate, wood, stone, horror, retro 8-bit, sci-fi, rainbow, sunset, ocean, two-tone, embossed, pastel, VICTORY, DEFEAT, LEVEL UP, +100, COMBO x3, damage and critical hit numbers, heal, menu titles, a sticker and a boss fight) and 15 animated ones (a neon sign, blaze, lava, holographic, party, shiny gold, love, chill, toxic, spell, glitch, start, a moving light, a ghost and a victory parade), and 100 themed ones: Fantasy & RPG (dragon, elven, rune stone, legendary, epic, rare and common loot, quest complete, mana, health, kingdom, grimoire), Arcade & Retro (insert coin, high score, 1UP, neon marquee, synthwave, 80s chrome, vaporwave, pixel hero, press start, pinball, on air, 8-bit stripes), Cartoon & Comic (bubble, kaboom, zap, splat, wham, barber stripes, sugar rush, kids, toon shadow, doodle, marker note, smash), Horror & Dark (zombie, haunted, vampire, cursed, bones, hex, graveyard, nightmare, abyss, blood moon), Sci-fi & Neon (cyberpunk, laser, plasma core, warp, hologram, galaxy, neon signs, terminal, hazard stripes, mech, energy), Materials & Nature (marble, copper, platinum, obsidian, amber, jade, magma, waves, grass, snow, desert, forest, embers, crystal), Western & Vintage (wanted, saloon, sheriff, army, stencil stamp, typewriter, newspaper, telegram, motel sign, circus), Elegant & Script (wedding, royal, signature, luxury, calligraphy, brush, champagne, ink) and Seasons & Holidays (Christmas, candy cane, Halloween, spring, summer, autumn, winter, Valentine, new year, Easter).
+- The tiles get their effects only near the visible part of the gallery and release them (and their render targets) when scrolled far away.
 
 ## Samples - Games
 

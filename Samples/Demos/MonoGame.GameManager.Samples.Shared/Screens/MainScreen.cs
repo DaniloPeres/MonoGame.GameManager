@@ -111,8 +111,28 @@ namespace MonoGame.GameManager.Samples.Screens
             AddGlowAndShadowButton(new Vector2(posX, posY));
             posX += textureButtonDefault.Width + MarginOptions;
             AddButtonCatalogButton(new Vector2(posX, posY));
+            posX += textureButtonDefault.Width + MarginOptions;
+            AddTextEffectsButton(new Vector2(posX, posY));
 
             posY += textureButtonDefault.Height;
+        }
+
+        private void AddTextEffectsButton(Vector2 pos)
+        {
+            var button = AddOptionButton(pos, "Text Effects", TextEffectsScreen.OpenTextEffectsScreen);
+
+            // The glow is added to what is below it: it shines better on a dark background.
+            new RectangleControl(new Rectangle(0, -12, 132, 84), new Color(55, 105, 150))
+                .SetAnchor(Enums.Anchor.Center)
+                .AddToScreen(button);
+
+            new Label(ContentHandler.Instance.FontAlfaSlabOne, "Map", Vector2.Zero, Color.White)
+                .SetScale(1.3f)
+                .SetOriginRate(new Vector2(0.5f))
+                .SetAnchor(Enums.Anchor.Center)
+                .SetPosition(0, -14)
+                .AddShadings(ShadingPresets.GoldMap())
+                .AddToScreen(button);
         }
 
         private void AddButtonCatalogButton(Vector2 pos)
