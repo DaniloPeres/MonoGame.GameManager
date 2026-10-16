@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using MonoGame.GameManager.Controls.Interfaces;
 using System;
+using System.Linq.Expressions;
 using System.Reflection;
 
 namespace MonoGame.GameManager.Services.Inputs
@@ -178,7 +179,14 @@ namespace MonoGame.GameManager.Services.Inputs
                     if (!relay.IsValid)
                         return false;
 
-                    var handler = Delegate.CreateDelegate(handlerType, relay, typeof(Relay).GetMethod(nameof(Relay.Handle)));
+                    // (sender, args) => relay.Handle((object)args). Built as an expression because the arguments are a
+                    // struct in MonoGame 3.8.1+ (TextInputEventArgs), so a method taking EventArgs cannot be bound to the
+                    // handler type directly (delegate variance does not apply to value types).
+                    var sender = Expression.Parameter(typeof(object), "sender");
+                    var arguments = Expression.Parameter(argumentsType, "args");
+                    var call = Expression.Call(Expression.Constant(relay), typeof(Relay).GetMethod(nameof(Relay.Handle)),
+                        Expression.Convert(arguments, typeof(object)));
+                    var handler = Expression.Lambda(handlerType, call, sender, arguments).Compile();
                     eventInfo.AddEventHandler(window, handler);
                     return true;
                 }
@@ -203,7 +211,7 @@ namespace MonoGame.GameManager.Services.Inputs
 
                 public bool IsValid => characterField != null || characterProperty != null;
 
-                public void Handle(object sender, EventArgs args)
+                public void Handle(object args)
                 {
                     var value = characterField != null ? characterField.GetValue(args) : characterProperty.GetValue(args);
                     if (value is char character)

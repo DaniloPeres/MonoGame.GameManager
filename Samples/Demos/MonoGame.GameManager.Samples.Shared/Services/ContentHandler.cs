@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+﻿using FontStashSharp;
+using Microsoft.Xna.Framework.Graphics;
 using MonoGame.GameManager.Services;
 using System;
 
@@ -9,7 +10,8 @@ namespace MonoGame.GameManager.Samples.Services
         private static readonly Lazy<ContentHandler> lazyInstance = new Lazy<ContentHandler>(() => new ContentHandler());
         public static ContentHandler Instance => lazyInstance.Value;
 
-        public SpriteFont SpriteFontArial { get; private set; }
+        public FontSystem FontSystem { get; private set; }
+        public SpriteFontBase Font { get; private set; }
 
         #region Images
         public Texture2D TextureButton { get; private set; }
@@ -36,7 +38,8 @@ namespace MonoGame.GameManager.Samples.Services
 
         public void LoadAllContents()
         {
-            SpriteFontArial = ServiceProvider.ContentLoader.LoadSpriteFont("Arial");
+            FontSystem = ServiceProvider.ContentLoader.LoadFontSystem("Fonts/Roboto-Regular.ttf");
+            Font = FontSystem.GetFont(36);
 
             LoadImages();
         }

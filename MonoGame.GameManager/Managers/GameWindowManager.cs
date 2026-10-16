@@ -13,6 +13,7 @@ namespace MonoGame.GameManager.Managers
         private Point screenSize;
         private Vector2 screenScale = Vector2.One;
         private Vector4 screenMargin;
+        private float maxStretch;
         private bool isSubscribedToWindow;
 
         public GameWindowManager() : this(null) { }
@@ -52,6 +53,16 @@ namespace MonoGame.GameManager.Managers
             set
             {
                 screenMargin = value;
+                UpdateLayout();
+            }
+        }
+
+        public float MaxStretch
+        {
+            get => maxStretch;
+            set
+            {
+                maxStretch = Math.Max(0f, value);
                 UpdateLayout();
             }
         }
@@ -169,7 +180,8 @@ namespace MonoGame.GameManager.Managers
 
         /// <summary>
         /// Recalculates the scale and the position of the virtual screen so it fits in the window, centered, with
-        /// the margins (in virtual units, scaled together with the screen).
+        /// the margins (in virtual units, scaled together with the screen). The axis with bars is stretched by up to
+        /// <see cref="MaxStretch"/> to cover them.
         /// </summary>
         public void UpdateLayout()
         {
@@ -184,8 +196,11 @@ namespace MonoGame.GameManager.Managers
             if (clientSize.X <= 0f || clientSize.Y <= 0f || totalSize.X <= 0f || totalSize.Y <= 0f)
                 return;
 
-            var scale = Math.Min(clientSize.X / totalSize.X, clientSize.Y / totalSize.Y);
-            DrawScreenScale = new Vector2(scale);
+            // The scale that fills each axis; the smaller one fits the whole screen, the other may stretch a little.
+            var fit = clientSize / totalSize;
+            var maxScale = Math.Min(fit.X, fit.Y) * (1f + maxStretch);
+            var scale = new Vector2(Math.Min(fit.X, maxScale), Math.Min(fit.Y, maxScale));
+            DrawScreenScale = scale;
 
             var offset = (clientSize - totalSize * scale) / 2f;
             DrawScreenPosition = (offset + new Vector2(ScreenMargin.X, ScreenMargin.Y) * scale).ToPoint();

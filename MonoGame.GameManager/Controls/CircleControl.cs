@@ -53,6 +53,9 @@ namespace MonoGame.GameManager.Controls
             return this;
         }
 
+        /// <inheritdoc />
+        protected override int? GetContentSignature() => HashCode.Combine(radius, IsFilled, Thickness, Segments);
+
         public override void Draw(SpriteBatch spriteBatch)
         {
             if (radius <= 0f)

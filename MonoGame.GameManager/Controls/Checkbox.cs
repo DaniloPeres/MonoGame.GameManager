@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using FontStashSharp;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.GameManager.Controls.Abstracts;
 using MonoGame.GameManager.Enums;
@@ -95,16 +96,16 @@ namespace MonoGame.GameManager.Controls
         }
 
         /// <summary>Shows a text next to the box (created once, updated afterwards).</summary>
-        public Checkbox SetLabel(SpriteFont spriteFont, string text, Color? color = null)
+        public Checkbox SetLabel(SpriteFontBase font, string text, Color? color = null)
         {
             if (Label == null || Label.IsDisposed)
             {
-                Label = new Label(spriteFont, text, Vector2.Zero, color ?? Color.White).SetAnchor(Anchor.CenterLeft);
+                Label = new Label(font, text, Vector2.Zero, color ?? Color.White).SetAnchor(Anchor.CenterLeft);
                 AddChild(Label);
             }
             else
             {
-                Label.SetSpriteFont(spriteFont).SetText(text);
+                Label.SetFont(font).SetText(text);
                 if (color.HasValue)
                     Label.SetColor(color.Value);
             }

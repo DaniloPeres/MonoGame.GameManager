@@ -40,6 +40,13 @@ namespace MonoGame.GameManager.Samples.Android
             game.Run();
         }
 
+        protected override void OnResume()
+        {
+            // MonoGame changes the full-screen window flags here, so the bars are hidden again after it.
+            base.OnResume();
+            HideSystemBars();
+        }
+
         public override void OnWindowFocusChanged(bool hasFocus)
         {
             base.OnWindowFocusChanged(hasFocus);
@@ -66,8 +73,10 @@ namespace MonoGame.GameManager.Samples.Android
                 return;
             }
 
-            // Android 10 (API 29) has no WindowInsetsController.
+            // Android 9 and 10 (API 28-29) have no WindowInsetsController. FLAG_FORCE_NOT_FULLSCREEN (set by MonoGame while
+            // IsFullScreen is false) would keep the status bar on screen over every other flag.
 #pragma warning disable CA1422
+            Window.ClearFlags(WindowManagerFlags.ForceNotFullscreen);
             Window.SetFlags(WindowManagerFlags.Fullscreen, WindowManagerFlags.Fullscreen);
             Window.DecorView.SystemUiFlags =
                 SystemUiFlags.LayoutStable

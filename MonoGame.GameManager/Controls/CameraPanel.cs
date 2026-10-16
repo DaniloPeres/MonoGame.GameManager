@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using MonoGame.GameManager.Cameras;
 using MonoGame.GameManager.Controls.Abstracts;
 using MonoGame.GameManager.Controls.Interfaces;
+using MonoGame.GameManager.Controls.Shading;
 using MonoGame.GameManager.GameMath;
 using MonoGame.GameManager.Services;
 
@@ -112,7 +113,7 @@ namespace MonoGame.GameManager.Controls
                     continue;
                 if (CullChildren && child.Rotation == 0f && !(child is IContainer) && !IsUnbounded(child) && !visibleArea.Intersects(GetBounds(child)))
                     continue;
-                child.Draw(spriteBatch);
+                ShadingRenderer.DrawControl(child, spriteBatch);
             }
         }
 
@@ -127,7 +128,11 @@ namespace MonoGame.GameManager.Controls
         {
             var bounds = control.DestinationRectangle;
             var origin = control.Origin;
-            return new RectangleF(bounds.X - origin.X, bounds.Y - origin.Y, bounds.Width, bounds.Height);
+            var area = new RectangleF(bounds.X - origin.X, bounds.Y - origin.Y, bounds.Width, bounds.Height);
+
+            // Shadows and glows reach outside the control: it is drawn while they can be seen.
+            var margin = control is IShadingHost host ? host.ShadingMargin : 0f;
+            return margin > 0f ? area.Inflate(margin, margin) : area;
         }
     }
 }

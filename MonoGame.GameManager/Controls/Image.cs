@@ -65,6 +65,9 @@ namespace MonoGame.GameManager.Controls
 
         public override void Draw(SpriteBatch spriteBatch) => DrawTexture(spriteBatch, texture, DestinationRectangle, sourceRectangle, OriginWithoutScale);
 
+        /// <inheritdoc />
+        protected override int? GetContentSignature() => HashCode.Combine(texture, sourceRectangle);
+
         protected override Vector2 CalculateSize()
         {
             if (sourceRectangle.HasValue)

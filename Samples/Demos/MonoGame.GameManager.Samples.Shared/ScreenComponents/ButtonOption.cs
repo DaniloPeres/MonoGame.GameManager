@@ -21,7 +21,7 @@ namespace MonoGame.GameManager.Samples.ScreenComponents
                 .SetMouseEventsColor(hoverButtonColor, pressedButtonColor)
                 .AddOnClick(args => onClick());
 
-            new Label(ContentHandler.Instance.SpriteFontArial, text, Vector2.Zero, Color.Black)
+            new Label(ContentHandler.Instance.Font, text, Vector2.Zero, Color.Black)
                 .AddToScreen(panelButton)
                 .SetAnchor(Enums.Anchor.Center);
         }

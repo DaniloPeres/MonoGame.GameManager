@@ -21,7 +21,10 @@ Version 2.0 is a complete review of the library. [CHANGES.md](https://github.com
 - [Screens](#screens)
 - [Controls](#controls)
   - [Button](#button)
+  - [Button effects](#button-effects)
+  - [Glow and shadow](#glow-and-shadow)
   - [Image](#image)
+  - [Fonts](#fonts)
   - [Label](#label)
   - [Multi-line Labels](#multi-line-labels)
   - [Panel](#panel)
@@ -46,6 +49,7 @@ Version 2.0 is a complete review of the library. [CHANGES.md](https://github.com
 - [Physics, state machines and pools](#physics-state-machines-and-pools)
 - [Particles](#particles)
 - [Audio](#audio)
+- [Video](#video)
 - [Save games](#save-games)
 - [Services](#services)
 - [Screen](#screen)
@@ -53,6 +57,7 @@ Version 2.0 is a complete review of the library. [CHANGES.md](https://github.com
   - [Screen Manager](#screen-manager)
 - [Samples - Demos](#samples---demos)
 - [Samples - Games](#samples---games)
+- [Migrating from 2.x](#migrating-from-2x)
 - [Migrating from 1.x](#migrating-from-1x)
 - [License](#license)
 
@@ -64,7 +69,7 @@ The NuGet package is available at https://www.nuget.org/packages/MonoGame.GameMa
 dotnet add package MonoGame.GameManager
 ```
 
-The package targets `net8.0` and `net10.0` and is compiled against MonoGame 3.8.5.1. Games on .NET 8, .NET 9 and .NET 10 can use it. It does not bring a MonoGame platform package: your game references the one it runs on, for example `MonoGame.Framework.DesktopGL`, `MonoGame.Framework.WindowsDX` or `MonoGame.Framework.Android`.
+The package targets `net8.0` and `net10.0` and is compiled against MonoGame 3.8.5.1. Games on .NET 8, .NET 9 and .NET 10 can use it. It does not bring a MonoGame platform package: your game references the one it runs on, for example `MonoGame.Framework.DesktopGL`, `MonoGame.Framework.WindowsDX` or `MonoGame.Framework.Android`. Text is rendered with [FontStashSharp](https://github.com/FontStashSharp/FontStashSharp) (`FontStashSharp.MonoGame`, brought by the package).
 
 ## Quick start
 
@@ -91,12 +96,12 @@ public static class Program
 
 public class MenuScreen : Screen
 {
-    private SpriteFont font;
+    private SpriteFontBase font;
 
     public override void LoadContent()
     {
         // Assets loaded with Content are released when the screen closes.
-        font = Content.LoadSpriteFont("Fonts/Main");
+        font = Content.LoadFont("Fonts/Roboto-Regular.ttf", 24);
     }
 
     public override void OnInit()
@@ -153,7 +158,7 @@ public class PauseScreen : Screen
 {
     public override void OnInit()
     {
-        var font = ServiceProvider.ContentLoader.LoadSpriteFont("Fonts/Main"); // kept for the whole game
+        var font = ServiceProvider.ContentLoader.LoadFont("Fonts/Roboto-Regular.ttf", 24); // kept for the whole game
 
         new RectangleControl(Vector2.Zero, ScreenManager.ScreenSize.ToVector2(), Color.Black * 0.6f)
             .AddToScreen();
@@ -191,6 +196,111 @@ var playButton = new Button(new Vector2(20, 100), new Vector2(200, 50), Color.Se
 playButton.SetIsEnabled(false); // drawn in gray, does not react
 ```
 
+### Button effects
+<img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Demos/SamplesDemosButtonEffects.png" alt="MonoGame.GameManager samples demo - button effects" width="600" height="400">
+
+Buttons (and toggle buttons) get effects. Some are static: glossy highlights, glints, inner light, shaded bottoms, outlines, 3D lips, drop shadows and outlined text. Others are animated lights: halos, lit rims, gems, lights running around the border, sweeps, sparkles, rays and ripples. They follow the size, the corner radius, the scale and the rotation of the button, so the same effects fit a small icon and a wide banner. `SetCornerRadius` also rounds the background color and the border of the button.
+
+```csharp
+// Rich static presets (a lot of glow and particles, nothing moves): Ornate, Starlight, Treasure, Crystal, Galaxy, Fairy, Sunburst
+// Static presets (no movement, no blinking): Candy, Jelly, Glossy, Cartoon, Bubble, Pearl, Soft Glow, Inner Light, Framed, Minimal
+// Animated presets: Gold, Royal, Magic, Ice, Fire, Emerald, Neon, Rainbow, Legendary, Glass, Alert, Subtle
+new Button(new Vector2(100, 100), new Vector2(240, 64), new Color(255, 180, 20))
+    .SetCornerRadius(32)
+    .SetText(font, "PLAY")
+    .AddEffects(ButtonEffectPresets.Candy())
+    .AddToScreen();
+
+// A calm glossy button made by hand: the borders and the lip use darker shades of the button color
+nextButton
+    .AddEffect(new DropShadowEffect().SetOffset(new Vector2(0, 5)).SetBlur(8))
+    .AddEffect(new DepthEffect().SetDepth(6))
+    .AddEffect(new OutlineEffect().UseButtonColor(0.6f).SetThickness(3))
+    .AddEffect(new InnerShadeEffect().SetHeightRate(0.5f).SetIntensity(0.2f))
+    .AddEffect(new HighlightEffect().SetInset(8, 4).SetHeightRate(0.4f))
+    .AddEffect(new GlintEffect().SetCorners(Anchor.TopLeft).SetDots(2, 6))
+    .AddEffect(new TextOutlineEffect().UseButtonColor(0.7f).SetShadow(new Vector2(0, 2), Color.Black * 0.3f));
+
+// Effects made by hand, with fluent options
+battleButton
+    .AddEffect(new GlowEffect().SetColor(Color.DeepSkyBlue).SetRadius(18).SetPulse(1f, 0.4f))
+    .AddEffect(new GlowEffect(GlowPlacement.Rim).SetColor(Color.Gold).SetThickness(2).SetOffset(-3))
+    .AddEffect(new GlossEffect().SetHeightRate(0.45f))
+    .AddEffect(new ShineSweepEffect().SetTiming(0.7f, 2.5f))
+    .AddEffect(new CornerLightEffect().SetAnchors(Anchor.TopCenter).SetShape(LightShape.Diamond).SetStreak(110, 4))
+    .AddEffect(new RunningLightEffect().SetCount(2).SetSpeed(240))
+    .AddEffect(new SparkleEffect().SetArea(SparkleArea.Around).SetClickBurst(12))
+    .AddEffect(new LightFillEffect().SetIntensity(0.2f).VisibleOnHover());
+```
+
+| Effect | Layer | What it does |
+|---|---|---|
+| `GlowEffect` | behind, inside or front | A halo around the button (`Outer`), light along the inside of the edge (`Inner`) or a lit border (`Rim`). Radius, falloff, thickness, softness, offset. |
+| `GlossEffect` | inside | A glossy reflection at the top (or the bottom) of the button. |
+| `ShineSweepEffect` | inside | A diagonal band of light that crosses the button every few seconds or when the pointer enters it. |
+| `LightFillEffect` | inside | Lights the whole button: a hover highlight, a pulse, a flash. |
+| `ClickRippleEffect` | inside | A ring of light that grows from where the button is pressed. |
+| `CornerLightEffect` | front | Gems and sparkles on the corners and on the middle of the edges, with a twinkle and an optional streak. |
+| `RunningLightEffect` | front | Lights with a fading tail that run around the border. |
+| `SparkleEffect` | front | Sparkles on the border, around, inside or above the button, and bursts on click (built on the particle system). |
+| `LightRaysEffect` | behind | Rays that turn slowly behind the button, from its center or from a point of its outline. |
+| `HighlightEffect` | inside | A static soft reflection: a rounded band at the top, a thin strip, an oval, or a band at the bottom. |
+| `GlintEffect` | front | Static reflection dots near a corner: an oval followed by smaller dots. |
+| `InnerShadeEffect` | inside, painted | Darkens the bottom, the top, the edges or the whole button. |
+| `OutlineEffect` | behind or inside, painted | A solid rounded border of any thickness around the button or inside its edge; stack several for double borders. |
+| `DepthEffect` | behind, painted | A solid 3D lip under the button, thinner while it is pressed. |
+| `DropShadowEffect` | behind, painted | A soft shadow under the button. |
+| `TextOutlineEffect` | inside, painted | An outline and a shadow under the text of the button. |
+| `FrameEffect` | behind or inside, painted | A border made of several rings (levels): `Gold`, `Silver`, `Bronze`, `Gem(color)`, `ButtonColor`, `Dark`, `Candy`, or your own with `AddLayer`. |
+| `ParticleFieldEffect` | inside or front | Still particles (glows, sparkles, stars, dots, diamonds) inside the button, in its upper or lower half, above, under or around it; they can twinkle or float up. |
+
+Lights are added to what is below them (`ButtonEffectBlend.Light`), so they can only brighten. Shades, outlines, lips, shadows and text outlines are painted over it (`ButtonEffectBlend.Normal`), so they can darken; `SetBlend` changes it for any effect (eg: a dark glow). An inner `GlowEffect` can light every edge or only the top or the bottom one (`SetEdges`). `UseButtonColor(shade)` makes any effect use a darker (0 to 1) or lighter (0 to -1) version of the background color of the button, so the static presets fit buttons of every color.
+
+Every effect has a color (or a `ColorCycle`), an intensity, a pulse, a time offset and an intensity for each visual state: `VisibleOnHover()` shows an effect only under the pointer, and a disabled button turns its lights off. The effects drawn inside the button are clipped to its shape (`EffectMask`: a rectangle, the corner radius, or the transparency of the texture); `EffectPadding` shrinks the shape for textures with transparent margins, and `EffectsUseUnscaledTime` keeps the lights moving while the game is paused. Custom effects derive from `ButtonEffect<TEffect>`. A button scrolled out of a scroll viewer (or hidden by any parent that hides its overflow) skips its effects, so long lists of glowing buttons stay fast. `RoundedRectanglePath`, `NineSlice` and the new `TextureFactory` generators (rounded glows and rims, gradients, soft bands) can also be used on their own.
+
+### Glow and shadow
+<img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Demos/SamplesDemosGlowAndShadow.png" alt="MonoGame.GameManager samples demo - glow and shadow" width="600" height="400">
+
+Any control can get shadows, glows, outlines and shines that follow its silhouette: the glyphs of a `Label` or a `MultiLineLabel`, the opaque pixels of an `Image`, a `NineSliceImage` or a `SpriteAnimation`. Effects are stacked, so a title can have two shadows, three glows, an outline and a shine at the same time. They follow the scale, the rotation and the opacity of the control, and they can be animated: flicker, pulse, breathe, orbit, cycle colors and shine.
+
+```csharp
+using MonoGame.GameManager.Controls.Shading;
+
+// A title with two shadows, three glows, an outline and a shine. Shadows first, outlines last (drawn in this order).
+new Label(font, "LEVEL 7", new Vector2(100, 100), Color.White)
+    .SetScale(2f)
+    .AddShading(new Shadow(new Vector2(0, 10), 10, Color.Black * 0.6f))                    // a soft shadow far below
+    .AddShading(new Shadow(new Vector2(0, 4), 0, new Color(120, 30, 160)).SetSpread(3))   // a hard, bold shadow (a 3D lip)
+    .AddShading(new Glow(new Color(170, 60, 255), 30).SetBreathe(0.5f, 0.05f))           // a wide halo that breathes
+    .AddShading(new Glow(new Color(255, 110, 230), 14).SetPulse(0.8f, 0.4f))             // a pulsing glow
+    .AddShading(new Glow(Color.White, 3).SetFlicker(0.3f, 9f))                           // a flickering core
+    .AddShading(new Outline(new Color(60, 10, 90), 3))
+    .AddShading(new Shine(new Color(255, 240, 255)).SetTiming(0.8f, 3f))                 // a band of light sweeping across
+    .AddToScreen();
+
+// Fire: three glows from red to yellow, each flickering at its own pace and rising like flames
+new Label(font, "HOT", new Vector2(100, 220), Color.White)
+    .AddShading(new Glow(new Color(255, 40, 10), 30).SetOffset(0, -6).SetFlicker(0.5f, 6f).SetBreathe(1.3f, 0.06f))
+    .AddShading(new Glow(new Color(255, 120, 20), 15).SetOffset(0, -3).SetFlicker(0.4f, 9f).SetTimeOffset(1.3f))
+    .AddShading(new Glow(new Color(255, 210, 90), 4).SetFlicker(0.3f, 13f).SetTimeOffset(2.1f))
+    .AddToScreen();
+
+// Animated presets: Gold Title, Fire, Neon, Ice, Magic, Rainbow, Toxic, Plasma, Heartbeat, Ghost, Hologram, Selected, Shiny, Glitch
+// Still presets: Soft Shadow, Hard Shadow, Long Shadow, Sticker, Comic, Candy, Emboss, Retro, Double Outline
+new Image(iconTexture).AddShadings(ShadingPresets.Sticker()).AddToScreen();
+coinAnimation.AddShadings(ShadingPresets.Neon(Color.Gold));
+title.SetShadings(ShadingPresets.Create("Gold Title"));
+```
+
+| Effect | Default | What it does |
+|---|---|---|
+| `Shadow` | behind, painted | A copy of the silhouette moved by an `Offset`, soft (`Blur`) or sharp, and grown by a `Spread` for bold shadows. Two shadows of different colors make 3D lips and retro titles. |
+| `Glow` | behind, added light | A halo that fades over a `Radius` around the silhouette (`Spread` makes its core thicker). `SetLayer(ShadingLayer.Front)` also draws it over the control (a bloom); `SetBlend(ShadingBlend.Normal)` paints it (a dark aura on light backgrounds). |
+| `Outline` | behind, painted | A border of a `Thickness` around the silhouette, crisp or soft (`Softness`). Stack two outlines for a double border. |
+| `Shine` | front, added light | A slanted band of light (`Width`, `Angle`) that sweeps across the silhouette every few seconds (`SetTiming(duration, interval)`): gold titles, coins, gems, scan lines. |
+
+Every effect has a color (or a `ColorCycle`), an `Intensity` (above 1 makes soft glows and shadows denser) and an `Offset` that keeps its direction on the screen when the control rotates. Animations: `SetPulse` (dims and brightens), `SetFlicker` (smooth noise, like flames and old neon tubes), `SetBreathe` (grows and shrinks), `SetOrbit` (turns around a circle) and `SetColorCycle`; `SetTimeOffset` shifts them so stacked glows do not move in lockstep. The shape of each effect is rendered once into a render target (big blurs at a lower resolution) and drawn every frame until the control changes: its text, texture, frame, size, scale or alpha, or the shape options of the effect. The color, the animations and the rotation cost nothing. A custom control overrides `GetContentSignature` so its shading is not rendered every frame. The effects are drawn when the parent draws the control, and are skipped while a scroll viewer (or any parent that hides its overflow) hides it.
+
 ### Image
 <img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Demos/SamplesDemosImages.gif" alt="MonoGame.GameManager samples demo - images" width="600" height="400">
 
@@ -204,6 +314,22 @@ new Image(playerTexture)
     .AddToScreen();
 ```
 
+### Fonts
+
+Text is drawn with [FontStashSharp](https://github.com/FontStashSharp/FontStashSharp): fonts are TrueType/OpenType files rasterized at runtime, at any size, so there are no `.spritefont` files. Copy the font file to the content folder (in the `.mgcb`: `/copy:Fonts/Roboto-Regular.ttf`) and load it with the content loader. Every text control (`Label`, `MultiLineLabel`, `Button.SetText`, `Checkbox.SetLabel`, `TextBox`, `Tooltip`, `FpsCounter`) takes a `SpriteFontBase`.
+
+```csharp
+// One font system per font file (cached and released with the loader); one font per size.
+var fonts = Content.LoadFontSystem("Fonts/Roboto-Regular.ttf", "Fonts/NotoSansJP-Regular.ttf"); // the next files are fallbacks
+var title = fonts.GetFont(48);
+var body = fonts.GetFont(20);
+
+// Or directly a size of a font file.
+var small = Content.LoadFont("Fonts/Roboto-Regular.ttf", 14);
+```
+
+Scaled text stays sharp: a label scaled to 2 is drawn with the font rasterized at twice its size (the layout is still measured with the font of the control). Set `FontScaling.CrispScaling = false` to stretch the glyphs instead, and `FontScaling.MaxFontSize` to limit the sizes rasterized. Characters the fonts do not have are drawn with `FontSystem.DefaultCharacter`. `Label.SetOutline(color, thickness)` draws an outline around the text (see [Label](#label)).
+
 ### Label
 <img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Demos/SamplesDemosLabel.gif" alt="MonoGame.GameManager samples demo - labels" width="600" height="400">
 
@@ -212,7 +338,16 @@ var scoreLabel = new Label(font, "Score: 0", new Vector2(20, 20), Color.Yellow)
     .SetAnchor(Anchor.TopRight) // the position of right and bottom anchors points inwards
     .AddToScreen();
 scoreLabel.SetText("Score: 100");
+
+// An outline around the glyphs, in font pixels: it grows with the scale and takes any color.
+new Label(font, "GAME OVER", new Vector2(0, 0), Color.Yellow)
+    .SetOutline(Color.Black, 3)
+    .SetScale(2f)
+    .SetAnchor(Anchor.Center)
+    .AddToScreen();
 ```
+
+The fonts loaded with `LoadFontSystem`/`LoadFont` rasterize the outline once per size and thickness (round, any color, one draw). For a `FontSystem` created by hand, pass `TextOutline.CreateFontSystemSettings()` to get the same; otherwise the outline is drawn by repeating the text around its position.
 
 ### Multi-line Labels
 <img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Demos/SamplesDemosMulti-lineLabel.gif" alt="MonoGame.GameManager samples demo - Multi-line labels" width="600" height="400">
@@ -646,6 +781,40 @@ Audio.StopMusic(fadeOutSeconds: 2f);
 
 Sound effect instances are pooled and reused, up to `MaxInstancesPerSound` playing at the same time for each sound.
 
+## Video
+
+`VideoScreen` plays a video of the content folder (an intro, a logo animation, a cutscene) and goes on when it ends. The video is decoded by an `IVideoPlayer` created by the `IVideoPlayerFactory` of the platform, so the core library has no platform code: each platform has its own project that the game references and registers.
+
+| Project | Player | The game also needs |
+|---|---|---|
+| `MonoGame.GameManager.DesktopGL` | LibVLC (`LibVlcVideoPlayerFactory`), frames copied into a texture | The native package of its OS, eg `VideoLAN.LibVLC.Windows` (on Linux and macOS, VLC must be installed). |
+| `MonoGame.GameManager.Android` | Android `MediaPlayer` on a `TextureView` over the game (`AndroidVideoPlayerFactory`) | `AndroidStoreUncompressedFileExtensions` with the video extension (eg `.mp4`) in the csproj, so the video is stored uncompressed in the APK. |
+
+Register the factory of the platform before creating the game (a platform without one plays nothing: the screen ends at once and the game goes on).
+
+```csharp
+// DesktopGL, Program.cs
+ServiceProvider.Register<IVideoPlayerFactory>(new LibVlcVideoPlayerFactory());
+// Android, Activity.OnCreate (the video is shown over the content of the activity)
+ServiceProvider.Register<IVideoPlayerFactory>(new AndroidVideoPlayerFactory(this));
+```
+
+Play a video by opening a screen with it, or derive from `VideoScreen` and override `OnFinished` to open the next screen:
+
+```csharp
+ChangeScreen(new VideoScreen("Videos/Intro.mp4", () => ChangeScreen(new MenuScreen()),
+    new VideoScreenOptions { Skippable = true, ScaleMode = VideoScaleMode.Fill, BackgroundColor = Color.Black }));
+
+public sealed class IntroScreen : VideoScreen
+{
+    public IntroScreen() : base("Videos/Intro.mp4") { }
+
+    protected override void OnFinished() => ChangeScreen(new MenuScreen(), new FadeTransition());
+}
+```
+
+The video file is a static file copied to the content folder (not a content pipeline asset), and its path is relative to the content root, with the extension. `VideoScreenOptions` sets `Skippable` (a tap, a click, Escape, Space or Enter end it), `IsMuted`, `ScaleMode` (`Fit` shows the whole video, `Fill` covers the screen, `Stretch`), `ContentOffset` (moves the picture by video pixels, to center an art that is not centered in its video) and `BackgroundColor`. The video pauses while the game is not the active window. To use a player without the screen, call `ServiceProvider.Video.Create(path)`, call `Update` on the player every frame and draw `FrameTexture` (null on Android, where the system draws the video). To support another platform, implement `IVideoPlayer` and `IVideoPlayerFactory`.
+
 ## Save games
 
 `ServiceProvider.Storage` saves any object as JSON in the application data folder (`ScreenManagerSettings.ApplicationName`). Every save is written to a temporary file first, so a crash while saving does not corrupt the previous save. MonoGame types (`Vector2`, `Point`, `Rectangle`, `Color`) are supported.
@@ -693,7 +862,7 @@ Repository: https://github.com/DaniloPeres/MonoGame.GameManager/tree/main/Sample
 
 The samples need the .NET 10 SDK. The demos have a desktop head (`MonoGame.GameManager.Samples.WinExe`, DesktopGL, `net10.0`) and an Android head (`MonoGame.GameManager.Samples.Android`, `net10.0-android`, Android 10 or later, needs the `android` workload). The games are desktop only (DesktopGL, `net10.0`).
 
-The content is built by the MonoGame content builder, a local .NET tool. Restore it once, from the repository root, before the first build:
+The samples use the Roboto font (Apache 2.0), copied to the content folders. The content is built by the MonoGame content builder, a local .NET tool. Restore it once, from the repository root, before the first build:
 
 ```
 dotnet tool restore
@@ -705,6 +874,19 @@ dotnet run --project Samples/Demos/MonoGame.GameManager.Samples.WinExe
 The Particles tile opens a playground: 14 presets, every setting editable live (emission, shape, motion, look, color and timeline), click to burst, right click to move the emitter, a randomizer, and a scenes screen that combines emitters with other controls: a campfire, fireworks, a rainy day, a confetti cannon, a magic cursor, a fountain, a portal and spaceships.
 
 The Slider tile shows every option of the slider on a live preview, with a color mixer, a stepped volume fader and a slider that resizes an image. The other pages use sliders for their numeric options (scale, rotation, opacity, durations, speed, zoom limits).
+
+The Button Effects tile opens a preview button where every effect can be changed live on seven scrolling pages: Button, Text, Glow, Inner, Borders, Particles and Motion.
+- The Button page has the 29 presets, a switch that turns the animations off, a light strength, the size, the corner radius, the colors of the button and of the stage, textures, scale, rotation, opacity, the enabled state and the game speed.
+- The Text page has the text, its size and color, the border of the label (`Label.SetOutline`: thickness and color) and the outline and shadow of `TextOutlineEffect`.
+- The other pages hold the options of each effect.
+- Two randomizers make animated or calm combinations.
+
+The Glow & Shadow tile opens a preview where shadows, glows and outlines can be added, removed and changed live on a text, a multi-line text, an image, a nine-slice image or a sprite animation.
+- The Target page has the 23 presets, the target, its text, image, color, scale, rotation and opacity, the color of the stage and the game speed.
+- The Effects page lists every effect of the target, each with its own options, animations (pulse, flicker, breathe, orbit, color cycle) and a switch. The add buttons create up to 2 shadows, 3 glows, 2 outlines and a shine, so a text can have all of them at the same time, or any of them alone.
+- A scrolling gallery of 51 looks in four sections can be clicked to edit them: animated ones (a flickering neon sign, fire with three glows, a shining gold title, breathing ice, a rainbow, orbiting plasma, magic, toxic, a heartbeat, lightning, a sunset, a glitch), still ones (comic, candy, retro, emboss, long shadow), images and sprites (a shining golden star, a shiny coin, a burning torch, a plasma orb, a gem, a hologram with a scan line, stickers, a card), and a section of shadows and outlines without animation (drop, hard, floating and dark aura shadows, extruded 3D, letterpress, pop art, thin, thick, soft and triple outlines, outlined icons, sprites and stamps).
+
+A scrolling gallery shows 124 buttons in three sections: 27 rich static buttons, 60 glossy, candy and cartoon buttons, and 37 animated ones. They use every preset and some hand-made combinations (VIP, Mythic, Frozen, Soft UI, Wood, Comic) on buttons of many sizes, shapes and colors, and a toggle button whose lights turn on with it.
 
 ## Samples - Games
 
@@ -722,6 +904,15 @@ Repository: https://github.com/DaniloPeres/MonoGame.GameManager/tree/main/Sample
 Repository: https://github.com/DaniloPeres/MonoGame.GameManager/tree/main/Samples/Games/Tic-Tac-Toe
 
 <img src="https://raw.githubusercontent.com/DaniloPeres/MonoGame.GameManager/main/Samples/Games/Tic-Tac-Toe/Sample-Tic-Tac-Toe.gif" alt="MonoGame.GameManager samples games - Tic-Tac-Toe" width="320" height="480">
+
+## Migrating from 2.x
+
+Version 3 renders text with FontStashSharp instead of `SpriteFont`:
+
+- Replace the `.spritefont` files with TrueType/OpenType files copied to the content folder (`/copy:Fonts/MyFont.ttf` in the `.mgcb`).
+- `LoadSpriteFont("Fonts/Main")` is gone: use `LoadFont("Fonts/MyFont.ttf", size)` or `LoadFontSystem("Fonts/MyFont.ttf").GetFont(size)`.
+- The text controls take a `FontStashSharp.SpriteFontBase`; their `SpriteFont` property and `SetSpriteFont` are now `Font` and `SetFont`.
+- Text is no longer flipped by `SpriteEffects`.
 
 ## Migrating from 1.x
 

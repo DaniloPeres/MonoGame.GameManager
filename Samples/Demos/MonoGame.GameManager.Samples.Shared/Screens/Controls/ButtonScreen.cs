@@ -49,7 +49,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             var container = new Panel(new Rectangle(sectionDivisionLeft + Config.ScreenContentMargin, sectionTop, sectionWidth - sectionDivisionLeft - Config.ScreenContentMargin, sectionDivisionBottom - sectionTop - 15))
                 .AddToScreen();
 
-            new Label(ContentHandler.Instance.SpriteFontArial, "Preview", Vector2.Zero, Color.Yellow)
+            new Label(ContentHandler.Instance.Font, "Preview", Vector2.Zero, Color.Yellow)
                 .SetAnchor(Enums.Anchor.TopCenter)
                 .AddToScreen(container);
 
@@ -73,7 +73,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
                 .SetAnchor(Enums.Anchor.CenterLeft)
                 .SetPosition(new Vector2(15, 0));
 
-            buttonTextPreview = new Label(ContentHandler.Instance.SpriteFontArial, "My button", new Vector2(25, 0), Color.White)
+            buttonTextPreview = new Label(ContentHandler.Instance.Font, "My button", new Vector2(25, 0), Color.White)
                 .AddToScreen(buttonPreview)
                 .SetScale(0.75f)
                 .SetAnchor(Enums.Anchor.Center);
@@ -84,7 +84,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             var container = new Panel(new Rectangle(Config.ScreenContentMargin, sectionTop, sectionDivisionLeft - (Config.ScreenContentMargin * 2), sectionHeight))
                 .AddToScreen();
 
-            var labelOptions = new Label(ContentHandler.Instance.SpriteFontArial, "Options", Vector2.Zero, Color.Yellow)
+            var labelOptions = new Label(ContentHandler.Instance.Font, "Options", Vector2.Zero, Color.Yellow)
                 .SetAnchor(Enums.Anchor.TopCenter)
                 .AddToScreen(container);
 

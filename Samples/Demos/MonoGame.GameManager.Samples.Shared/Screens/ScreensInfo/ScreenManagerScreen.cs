@@ -44,7 +44,7 @@ namespace MonoGame.GameManager.Samples.Screens.ScreensInfo
 
             var pos = new Vector2(0);
 
-            new Label(ContentHandler.Instance.SpriteFontArial, "Screen Options", pos, Color.Yellow)
+            new Label(ContentHandler.Instance.Font, "Screen Options", pos, Color.Yellow)
                 .AddToScreen(container);
 
             var colors = new List<Color>()
@@ -76,7 +76,7 @@ namespace MonoGame.GameManager.Samples.Screens.ScreensInfo
 
 
             pos.Y += 100;
-            new Label(ContentHandler.Instance.SpriteFontArial, "Try resizing the window", pos, Color.White)
+            new Label(ContentHandler.Instance.Font, "Try resizing the window", pos, Color.White)
                 .AddToScreen(container);
         }
 

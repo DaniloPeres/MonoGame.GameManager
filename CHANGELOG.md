@@ -1,5 +1,60 @@
 # Changelog
 
+## [3.1.0] (unreleased)
+
+### Added
+- A video player. `VideoScreen` plays a video of the content folder and goes on when it ends (`Skippable`, `IsMuted`, `ScaleMode` Fit/Fill/Stretch, `ContentOffset`, `BackgroundColor`; override `OnFinished` to open the next screen). The core library only has the abstractions (`IVideoPlayer`, `IVideoPlayerFactory`, `VideoLayout`, `ServiceProvider.Video`); a platform without a registered player plays nothing and the screen ends at once.
+- `MonoGame.GameManager.DesktopGL`: the LibVLC player (`LibVlcVideoPlayerFactory`).
+- `MonoGame.GameManager.Android`: the Android `MediaPlayer` player (`AndroidVideoPlayerFactory`), shown over the activity without detaching the game view.
+- `ScreenManagerSettings.ContentStreamFilter`: wraps every stream of `IContentLoader.OpenStream` (global and screen loaders), eg to decrypt content files; `ContentLoader` takes it as `streamFilter`.
+
+## [3.0.0] (2026-10-07)
+
+Text is rendered with FontStashSharp: TrueType/OpenType fonts at any size, sharp when scaled, without `.spritefont` files.
+
+### Fixes
+- `TextBox` receives typed text again on DesktopGL with MonoGame 3.8.1+: `GameWindow.TextInput` passes a struct (`TextInputEventArgs`), so the input bridge now builds its handler with an expression instead of binding a method that takes `EventArgs` (which failed silently).
+
+### Breaking changes
+- `SpriteFont` is no longer supported. `Label`, `MultiLineLabel`, `TextBox`, `FpsCounter`, `Tooltip.Attach`, `Button.SetText` and `Checkbox.SetLabel` take a `FontStashSharp.SpriteFontBase`; the `SpriteFont` properties and `SetSpriteFont` are renamed `Font` and `SetFont`.
+- `IContentLoader.LoadSpriteFont` is removed.
+- Text is no longer flipped by `SpriteEffects`.
+- `TextBox` accepts every printable character (the characters a font does not have are drawn with `FontSystem.DefaultCharacter`).
+
+### New features
+- `IContentLoader.LoadFontSystem(params string[])` loads and caches a FontStashSharp font system from font files copied to the content folder (the next files are fallbacks), released with the loader; `LoadFont(path, size)` returns one size of it.
+- `FontScaling`: scaled text is drawn with the font rasterized at its final size, so it stays sharp (`CrispScaling`, `MaxFontSize`).
+- `Label.SetOutline(color, thickness)` (`OutlineColor`, `OutlineThickness`): an outline around the glyphs, in font pixels, that grows with the scale and the rotation of the label.
+- `TextOutline`: round outlines of any color and thickness rasterized by a FontStashSharp glyph renderer (cached per size and thickness, one draw), used by the font systems of `LoadFontSystem` (`TextOutline.CreateFontSystemSettings()` for font systems created by hand; others repeat the text around its position). `TextOutlineEffect` uses it.
+- Demos: the Label page has outline color and thickness options, and its scale goes up to 5.
+- Demos: the Button Effects page has a Text tab (text, size, color, label border and the outline and shadow of `TextOutlineEffect`), and the buttons of its gallery have texts of many colors, many of them with a border.
+- Demos: the "1250 Buttons" page shows 1250 numbered buttons in five color families of 250 (purple, blue, green, red and gold), each with its own combination of effects (the presets painted with the colors of the family, then auras, frames, inner lights, particles and animated lights) and a text with a shadow and a glow. Buttons jump to each family; a click shows the recipe of a button and marks it as a favorite; only the rows near the visible area are created.
+- The samples use the Roboto font (Apache 2.0) copied to their content folders, instead of `.spritefont` files built from fonts installed on the machine.
+
+## [2.2.0] (2026-10-07)
+
+Effects for the buttons, static and animated, and shadows, glows and outlines for texts and images, with demo pages.
+
+### Improvements
+- `Button` and `ToggleButton` get a `CornerRadius`: the background color and the border are drawn rounded, at any size.
+- `NineSliceImage` uses the new `NineSlice` helper; `ScalableControlAbstract` can draw nine-slice textures in local space (`DrawLocalNineSlice`).
+- `TextureFactory.RoundedRectangleDistance` is public.
+- Containers and camera panels draw their children with their shading effects; a camera panel keeps drawing a child while its shadow or glow can be seen. Controls can override `GetContentSignature` so their shading is rendered again only when what they draw changes (done for `Label`, `MultiLineLabel`, `Image`, `NineSliceImage`, `SpriteAnimation`, `TiledImage`, `RectangleControl` and `CircleControl`).
+
+### New features
+- Button effects (`MonoGame.GameManager.Controls.Effects`): `GlowEffect` (outer halo, inner glow and rim), `GlossEffect`, `ShineSweepEffect`, `LightFillEffect`, `ClickRippleEffect`, `CornerLightEffect`, `RunningLightEffect`, `SparkleEffect` and `LightRaysEffect`. They are added with `AddEffect`, `AddEffects` and `SetEffects`, drawn behind, inside (clipped to the shape of the button, `EffectMask`) or in front of the button, and follow its size, corner radius, scale and rotation. Every effect has a color or a `ColorCycle`, an intensity, a pulse, a time offset and an intensity per visual state (`VisibleOnHover`); custom effects derive from `ButtonEffect<TEffect>`.
+- Static effects, without movement: `HighlightEffect` (band, strip, oval or bottom reflection), `GlintEffect` (reflection dots), `InnerShadeEffect` (bottom, top, edges or full), `OutlineEffect` (outside or inside, stackable), `DepthEffect` (3D lip), `DropShadowEffect` and `TextOutlineEffect` (outline and shadow under the text). An inner `GlowEffect` can light only the top or the bottom edge (`GlowEdges`).
+- `ButtonEffectBlend`: lights are added (`Light`), shades, outlines, lips and shadows are painted (`Normal`); any effect can switch with `SetBlend`. `UseButtonColor(shade)` makes an effect use a darker or lighter version of the background color of the button.
+- `FrameEffect`: borders made of several rings (levels) of colors and thicknesses, around the button or inside its edge, with the `Gold`, `Silver`, `Bronze`, `Gem`, `ButtonColor`, `Dark` and `Candy` styles. `ParticleFieldEffect`: still particles scattered inside the button, in its upper or lower half, above, under, around or on its edge, from a seed; they can twinkle or float up. `HighlightEffect` is painted by default and fades towards the middle of the button (`Fade`), with round ends that keep their shape at any size.
+- `ButtonEffectPresets`: the rich static presets Ornate, Starlight, Treasure, Crystal, Galaxy, Fairy and Sunburst (a lot of glow and particles, nothing moves), the static presets Candy, Jelly, Glossy, Cartoon, Bubble, Pearl, Soft Glow, Inner Light, Framed and Minimal (`StaticNames`), and the animated presets Gold, Royal, Magic, Ice, Fire, Emerald, Neon, Rainbow, Legendary, Glass, Alert and Subtle.
+- `ButtonEffectResources`: the light and mask blend states, the light shapes and the generated frames (glows, rims, rounded masks, borders, soft fills and glossy bands) cached per corner radius and resolution, the least recently used ones released when the cache is full. The effects of a button hidden by a parent that hides its overflow (eg: scrolled out of a scroll viewer) are not drawn.
+- `RoundedRectanglePath` walks the outline of a rounded rectangle by distance; `NineSlice` draws any texture with nine-slice scaling.
+- `TextureFactory` generates rounded rectangle glows, rims and soft fills, vertical gradients and soft bands.
+- Shading effects for any control (`MonoGame.GameManager.Controls.Shading`): `Shadow` (offset, blur, spread), `Glow` (radius, spread, added light or painted, behind or in front as a bloom), `Outline` (thickness, softness) and `Shine` (a slanted band of light that sweeps across the silhouette). They follow the silhouette of the control (the glyphs of a text, the opaque pixels of an image, a nine-slice image or a sprite animation), are stacked with `AddShading`, `AddShadings` and `SetShadings`, and follow its scale, rotation and opacity. Every effect has a color or a `ColorCycle`, an intensity (above 1 makes soft edges denser), an offset that keeps its direction on the screen, and animations that cost nothing: `SetPulse`, `SetFlicker`, `SetBreathe`, `SetOrbit` and `SetTimeOffset`. The shapes are rendered once into render targets (downsampled for big blurs) and drawn every frame until the control changes.
+- `ShadingPresets`: the animated presets Gold Title, Fire, Neon, Ice, Magic, Rainbow, Toxic, Plasma, Heartbeat, Ghost, Hologram, Selected, Shiny and Glitch (`AnimatedNames`), and the still presets Soft Shadow, Hard Shadow, Long Shadow, Sticker, Comic, Candy, Emboss, Retro and Double Outline. `ShadingResources` holds the blend states and the scratch render targets.
+- Demos: a Glow & Shadow tile with a live preview of texts and images where up to 2 shadows, 3 glows, 2 outlines and a shine can be added, removed, changed and animated, the presets, and a gallery of 51 looks in four sections: animated glows and shines, still texts, images and sprites, and shadows and outlines without animation.
+- Demos: a Button Effects tile with a live preview of every effect and option on six scrolling pages, a switch that turns the animations off, a light strength, animated and calm randomizers, and a scrolling gallery of 124 buttons (rich static, glossy, candy and cartoon, animated) of many sizes, shapes and colors.
+
 ## [2.1.0] (2026-10-06)
 
 A complete particle system, with a playground and scenes in the demos.

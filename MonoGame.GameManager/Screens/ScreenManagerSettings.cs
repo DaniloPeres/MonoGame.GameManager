@@ -1,6 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.GameManager.Screens.Transitions;
+using System;
+using System.IO;
 
 namespace MonoGame.GameManager.Screens
 {
@@ -33,11 +35,25 @@ namespace MonoGame.GameManager.Screens
 
         public bool IsFullScreen { get; set; }
 
+        /// <summary>
+        /// How much one axis may be stretched to cover the letterbox bars (0 = always keep the aspect ratio,
+        /// 0.1 = up to 10%).
+        /// </summary>
+        public float MaxStretch { get; set; }
+
         public bool AllowUserResizing { get; set; }
 
         public DisplayOrientation SupportedOrientations { get; set; } = DisplayOrientation.LandscapeLeft | DisplayOrientation.LandscapeRight;
 
         public string ContentRootDirectory { get; set; } = "Content";
+
+        /// <summary>
+        /// Wraps every stream opened by <see cref="Managers.IContentLoader.OpenStream"/> (raw files of the content folder:
+        /// images, fonts, data), eg to read pack files or encrypted content. It takes the opened file and returns the
+        /// stream to read (it owns the file from then on). Null = the files are read as they are. Assets built by the
+        /// content pipeline (<see cref="Managers.IContentLoader.Load{T}"/>) are not filtered.
+        /// </summary>
+        public Func<Stream, Stream> ContentStreamFilter { get; set; }
 
         public bool IsMouseVisible { get; set; } = true;
 

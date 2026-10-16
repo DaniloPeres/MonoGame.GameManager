@@ -30,8 +30,11 @@
     <Compile Include="$(MSBuildThisFileDirectory)Screens\Animations\EaseAnimationScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Screens\Animations\RotationAnimationScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Screens\Animations\ScaleAnimationScreen.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Screens\Controls\ButtonCatalogScreen.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Screens\Controls\ButtonEffectsScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Screens\Controls\ButtonScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Screens\Animations\FadeAnimationScreen.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Screens\Controls\GlowAndShadowScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Screens\Controls\ImageScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Screens\Controls\LabelScreen.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Screens\Controls\MultiLineLabelScreen.cs" />

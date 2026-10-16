@@ -71,6 +71,8 @@ namespace MonoGame.GameManager.Screens
 
             ServiceProvider.Initialize(this);
 
+            WindowManager.MaxStretch = Settings.MaxStretch;
+
             if (WindowManager is GameWindowManager gameWindowManager)
                 gameWindowManager.Init(Settings.VirtualResolution);
             else
@@ -79,6 +81,21 @@ namespace MonoGame.GameManager.Screens
 
         /// <summary>The configuration of the game.</summary>
         public ScreenManagerSettings Settings { get; }
+
+        /// <summary>
+        /// Creates a content loader with its own <see cref="ContentManager"/>, for assets released before their screen
+        /// closes (eg: the big images of a popup). Dispose it to release them.
+        /// </summary>
+        /// <remarks>
+        /// Every content loader comes from here (the global one and the one of each screen too), so each one opens its
+        /// files through <see cref="ScreenManagerSettings.ContentStreamFilter"/>.
+        /// </remarks>
+        public IContentLoader CreateContentLoader() =>
+            CreateContentLoader(new ContentManager(Services, Content.RootDirectory), ownsContentManager: true);
+
+        /// <summary>The only place that creates a <see cref="ContentLoader"/> (see <see cref="CreateContentLoader()"/>).</summary>
+        internal ContentLoader CreateContentLoader(ContentManager contentManager, bool ownsContentManager) =>
+            new ContentLoader(contentManager, ownsContentManager: ownsContentManager, streamFilter: Settings.ContentStreamFilter);
 
         public IGameWindowManager WindowManager => ServiceProvider.GameWindowManager;
 
@@ -298,8 +315,7 @@ namespace MonoGame.GameManager.Screens
                 throw new InvalidOperationException("The screen is already open.");
 
             var root = new ScreenRootPanel(ScreenSize.ToVector2());
-            var content = new ContentLoader(new ContentManager(Services, Content.RootDirectory), ownsContentManager: true);
-            screen.Attach(this, root, content);
+            screen.Attach(this, root, CreateContentLoader());
 
             screens.Add(screen);
             controlManager.RootPanel.AddChild(root);
@@ -384,6 +400,8 @@ namespace MonoGame.GameManager.Screens
             ShapeExtension.Reset();
             Primitives.Reset();
             Particles.ParticleResources.Reset();
+            Controls.Effects.ButtonEffectResources.Reset();
+            Controls.Shading.ShadingResources.Reset();
         }
 
         private enum NavigationKind

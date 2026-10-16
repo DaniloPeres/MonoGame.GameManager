@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework.Graphics;
+﻿using FontStashSharp;
+using Microsoft.Xna.Framework.Graphics;
 using MonoGame.GameManager.Services;
 using System;
 
@@ -9,14 +10,14 @@ namespace Snake
         private static readonly Lazy<ContentHandler> lazyInstance = new Lazy<ContentHandler>(() => new ContentHandler());
         public static ContentHandler Instance => lazyInstance.Value;
 
-        public SpriteFont HoboStdSpriteFont { get; private set; }
+        public SpriteFontBase Font { get; private set; }
         public Texture2D TextureFood { get; private set; }
 
         private ContentHandler() { }
 
         public void LoadAllContents()
         {
-            HoboStdSpriteFont = ServiceProvider.ContentLoader.LoadSpriteFont("HoboStd");
+            Font = ServiceProvider.ContentLoader.LoadFont("Fonts/Roboto-Regular.ttf", 37);
             TextureFood = ServiceProvider.ContentLoader.LoadTexture2D("food");
         }
     }

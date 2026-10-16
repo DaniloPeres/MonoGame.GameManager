@@ -45,7 +45,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             var container = new Panel(new Rectangle(sectionDivisionLeft + Config.ScreenContentMargin, sectionTop, 600, sectionHeight))
                 .AddToScreen();
 
-            new Label(ContentHandler.Instance.SpriteFontArial, "Preview", Vector2.Zero, Color.Yellow)
+            new Label(ContentHandler.Instance.Font, "Preview", Vector2.Zero, Color.Yellow)
                 .SetAnchor(Enums.Anchor.TopCenter)
                 .AddToScreen(container);
 
@@ -60,7 +60,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
                 .AddToScreen(labelContainer);
 
             var loremIpsumText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
-            multiLineLabelPreview = new MultiLineLabel(ContentHandler.Instance.SpriteFontArial, $"My long text example:\n{loremIpsumText}", Vector2.Zero, Color.White, 500)
+            multiLineLabelPreview = new MultiLineLabel(ContentHandler.Instance.Font, $"My long text example:\n{loremIpsumText}", Vector2.Zero, Color.White, 500)
                 .AddToScreen(labelContainer)
                 .SetAnchor(Enums.Anchor.Center)
                 .AddOnUpdateDestinationRectangle(UpdateRectangleTextBoxPreview);
@@ -71,7 +71,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             var container = new Panel(new Rectangle(Config.ScreenContentMargin, sectionTop, sectionDivisionLeft - (Config.ScreenContentMargin * 2), sectionHeight))
                 .AddToScreen();
 
-            var labelOptions = new Label(ContentHandler.Instance.SpriteFontArial, "Options", Vector2.Zero, Color.Yellow)
+            var labelOptions = new Label(ContentHandler.Instance.Font, "Options", Vector2.Zero, Color.Yellow)
                 .SetAnchor(Enums.Anchor.TopCenter)
                 .AddToScreen(container);
 
@@ -99,7 +99,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             var marginLeft = 10;
             var posX = 0f;
 
-            var textAlignLabel = new Label(ContentHandler.Instance.SpriteFontArial, $"Text align: ", new Vector2(posX, posY), Color.Yellow)
+            var textAlignLabel = new Label(ContentHandler.Instance.Font, $"Text align: ", new Vector2(posX, posY), Color.Yellow)
                 .AddToScreen(container);
             posX += textAlignLabel.Size.X + marginLeft;
 
@@ -123,7 +123,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
                         onTextAlignSelected(textAlign);
                     });
 
-                new Label(ContentHandler.Instance.SpriteFontArial, textAlign.ToString(), Vector2.Zero, Color.White)
+                new Label(ContentHandler.Instance.Font, textAlign.ToString(), Vector2.Zero, Color.White)
                     .AddToScreen(textAlignContainer)
                     .SetScale(0.65f)
                     .SetAnchor(Anchor.Center);

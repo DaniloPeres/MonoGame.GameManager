@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-android</TargetFramework>
+    <SupportedOSPlatformVersion>28</SupportedOSPlatformVersion>
+    <!-- Not "...Android": a namespace segment named Android would hide the Android SDK namespace (same rule as Nimavora.Droid). -->
+    <RootNamespace>MonoGame.GameManager.Droid</RootNamespace>
+    <AssemblyName>MonoGame.GameManager.Android</AssemblyName>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <DebugType>portable</DebugType>
+    <Deterministic>true</Deterministic>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>MonoGame.GameManager.Android</PackageId>
+    <Version>3.1.0</Version>
+    <Authors>Danilo Peres</Authors>
+    <Description>Android services for MonoGame.GameManager: the video player (Android MediaPlayer on a TextureView).</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MonoGame.Framework.Android" Version="3.8.5.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MonoGame.GameManager\MonoGame.GameManager.csproj" />
+  </ItemGroup>
+
+</Project>

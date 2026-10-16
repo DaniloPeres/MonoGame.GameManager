@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>MonoGame.GameManager.DesktopGL</RootNamespace>
+    <AssemblyName>MonoGame.GameManager.DesktopGL</AssemblyName>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <DebugType>portable</DebugType>
+    <Deterministic>true</Deterministic>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <PackageId>MonoGame.GameManager.DesktopGL</PackageId>
+    <Version>3.1.0</Version>
+    <Authors>Danilo Peres</Authors>
+    <Description>DesktopGL services for MonoGame.GameManager: the video player (LibVLC). The game also references the native LibVLC package of its OS (eg: VideoLAN.LibVLC.Windows).</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Compile-only reference: the game references its own MonoGame platform package. -->
+    <PackageReference Include="MonoGame.Framework.DesktopGL" Version="3.8.5.1" PrivateAssets="all" />
+    <PackageReference Include="LibVLCSharp" Version="3.9.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\MonoGame.GameManager\MonoGame.GameManager.csproj" />
+  </ItemGroup>
+
+</Project>

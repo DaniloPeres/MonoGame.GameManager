@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using FontStashSharp;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.GameManager.Animations;
 using MonoGame.GameManager.Controls;
@@ -18,7 +19,7 @@ namespace Tic_Tac_Toe.Screens
         public const int TotalGameSquares = 3;
         private int gamePosX;
 
-        private SpriteFont fontArial;
+        private SpriteFontBase font;
 
         private Texture2D
             imgTitle,
@@ -60,7 +61,7 @@ namespace Tic_Tac_Toe.Screens
             imgO = Content.LoadTexture2D("O");
             imgX = Content.LoadTexture2D("X");
 
-            fontArial = Content.LoadSpriteFont("Arial");
+            font = Content.LoadFont("Fonts/Roboto-Regular.ttf", 36);
 
             base.LoadContent();
         }
@@ -95,12 +96,12 @@ namespace Tic_Tac_Toe.Screens
                 .AddToScreen();
             posX += (int)playerScorePanel.Size.X;
 
-            new Label(fontArial, "PLAYER (X)", Vector2.Zero, Color.White)
+            new Label(font, "PLAYER (X)", Vector2.Zero, Color.White)
                 .SetScale(scale)
                 .SetAnchor(MonoGame.GameManager.Enums.Anchor.TopCenter)
                 .AddToScreen(playerScorePanel);
 
-            labelPlayerScore = new Label(fontArial, "0", new Vector2(0, scorePosY), Color.White)
+            labelPlayerScore = new Label(font, "0", new Vector2(0, scorePosY), Color.White)
                 .SetAnchor(MonoGame.GameManager.Enums.Anchor.Center)
                 .SetScale(finalLabelScoreScale)
                 .AddToScreen(playerScorePanel);
@@ -110,12 +111,12 @@ namespace Tic_Tac_Toe.Screens
                 .AddToScreen();
             posX += (int)tieScorePanel.Size.X;
 
-            new Label(fontArial, "TIE", Vector2.Zero, Color.White)
+            new Label(font, "TIE", Vector2.Zero, Color.White)
                 .SetScale(scale)
                 .SetAnchor(MonoGame.GameManager.Enums.Anchor.TopCenter)
                 .AddToScreen(tieScorePanel);
 
-            labelTieScore = new Label(fontArial, "0", new Vector2(0, scorePosY), Color.White)
+            labelTieScore = new Label(font, "0", new Vector2(0, scorePosY), Color.White)
                 .SetAnchor(MonoGame.GameManager.Enums.Anchor.Center)
                 .SetScale(finalLabelScoreScale)
                 .AddToScreen(tieScorePanel);
@@ -124,12 +125,12 @@ namespace Tic_Tac_Toe.Screens
             var computerScorePanel = new Panel(new Rectangle(posX, posY, 150, panelHeight))
                 .AddToScreen();
 
-            new Label(fontArial, "COMPUTER (O)", Vector2.Zero, Color.White)
+            new Label(font, "COMPUTER (O)", Vector2.Zero, Color.White)
                 .SetScale(scale)
                 .SetAnchor(MonoGame.GameManager.Enums.Anchor.TopCenter)
                 .AddToScreen(computerScorePanel);
 
-            labelComputerScore = new Label(fontArial, "0", new Vector2(0, scorePosY), Color.White)
+            labelComputerScore = new Label(font, "0", new Vector2(0, scorePosY), Color.White)
                 .SetAnchor(MonoGame.GameManager.Enums.Anchor.Center)
                 .SetScale(finalLabelScoreScale)
                 .AddToScreen(computerScorePanel);

@@ -1,4 +1,5 @@
-﻿using Microsoft.Xna.Framework;
+﻿using FontStashSharp;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Input.Touch;
@@ -8,6 +9,7 @@ using MonoGame.GameManager.GameMath;
 using MonoGame.GameManager.Layout;
 using MonoGame.GameManager.Services;
 using MonoGame.GameManager.Services.Inputs;
+using MonoGame.GameManager.Text;
 using System;
 
 namespace MonoGame.GameManager.Controls
@@ -43,13 +45,13 @@ namespace MonoGame.GameManager.Controls
         private float caretTime;
         private float scrollOffset;
 
-        /// <param name="spriteFont">The font of the text.</param>
+        /// <param name="font">The font of the text.</param>
         /// <param name="position">The position.</param>
         /// <param name="size">The size of the box.</param>
         /// <param name="input">The input manager (default: <see cref="ServiceProvider.Input"/>).</param>
-        public TextBox(SpriteFont spriteFont, Vector2 position, Vector2 size, IInputManager input = null)
+        public TextBox(SpriteFontBase font, Vector2 position, Vector2 size, IInputManager input = null)
         {
-            SpriteFont = spriteFont;
+            Font = font;
             PositionAnchor = position;
             Size = size;
             inputOverride = input;
@@ -57,7 +59,8 @@ namespace MonoGame.GameManager.Controls
             AddOnUpdateEvent(OnUpdate);
         }
 
-        public SpriteFont SpriteFont { get; set; }
+        /// <summary>The font of the text (missing characters are drawn with <see cref="FontSystem.DefaultCharacter"/>).</summary>
+        public SpriteFontBase Font { get; set; }
 
         /// <summary>The text (never null).</summary>
         public string Text => text;
@@ -243,8 +246,6 @@ namespace MonoGame.GameManager.Controls
                 return;
             if (CharacterFilter != null && !CharacterFilter(character))
                 return;
-            if (SpriteFont != null && !SpriteFont.Characters.Contains(character) && !SpriteFont.DefaultCharacter.HasValue)
-                return; // the font cannot draw it
 
             ChangeText(text.Insert(caretIndex, character.ToString()), true);
             caretIndex++;
@@ -256,7 +257,7 @@ namespace MonoGame.GameManager.Controls
             var bounds = LocalBounds;
             DrawLocalRectangle(spriteBatch, bounds, BackgroundColor * opacity);
             DrawLocalBorder(spriteBatch, bounds, (IsFocused ? FocusedBorderColor : BorderColor) * opacity, BorderThickness);
-            if (SpriteFont == null)
+            if (Font == null)
                 return;
 
             var area = new RectangleF(Padding.Left, Padding.Top, bounds.Width - Padding.Horizontal, bounds.Height - Padding.Vertical);
@@ -276,7 +277,7 @@ namespace MonoGame.GameManager.Controls
             if (controlManager != null && Rotation == 0f && !clipped)
                 return; // the text area is not visible
 
-            var lineHeight = SpriteFont.LineSpacing;
+            var lineHeight = Font.LineHeight;
             var textPosition = new Vector2(area.X - scrollOffset, area.Y + (area.Height - lineHeight) / 2f);
             if (displayText.Length > 0)
                 DrawLocalString(spriteBatch, displayText, textPosition, TextColor * opacity);
@@ -317,7 +318,7 @@ namespace MonoGame.GameManager.Controls
         private void OnClicked(ControlMouseEventArgs args)
         {
             Focus();
-            if (SpriteFont == null)
+            if (Font == null)
                 return;
 
             // Move the caret to the character closest to the pointer.
@@ -393,10 +394,14 @@ namespace MonoGame.GameManager.Controls
 
         private string GetDisplayText() => IsPassword ? new string(PasswordCharacter, text.Length) : text;
 
-        private float MeasureWidth(string value) => value.Length == 0 || SpriteFont == null ? 0f : SpriteFont.MeasureString(value).X;
+        private float MeasureWidth(string value) => value.Length == 0 || Font == null ? 0f : Font.MeasureString(value).X;
 
         private void DrawLocalString(SpriteBatch spriteBatch, string value, Vector2 localPosition, Color color)
-            => spriteBatch.DrawString(SpriteFont, value, GetPosition(), color, Rotation, OriginWithoutScale - localPosition, NestedScale, SpriteEffects.None, LayerDepthDraw);
+        {
+            var scale = NestedScale;
+            var origin = OriginWithoutScale - localPosition;
+            FontScaling.Resolve(Font, ref scale, ref origin).DrawText(spriteBatch, value, GetPosition(), color, Rotation, origin, scale, LayerDepthDraw);
+        }
 
         private Rectangle ToParentRectangle(RectangleF localArea)
         {

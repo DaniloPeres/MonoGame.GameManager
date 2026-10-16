@@ -18,6 +18,12 @@ namespace MonoGame.GameManager.Managers
         /// <summary>Margins around the virtual screen (X = left, Y = top, Z = right, W = bottom), in virtual units.</summary>
         Vector4 ScreenMargin { get; set; }
 
+        /// <summary>
+        /// How much one axis may be stretched beyond the uniform fit to cover the letterbox bars
+        /// (0 = keep the aspect ratio, 0.1 = up to 10%).
+        /// </summary>
+        float MaxStretch { get; set; }
+
         /// <summary>Where the virtual screen is drawn in the window.</summary>
         Point DrawScreenPosition { get; }
 

@@ -47,7 +47,7 @@ namespace MonoGame.GameManager.Samples.Screens.Animations
             var container = new Panel(new Rectangle(Config.ScreenContentMargin, sectionTop, sectionDivisionLeft - (Config.ScreenContentMargin * 2), sectionHeight))
                 .AddToScreen();
 
-            var labelOptions = new Label(ContentHandler.Instance.SpriteFontArial, "Options", Vector2.Zero, Color.Yellow)
+            var labelOptions = new Label(ContentHandler.Instance.Font, "Options", Vector2.Zero, Color.Yellow)
                 .SetAnchor(Enums.Anchor.TopCenter)
                 .AddToScreen(container);
 
@@ -80,7 +80,7 @@ namespace MonoGame.GameManager.Samples.Screens.Animations
                 .SetMousePressedTexture(ContentHandler.Instance.TextureButtonBackgroundPressed)
                 .AddOnClick(PlayStopButtonClick);
 
-            playStopLabel = new Label(ContentHandler.Instance.SpriteFontArial, "Stop", Vector2.Zero, Color.White)
+            playStopLabel = new Label(ContentHandler.Instance.Font, "Stop", Vector2.Zero, Color.White)
                 .AddToScreen(playStopButton)
                 .SetScale(0.75f)
                 .SetAnchor(Enums.Anchor.Center);
@@ -92,7 +92,7 @@ namespace MonoGame.GameManager.Samples.Screens.Animations
                .SetMousePressedTexture(ContentHandler.Instance.TextureButtonBackgroundPressed)
                .AddOnClick(ResetAnimationButtonClick);
 
-            new Label(ContentHandler.Instance.SpriteFontArial, "Reset Animation", Vector2.Zero, Color.White)
+            new Label(ContentHandler.Instance.Font, "Reset Animation", Vector2.Zero, Color.White)
                 .AddToScreen(resetAnimationButton)
                 .SetScale(0.75f)
                 .SetAnchor(Enums.Anchor.Center);
@@ -132,7 +132,7 @@ namespace MonoGame.GameManager.Samples.Screens.Animations
             var container = new Panel(new Rectangle(sectionDivisionLeft + Config.ScreenContentMargin, sectionTop, 600, sectionHeight))
                 .AddToScreen();
 
-            new Label(ContentHandler.Instance.SpriteFontArial, "Preview", Vector2.Zero, Color.Yellow)
+            new Label(ContentHandler.Instance.Font, "Preview", Vector2.Zero, Color.Yellow)
                 .SetAnchor(Enums.Anchor.TopCenter)
                 .AddToScreen(container);
 

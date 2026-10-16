@@ -9,6 +9,7 @@ using MonoGame.GameManager.Screens;
 using MonoGame.GameManager.Services.Inputs;
 using MonoGame.GameManager.Storage;
 using MonoGame.GameManager.Timers;
+using MonoGame.GameManager.Video;
 using System;
 using System.Reflection;
 
@@ -71,6 +72,9 @@ namespace MonoGame.GameManager.Services
 
         public static IAudioManager Audio => Get<IAudioManager>();
 
+        /// <summary>Creates the video players of the platform (the game registers the factory of its platform).</summary>
+        public static IVideoPlayerFactory Video => Get<IVideoPlayerFactory>();
+
         /// <summary>Saves and loads game data.</summary>
         public static ISaveGameService Storage => Get<ISaveGameService>();
 
@@ -103,9 +107,10 @@ namespace MonoGame.GameManager.Services
             registry.TryRegister<IRandom>(() => new RandomGenerator());
             registry.TryRegister<IScheduler>(() => new Scheduler());
             registry.TryRegister<IGameWindowManager>(() => new GameWindowManager(manager));
-            registry.TryRegister<IContentLoader>(() => new ContentLoader(manager.Content));
+            registry.TryRegister<IContentLoader>(() => manager.CreateContentLoader(manager.Content, ownsContentManager: false));
             registry.TryRegister<IInputManager>(() => new InputManager(manager.Window, GameWindowManager.GetPositionOnScreen));
             registry.TryRegister<IAudioManager>(() => new AudioManager(ContentLoader));
+            registry.TryRegister<IVideoPlayerFactory>(() => new UnsupportedVideoPlayerFactory());
             registry.TryRegister<ISaveGameService>(() => new JsonSaveGameService(
                 JsonSaveGameService.DefaultDirectory(manager.Settings.ApplicationName ?? GetDefaultApplicationName())));
         }

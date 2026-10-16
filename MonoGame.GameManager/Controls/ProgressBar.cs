@@ -4,6 +4,7 @@ using MonoGame.GameManager.Animations;
 using MonoGame.GameManager.Controls.Abstracts;
 using MonoGame.GameManager.GameMath;
 using MonoGame.GameManager.Layout;
+using MonoGame.GameManager.Timers;
 
 namespace MonoGame.GameManager.Controls
 {
@@ -63,12 +64,19 @@ namespace MonoGame.GameManager.Controls
         }
 
         /// <summary>Animates the value (the previous animation of the value is stopped).</summary>
-        public ProgressBar AnimateTo(float value, float duration, EasingFunction easing = null)
+        /// <param name="scheduler">
+        /// The scheduler that runs the animation; null: the scheduler of the current screen (scaled by the clock). Pass
+        /// <see cref="Services.ServiceProvider.GlobalScheduler"/> for a bar that must fill while the game is paused
+        /// (time scale 0), such as one in a pause menu.
+        /// </param>
+        public ProgressBar AnimateTo(float value, float duration, EasingFunction easing = null, IScheduler scheduler = null)
         {
             valueTween?.Stop();
             valueTween = Tween.Float(v => Value = v, Value, MathHelper.Clamp(value, 0f, 1f), duration, this)
-                .SetEasing(easing ?? Easing.CubicOut)
-                .Play();
+                .SetEasing(easing ?? Easing.CubicOut);
+            if (scheduler != null)
+                valueTween.SetScheduler(scheduler);
+            valueTween.Play();
             return this;
         }
 

@@ -41,7 +41,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             var container = new Panel(new Rectangle(Config.ScreenContentMargin, sectionTop, sectionDivisionLeft - (Config.ScreenContentMargin * 2), sectionHeight))
                 .AddToScreen();
 
-            var labelOptions = new Label(ContentHandler.Instance.SpriteFontArial, "Options", Vector2.Zero, Color.Yellow)
+            var labelOptions = new Label(ContentHandler.Instance.Font, "Options", Vector2.Zero, Color.Yellow)
                 .SetAnchor(Enums.Anchor.TopCenter)
                 .AddToScreen(container);
 
@@ -67,7 +67,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
             var container = new Panel(new Rectangle(sectionDivisionLeft + Config.ScreenContentMargin, sectionTop, 600, sectionHeight))
                 .AddToScreen();
 
-            new Label(ContentHandler.Instance.SpriteFontArial, "Preview", Vector2.Zero, Color.Yellow)
+            new Label(ContentHandler.Instance.Font, "Preview", Vector2.Zero, Color.Yellow)
                 .SetAnchor(Enums.Anchor.TopCenter)
                 .AddToScreen(container);
 
@@ -83,7 +83,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
                 .SetAnchor(Enums.Anchor.Center)
                 .AddOnUpdateDestinationRectangle(UpdatePanelBackgroundRectangle);
 
-            new Label(ContentHandler.Instance.SpriteFontArial, "My panel text example", Vector2.Zero, Color.LightCyan)
+            new Label(ContentHandler.Instance.Font, "My panel text example", Vector2.Zero, Color.LightCyan)
                 .AddToScreen(panelPreview)
                 .SetScale(0.75f)
                 .SetMouseEventsColor(Color.Blue, Color.Red)
@@ -102,7 +102,7 @@ namespace MonoGame.GameManager.Samples.Screens.Controls
                 .SetPosition(new Vector2(15, 15))
                 .SetAnchor(Enums.Anchor.BottomLeft);
 
-            new Label(ContentHandler.Instance.SpriteFontArial, "MY BUTTON", Vector2.Zero, Color.White)
+            new Label(ContentHandler.Instance.Font, "MY BUTTON", Vector2.Zero, Color.White)
                 .AddToScreen(myButton)
                 .SetScale(0.75f)
                 .SetAnchor(Enums.Anchor.Center);

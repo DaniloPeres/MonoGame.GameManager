@@ -13,12 +13,8 @@
 
 #---------------------------------- Content ---------------------------------#
 
-#begin Arial.spritefont
-/importer:FontDescriptionImporter
-/processor:FontDescriptionProcessor
-/processorParam:PremultiplyAlpha=True
-/processorParam:TextureFormat=Compressed
-/build:Arial.spritefont
+#begin Fonts/Roboto-Regular.ttf
+/copy:Fonts/Roboto-Regular.ttf
 
 #begin O.png
 /importer:TextureImporter

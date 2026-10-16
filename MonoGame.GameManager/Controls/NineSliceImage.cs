@@ -67,28 +67,23 @@ namespace MonoGame.GameManager.Controls
             return this;
         }
 
+        /// <inheritdoc />
+        protected override int? GetContentSignature() => HashCode.Combine(Texture, SourceRectangle, Border, DrawCenter);
+
         public override void Draw(SpriteBatch spriteBatch)
         {
             if (Texture == null || Texture.IsDisposed)
                 return;
 
             var source = SourceRectangle ?? Texture.Bounds;
-            var size = SizeWithoutScale;
-            var border = Border;
 
-            // Source slices, in texture pixels.
-            var left = (int)MathHelper.Clamp(border.Left, 0, source.Width);
-            var right = (int)MathHelper.Clamp(border.Right, 0, source.Width - left);
-            var top = (int)MathHelper.Clamp(border.Top, 0, source.Height);
-            var bottom = (int)MathHelper.Clamp(border.Bottom, 0, source.Height - top);
-            int[] sourceX = { source.X, source.X + left, source.Right - right, source.Right };
-            int[] sourceY = { source.Y, source.Y + top, source.Bottom - bottom, source.Bottom };
-
-            // Destination slices, in local units: the corners shrink when the control is smaller than them.
-            var horizontalFactor = left + right > size.X && left + right > 0 ? size.X / (left + right) : 1f;
-            var verticalFactor = top + bottom > size.Y && top + bottom > 0 ? size.Y / (top + bottom) : 1f;
-            float[] destinationX = { 0f, left * horizontalFactor, size.X - right * horizontalFactor, size.X };
-            float[] destinationY = { 0f, top * verticalFactor, size.Y - bottom * verticalFactor, size.Y };
+            // Source slices in texture pixels, destination slices in local units (the corners shrink when the control
+            // is smaller than them).
+            Span<int> sourceX = stackalloc int[4];
+            Span<int> sourceY = stackalloc int[4];
+            Span<float> destinationX = stackalloc float[4];
+            Span<float> destinationY = stackalloc float[4];
+            NineSlice.ComputeSlices(source, Border, SizeWithoutScale, sourceX, sourceY, destinationX, destinationY);
 
             var color = DrawColor;
             for (var row = 0; row < 3; row++)

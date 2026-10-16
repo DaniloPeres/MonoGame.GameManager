@@ -11,3 +11,4 @@
 **/obj/
 artifacts/
 TestResults/
+/MonoGame.GameManager/Controls/Effects/TextOutlineEffect.cs
