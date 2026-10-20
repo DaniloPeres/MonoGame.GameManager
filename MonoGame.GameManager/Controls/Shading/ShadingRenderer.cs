@@ -32,6 +32,12 @@ namespace MonoGame.GameManager.Controls.Shading
         /// <summary>The box of what the control draws (the glyphs of a text), in local units: the area of gradient fills.</summary>
         RectangleF GetShadingContentBounds();
 
+        /// <summary>
+        /// True when what the control draws fills its area and stretches with it (a circle, a rectangle): a change of size
+        /// within <see cref="ShadingRenderer.SizeStep"/> stretches the shapes instead of rendering them again.
+        /// </summary>
+        bool ShadingStretchesWithSize { get; }
+
         /// <summary>Draws the control itself (without its shading effects).</summary>
         void DrawShadingContent(SpriteBatch spriteBatch);
 
@@ -59,7 +65,15 @@ namespace MonoGame.GameManager.Controls.Shading
     /// </para>
     /// <para>
     /// While the frame is drawn (<see cref="DrawLayer"/>), the shapes are drawn with the transformation of the control
-    /// (position, scale and rotation), tinted by the color, intensity and pulse of their effect.
+    /// (position, scale and rotation), tinted by the color, intensity and pulse of their effect. The shapes are premultiplied
+    /// when rendered and the lights are drawn with an alpha of 0 (added to what is below), so they go in the batch of the
+    /// controls without a new one.
+    /// </para>
+    /// <para>
+    /// Rendering a shape switches render targets several times (slow on phones), so it happens only when needed: a change of
+    /// scale alone keeps the shapes while they are sharp enough; an intensity above 1 and the opacity are kept in steps
+    /// (<see cref="GainStep"/>, <see cref="OpacitySteps"/>) and the two nearest steps are blended, so a pulsing or fading
+    /// effect renders each step once; circles and rectangles stretch their shapes with small changes of size.
     /// </para>
     /// </remarks>
     internal sealed class ShadingRenderer : IDisposable
@@ -72,14 +86,67 @@ namespace MonoGame.GameManager.Controls.Shading
         private const int MaxDownsample = 8;
         private const int MaxTapsPerSide = 12;
 
+        /// <summary>How much sharper than the screen needs the shapes can be before a smaller scale renders them again.</summary>
+        private const float MaxScaleReuse = 1.3f;
+
+        /// <summary>The extra resolution of the shapes rendered again while a control grows.</summary>
+        private const float GrowHeadroom = 1.15f;
+
+        /// <summary>The frames a scale must stay the same before the shapes get its exact resolution.</summary>
+        private const int SettleFrames = 20;
+
+        /// <summary>
+        /// The step between the gains (intensities above 1) rendered for an effect: an intensity between two steps blends their
+        /// shapes, so an intensity that moves (a pulsing or breathing glow) renders each step once.
+        /// </summary>
+        private const float GainStep = 0.25f;
+
+        /// <summary>
+        /// The opacity levels of the silhouette (a step is 1/OpacitySteps). The shapes depend on the opacity in a way that is
+        /// not linear (an outline stamps the silhouette many times), so a control that fades or breathes renders each level
+        /// once and is drawn with the two nearest ones blended.
+        /// </summary>
+        private const int OpacitySteps = 16;
+
+        /// <summary>
+        /// The relative step of the sizes rendered for a control whose content stretches with its size
+        /// (<see cref="IShadingHost.ShadingStretchesWithSize"/>): a circle that grows is rendered every 6% and stretched in
+        /// between (its glow is at most 3% wider or thinner).
+        /// </summary>
+        internal const float SizeStep = 1.06f;
+
+        /// <summary>The step of a size (see <see cref="SizeStep"/>).</summary>
+        private static int SizeBucket(float size) => size <= 0f ? int.MinValue : (int)Math.Round(Math.Log(size) / Math.Log(SizeStep));
+
         private readonly IShadingHost host;
         private readonly List<ShadingEffect> effects = new List<ShadingEffect>();
-        private readonly Dictionary<ShadingEffect, ShapeResult> results = new Dictionary<ShadingEffect, ShapeResult>();
+        private readonly Dictionary<(ShadingEffect Effect, int Level, int Opacity), ShapeResult> results = new Dictionary<(ShadingEffect, int, int), ShapeResult>();
+        private readonly List<(ShadingEffect Effect, int Level, int Opacity)> staleResults = new List<(ShadingEffect, int, int)>();
+
+        /// <summary>The opacity levels the control is drawn with now (see <see cref="OpacitySteps"/>) and the weight of the upper one.</summary>
+        private int opacityLow = OpacitySteps;
+        private int opacityHigh = OpacitySteps;
+        private float opacityWeight;
+
+        /// <summary>The opacity level of the silhouette being rendered.</summary>
+        private int renderOpacity = OpacitySteps;
+
+        /// <summary>The shapes rendered for the current content and scale (older ones are stale).</summary>
+        private int generation;
+
+        /// <summary>The gain level and gain of the shape being rendered.</summary>
+        private int renderLevel;
+        private float renderGain = 1f;
         private readonly int[] taps = new int[MaxTapsPerSide + 1];
         private float time;
         private bool hasKey;
         private int lastKey;
         private float pixelScale = 1f;
+
+        private Matrix drawMatrix = Matrix.Identity;
+        private Vector2 drawScale = Vector2.One;
+        private float lastIdeal;
+        private int stableFrames;
         private int padding;
         private bool isReady;
         private bool isCulled;
@@ -93,6 +160,15 @@ namespace MonoGame.GameManager.Controls.Shading
 
         /// <summary>True while a control is drawn into a silhouette: the shading of its children is not drawn.</summary>
         public static bool IsCapturing { get; private set; }
+
+        /// <summary>
+        /// The control drawn into a silhouette, or null: it is drawn at the opacity level being rendered
+        /// (<see cref="CaptureOpacity"/> is its <see cref="IRenderable.NestedOpacity"/> meanwhile).
+        /// </summary>
+        internal static IControl CaptureHost { get; private set; }
+
+        /// <summary>The opacity of <see cref="CaptureHost"/> while its silhouette is drawn.</summary>
+        internal static float CaptureOpacity { get; private set; } = 1f;
 
         public IReadOnlyList<ShadingEffect> Effects => effects;
 
@@ -149,12 +225,21 @@ namespace MonoGame.GameManager.Controls.Shading
         public void Remove(ShadingEffect effect)
         {
             effects.Remove(effect);
-            if (results.TryGetValue(effect, out var result))
+            staleResults.Clear();
+            foreach (var key in results.Keys)
             {
-                result.Dispose();
-                results.Remove(effect);
+                if (ReferenceEquals(key.Effect, effect))
+                    staleResults.Add(key);
             }
 
+
+            foreach (var key in staleResults)
+            {
+                results[key].Dispose();
+                results.Remove(key);
+            }
+
+            staleResults.Clear();
             hasKey = false;
         }
 
@@ -212,28 +297,55 @@ namespace MonoGame.GameManager.Controls.Shading
 
             // About one pixel of the target per pixel on the screen, smaller for big controls (big outlines are grown at
             // a lower resolution in RenderShape, so the fills and the other shapes stay sharp).
-            var s = MathUtils.Clamp(Math.Max(Math.Abs(scale.X), Math.Abs(scale.Y)), MinPixelScale, MaxPixelScale);
             var largest = Math.Max(size.X, size.Y) + extent * 2f;
-            if (largest * s + 8f > ShadingResources.MaxTargetSize)
-                s = (ShadingResources.MaxTargetSize - 8f) / largest;
-            s = Math.Max(1f / 64f, (float)Math.Floor(s * 64f) / 64f); // steps, so a slow zoom does not render every frame
+            var ideal = PixelScaleFor(Math.Max(Math.Abs(scale.X), Math.Abs(scale.Y)), largest);
+
+            // The shapes are rendered again when the control changed (all of them) or when the options of an effect
+            // changed (only its shape: a scrolling fill does not blur the glows again). The opacity and the gain are not
+            // part of the key: each step of them has its own shapes (see OpacitySteps and GainStep).
+            var signature = host.GetShadingContentSignature();
+            var key = ComputeKey(signature, size, extent);
+            var sameContent = signature != null && hasKey && key == lastKey;
+
+            // A change of scale alone (breathing, pop-ins, a lunge) keeps the shapes while they are at least as sharp as
+            // the screen needs and at most MaxScaleReuse times sharper; a control that stops changing gets shapes of its
+            // exact resolution after SettleFrames.
+            stableFrames = ideal == lastIdeal ? stableFrames + 1 : 0;
+            lastIdeal = ideal;
+            var s = ideal;
+            if (sameContent && pixelScale >= ideal && pixelScale <= ideal * MaxScaleReuse && (stableFrames < SettleFrames || pixelScale == ideal))
+                s = pixelScale;
+            else if (sameContent && ideal > pixelScale && stableFrames < SettleFrames)
+                s = PixelScaleFor(Math.Max(Math.Abs(scale.X), Math.Abs(scale.Y)) * GrowHeadroom, largest); // still growing: room to grow
 
             var pad = (int)Math.Ceiling(extent * s) + 2;
             var width = (int)Math.Ceiling(size.X * s) + pad * 2;
             var height = (int)Math.Ceiling(size.Y * s) + pad * 2;
+            if ((width > ShadingResources.MaxTargetSize || height > ShadingResources.MaxTargetSize) && s != ideal)
+            {
+                s = ideal;
+                pad = (int)Math.Ceiling(extent * s) + 2;
+                width = (int)Math.Ceiling(size.X * s) + pad * 2;
+                height = (int)Math.Ceiling(size.Y * s) + pad * 2;
+            }
+
             if (width > ShadingResources.MaxTargetSize || height > ShadingResources.MaxTargetSize)
                 return;
 
-            // The shapes are rendered again when the control changed (all of them) or when the options of an effect
-            // changed (only its shape: a scrolling fill does not blur the glows again).
-            var signature = host.GetShadingContentSignature();
-            var key = ComputeKey(signature, size, s, pad);
-            var renderAll = signature == null || !hasKey || key != lastKey;
+            var renderAll = !sameContent || s != pixelScale || pad != padding;
+            if (renderAll)
+                generation++;
+            GetOpacityLevels(host.NestedOpacity, out opacityLow, out opacityHigh, out opacityWeight);
             var needsRender = renderAll;
             for (var i = 0; i < effects.Count && !needsRender; i++)
             {
                 var effect = effects[i];
-                needsRender = effect.IsEnabled && (!results.TryGetValue(effect, out var result) || !result.IsValid || result.Key != ComputeEffectKey(effect));
+                if (!effect.IsEnabled)
+                    continue;
+                GetLevels(effect, out var low, out var high, out _);
+                var effectKey = ComputeEffectKey(effect);
+                needsRender = !IsCurrent(effect, low, opacityLow, effectKey) || !IsCurrent(effect, high, opacityLow, effectKey)
+                    || !IsCurrent(effect, low, opacityHigh, effectKey) || !IsCurrent(effect, high, opacityHigh, effectKey);
             }
 
             pixelScale = s;
@@ -258,31 +370,74 @@ namespace MonoGame.GameManager.Controls.Shading
             if (controlManager == null)
                 return false;
 
+            // The shapes are premultiplied and the lights are drawn with an alpha of 0 (added to what is below), so every
+            // shape goes in the batch that draws the controls: no new batch when it already uses the premultiplied blend
+            // and a linear sampler, one for the whole layer otherwise.
             var current = controlManager.CurrentState;
-            var state = current.WithTransform(GetLocalTransform(current.TransformMatrix)).WithSamplerState(SamplerState.LinearClamp);
-            ShadingBlend? blend = null;
+            var scale = host.NestedScale;
+            var inBatch = ReferenceEquals(current.BlendState, BlendState.AlphaBlend) && ReferenceEquals(current.SamplerState, SamplerState.LinearClamp)
+                && current.Effect == null;
+            if (!inBatch)
+                controlManager.PushState(spriteBatch, current.WithBlendState(BlendState.AlphaBlend).WithSamplerState(SamplerState.LinearClamp).WithEffect(null));
+
+            drawMatrix = GetLocalTransform(null);
+            drawScale = scale;
             for (var i = 0; i < effects.Count; i++)
             {
                 var effect = effects[i];
-                if (!IsVisible(effect, layer, out var result))
-                    continue;
-
-                if (blend != effect.Blend)
-                {
-                    if (blend.HasValue)
-                        controlManager.PopState(spriteBatch);
-                    blend = effect.Blend;
-                    controlManager.PushState(spriteBatch, state.WithBlendState(effect.Blend == ShadingBlend.Light
-                        ? ShadingResources.LightBlendState
-                        : ShadingResources.PaintBlendState));
-                }
-
-                DrawShape(spriteBatch, effect, result);
+                if (IsVisible(effect, layer, out var result))
+                    DrawShape(spriteBatch, effect, result);
             }
 
-            if (blend.HasValue)
+            if (!inBatch)
                 controlManager.PopState(spriteBatch);
             return true;
+        }
+
+        /// <summary>
+        /// Draws a part of a shape given in local units (its top-left <paramref name="localPosition"/>, <paramref name="scale"/>
+        /// local units per pixel) with the transformation of the control (<see cref="drawMatrix"/>).
+        /// </summary>
+        private void DrawLocal(SpriteBatch spriteBatch, Texture2D texture, Vector2 localPosition, Rectangle? source, Color tint, Vector2 scale)
+        {
+            var position = Vector2.Transform(localPosition, drawMatrix);
+            var spriteEffects = SpriteEffects.None;
+            var drawScale = this.drawScale * scale;
+            if (drawScale.X < 0f || drawScale.Y < 0f)
+            {
+                // A mirrored control: the texture is drawn flipped from the other corner.
+                var size = source.HasValue ? new Vector2(source.Value.Width, source.Value.Height) : new Vector2(texture.Width, texture.Height);
+                var origin = Vector2.Zero;
+                if (drawScale.X < 0f)
+                {
+                    spriteEffects |= SpriteEffects.FlipHorizontally;
+                    origin.X = size.X;
+                    drawScale.X = -drawScale.X;
+                }
+
+                if (drawScale.Y < 0f)
+                {
+                    spriteEffects |= SpriteEffects.FlipVertically;
+                    origin.Y = size.Y;
+                    drawScale.Y = -drawScale.Y;
+                }
+
+                spriteBatch.Draw(texture, position, source, tint, host.Rotation, origin, drawScale, spriteEffects, 0f);
+                return;
+            }
+
+            spriteBatch.Draw(texture, position, source, tint, host.Rotation, Vector2.Zero, drawScale, SpriteEffects.None, 0f);
+        }
+
+        /// <summary>
+        /// The color a shape is drawn with in a premultiplied batch: the straight color times the strength, with the strength
+        /// as alpha (painted) or 0 (a light: added to what is below, its alpha is kept).
+        /// </summary>
+        private static Color Tint(Color straight, float strength, ShadingBlend blend)
+        {
+            var s = MathUtils.Clamp01(strength);
+            return new Color((int)(straight.R * s + 0.5f), (int)(straight.G * s + 0.5f), (int)(straight.B * s + 0.5f),
+                blend == ShadingBlend.Light ? 0 : (int)(s * 255f + 0.5f));
         }
 
         public void Dispose()
@@ -290,16 +445,36 @@ namespace MonoGame.GameManager.Controls.Shading
             ReleaseResults();
         }
 
-        private int ComputeKey(int? signature, Vector2 size, float s, int pad)
+        /// <summary>
+        /// The pixels of the target per local unit for a control drawn at <paramref name="scale"/> (its largest side and
+        /// effects <paramref name="largest"/> local units long), in steps of 1/64.
+        /// </summary>
+        private static float PixelScaleFor(float scale, float largest)
+        {
+            var s = MathUtils.Clamp(scale, MinPixelScale, MaxPixelScale);
+            if (largest * s + 8f > ShadingResources.MaxTargetSize)
+                s = (ShadingResources.MaxTargetSize - 8f) / largest;
+            return Math.Max(1f / 64f, (float)Math.Floor(s * 64f) / 64f); // steps, so a slow zoom does not render every frame
+        }
+
+        /// <summary>The key of what the control draws (without its scale, which only changes the resolution of the shapes).</summary>
+        private int ComputeKey(int? signature, Vector2 size, float extent)
         {
             var hash = new HashCode();
             hash.Add(signature ?? 0);
-            hash.Add(size);
+            if (host.ShadingStretchesWithSize)
+            {
+                hash.Add(SizeBucket(size.X));
+                hash.Add(SizeBucket(size.Y));
+            }
+            else
+            {
+                hash.Add(size);
+            }
+
             hash.Add(host.Color.A);
-            hash.Add((int)Math.Round(host.NestedOpacity * 128f));
             hash.Add(host.SpriteEffects);
-            hash.Add(s);
-            hash.Add(pad);
+            hash.Add((int)Math.Ceiling(extent * 8f));
             hash.Add(effects.Count);
             return hash.ToHashCode();
         }
@@ -321,11 +496,94 @@ namespace MonoGame.GameManager.Controls.Shading
         private bool IsVisible(ShadingEffect effect, ShadingLayer layer, out ShapeResult result)
         {
             result = null;
-            return effect.IsEnabled && effect.Layer == layer && effect.Intensity > 0f && effect.Color.A > 0
-                && results.TryGetValue(effect, out result) && result.IsValid;
+            if (!effect.IsEnabled || effect.Layer != layer || effect.Intensity <= 0f || effect.Color.A == 0)
+                return false;
+            GetLevels(effect, out var low, out _, out _);
+            return TryGetCurrent(effect, low, opacityLow, out result);
         }
 
-        private void DrawShape(SpriteBatch spriteBatch, ShadingEffect effect, ShapeResult result)
+        /// <summary>The shape of an effect at a gain and opacity level, when it is rendered for the current content.</summary>
+        private bool TryGetCurrent(ShadingEffect effect, int level, int opacity, out ShapeResult result)
+            => results.TryGetValue((effect, level, opacity), out result) && result.IsValid && result.Generation == generation;
+
+        /// <summary>The opacity levels around <paramref name="opacity"/> and the weight of the upper one (0 on a level).</summary>
+        private static void GetOpacityLevels(float opacity, out int low, out int high, out float weight)
+        {
+            var steps = MathUtils.Clamp01(opacity) * OpacitySteps;
+            low = Math.Min(OpacitySteps, (int)Math.Floor(steps + 0.001f));
+            weight = steps - low;
+            if (weight < 0.004f || low >= OpacitySteps)
+            {
+                weight = 0f;
+                high = low;
+                return;
+            }
+
+            high = low + 1;
+        }
+
+        /// <summary>
+        /// The gain levels of the shapes an effect is drawn with: the step at or under its gain, the step over it, and the
+        /// weight of the upper one (0 when the gain is on a step). Shapes that do not use the gain have only level 0.
+        /// </summary>
+        private static void GetLevels(ShadingEffect effect, out int low, out int high, out float weight)
+        {
+            if (effect.Shape != ShadingShape.Outer && effect.Shape != ShadingShape.Inner)
+            {
+                low = high = 0;
+                weight = 0f;
+                return;
+            }
+
+            var steps = (effect.BakedGain - 1f) / GainStep;
+            low = (int)Math.Floor(steps + 0.001f);
+            weight = steps - low;
+            if (weight < 0.004f)
+            {
+                weight = 0f;
+                high = low;
+                return;
+            }
+
+            high = low + 1;
+        }
+
+        private static float GainOf(int level) => 1f + level * GainStep;
+
+        /// <summary>True when the shape of an effect at a gain and opacity level is rendered for the current content and options.</summary>
+        private bool IsCurrent(ShadingEffect effect, int level, int opacity, int effectKey)
+            => TryGetCurrent(effect, level, opacity, out var result) && result.Key == effectKey;
+
+        /// <summary>
+        /// Draws an effect: the shape of its gain and opacity, or, between two gain steps or two opacity levels, the nearest
+        /// shapes blended.
+        /// </summary>
+        private void DrawShape(SpriteBatch spriteBatch, ShadingEffect effect, ShapeResult lowest)
+        {
+            GetLevels(effect, out var lowLevel, out var highLevel, out var gainWeight);
+            for (var o = 0; o < 2; o++)
+            {
+                var opacity = o == 0 ? opacityLow : opacityHigh;
+                var opacityPart = o == 0 ? 1f - opacityWeight : opacityWeight;
+                if (opacityPart <= 0f || o == 1 && opacityHigh == opacityLow)
+                    continue;
+
+                for (var g = 0; g < 2; g++)
+                {
+                    var level = g == 0 ? lowLevel : highLevel;
+                    var gainPart = g == 0 ? 1f - gainWeight : gainWeight;
+                    if (gainPart <= 0f || g == 1 && highLevel == lowLevel)
+                        continue;
+
+                    if (o == 0 && g == 0)
+                        DrawShape(spriteBatch, effect, lowest, opacityPart * gainPart);
+                    else if (TryGetCurrent(effect, level, opacity, out var shape))
+                        DrawShape(spriteBatch, effect, shape, opacityPart * gainPart);
+                }
+            }
+        }
+
+        private void DrawShape(SpriteBatch spriteBatch, ShadingEffect effect, ShapeResult result, float weight)
         {
             var color = effect.GetColor(time);
             if (color.A == 0)
@@ -333,7 +591,7 @@ namespace MonoGame.GameManager.Controls.Shading
 
             // The colors of XNA are premultiplied; the shapes are drawn with a straight color.
             var alpha = color.A / 255f;
-            var strength = alpha * Math.Min(1f, effect.Intensity) * effect.GetAnimatedIntensity(time);
+            var strength = alpha * Math.Min(1f, effect.Intensity) * effect.GetAnimatedIntensity(time) * effect.Strength * weight;
             var straight = new Color(
                 (int)Math.Min(255f, color.R / alpha + 0.5f),
                 (int)Math.Min(255f, color.G / alpha + 0.5f),
@@ -345,10 +603,14 @@ namespace MonoGame.GameManager.Controls.Shading
             // stay on the silhouette.
             var attached = effect.IsAttached;
             var breathe = attached ? 1f : effect.GetBreathe(time);
-            var center = host.SizeWithoutScale / 2f;
-            var origin = new Vector2(-padding / pixelScale);
+            var size = host.SizeWithoutScale;
+            // Each shape is stretched from the size it was rendered at: the opacity and gain levels of one size step are
+            // rendered at different sizes while a circle grows, so one shared size would draw some of them too small.
+            var stretch = host.ShadingStretchesWithSize && result.Size.X > 0f && result.Size.Y > 0f ? size / result.Size : Vector2.One;
+            var center = size / 2f;
+            var origin = new Vector2(-padding / pixelScale) * stretch;
             var position = center + (origin - center) * breathe + (attached ? Vector2.Zero : ToLocalOffset(effect.GetAnimatedOffset(time)));
-            var scale = result.Downsample / pixelScale * breathe;
+            var scale = stretch * (result.Downsample / pixelScale * breathe);
 
             if (effect is Shine shine)
             {
@@ -356,17 +618,14 @@ namespace MonoGame.GameManager.Controls.Shading
                 return;
             }
 
-            spriteBatch.Draw(result.Target, position, null, WithAlpha(straight, strength), 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+            DrawLocal(spriteBatch, result.Target, position, null, Tint(straight, strength, effect.Blend), scale);
         }
-
-        private static Color WithAlpha(Color straight, float alpha)
-            => new Color(straight.R, straight.G, straight.B, (int)(MathUtils.Clamp01(alpha) * 255f + 0.5f));
 
         /// <summary>
         /// Draws the part of the silhouette under a slanted band of light: the band is cut in horizontal strips (shifted
         /// to slant it) and vertical slices (brighter in the middle of the band).
         /// </summary>
-        private void DrawShine(SpriteBatch spriteBatch, Shine shine, ShapeResult result, Color straight, float strength, Vector2 position, float scale)
+        private void DrawShine(SpriteBatch spriteBatch, Shine shine, ShapeResult result, Color straight, float strength, Vector2 position, Vector2 scale)
         {
             var progress = shine.GetProgress(time);
             if (progress < 0f || progress > 1f)
@@ -384,8 +643,8 @@ namespace MonoGame.GameManager.Controls.Shading
             var middle = start + (shine.Reverse ? 1f - progress : progress) * travel;
 
             // Local units to pixels of the shape: pixel = (local - origin) / scale.
-            int ToPixelX(float local) => MathUtils.Clamp((int)Math.Round((local - position.X) / scale), 0, texture.Width);
-            int ToPixelY(float local) => MathUtils.Clamp((int)Math.Round((local - position.Y) / scale), 0, texture.Height);
+            int ToPixelX(float local) => MathUtils.Clamp((int)Math.Round((local - position.X) / scale.X), 0, texture.Width);
+            int ToPixelY(float local) => MathUtils.Clamp((int)Math.Round((local - position.Y) / scale.Y), 0, texture.Height);
 
             Span<int> columns = stackalloc int[Slices + 1];
             for (var strip = 0; strip < Strips; strip++)
@@ -412,7 +671,7 @@ namespace MonoGame.GameManager.Controls.Shading
                     var weight = (float)Math.Sin(MathHelper.Pi * (i + 0.5f) / Slices);
                     var source = new Rectangle(columns[i], top, columns[i + 1] - columns[i], bottom - top);
                     var at = position + new Vector2(source.X, source.Y) * scale;
-                    spriteBatch.Draw(texture, at, source, WithAlpha(straight, strength * weight * weight), 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
+                    DrawLocal(spriteBatch, texture, at, source, Tint(straight, strength * weight * weight, shine.Blend), scale);
                 }
             }
         }
@@ -439,6 +698,52 @@ namespace MonoGame.GameManager.Controls.Shading
             var batch = ShadingResources.SpriteBatch;
             var previousTargets = graphicsDevice.GetRenderTargets();
 
+            RenderOpacity(graphicsDevice, controlManager, batch, opacityLow, width, height);
+            if (opacityHigh != opacityLow)
+                RenderOpacity(graphicsDevice, controlManager, batch, opacityHigh, width, height);
+
+            // The shapes of an older content or scale are useless now.
+            if (renderAll)
+            {
+                staleResults.Clear();
+                foreach (var pair in results)
+                {
+                    if (pair.Value.Generation != generation)
+                        staleResults.Add(pair.Key);
+                }
+
+                foreach (var key in staleResults)
+                {
+                    results[key].Dispose();
+                    results.Remove(key);
+                }
+
+                staleResults.Clear();
+            }
+
+            graphicsDevice.SetRenderTargets(previousTargets);
+        }
+
+        /// <summary>
+        /// Draws the silhouette of the control at an opacity level and renders from it every shape of that level that is
+        /// missing.
+        /// </summary>
+        private void RenderOpacity(GraphicsDevice graphicsDevice, ControlManager controlManager, SpriteBatch batch, int opacity, int width, int height)
+        {
+            var missing = false;
+            for (var i = 0; i < effects.Count && !missing; i++)
+            {
+                var effect = effects[i];
+                if (!effect.IsEnabled)
+                    continue;
+                var effectKey = ComputeEffectKey(effect);
+                GetLevels(effect, out var low, out var high, out _);
+                missing = !IsCurrent(effect, low, opacity, effectKey) || !IsCurrent(effect, high, opacity, effectKey);
+            }
+
+            if (!missing)
+                return;
+
             // The silhouette: the control drawn in its local space (unrotated), pixelScale pixels per unit, with a
             // transparent margin of padding pixels for the effects.
             var capture = ShadingResources.GetScratch(0, width, height);
@@ -449,6 +754,8 @@ namespace MonoGame.GameManager.Controls.Shading
                 * Matrix.CreateTranslation(padding, padding, 0f);
 
             IsCapturing = true;
+            CaptureHost = host.Control;
+            CaptureOpacity = opacity / (float)OpacitySteps;
             try
             {
                 controlManager.BeginOffscreen(batch, controlManager.BaseState.WithTransform(matrix).WithScissor(null).WithBlendState(BlendState.AlphaBlend));
@@ -458,8 +765,11 @@ namespace MonoGame.GameManager.Controls.Shading
             finally
             {
                 IsCapturing = false;
+                CaptureHost = null;
+                CaptureOpacity = 1f;
             }
 
+            renderOpacity = opacity;
             for (var i = 0; i < effects.Count; i++)
             {
                 var effect = effects[i];
@@ -467,32 +777,46 @@ namespace MonoGame.GameManager.Controls.Shading
                     continue;
 
                 var effectKey = ComputeEffectKey(effect);
-                if (!renderAll && results.TryGetValue(effect, out var previous) && previous.IsValid && previous.Key == effectKey)
-                    continue;
+                GetLevels(effect, out var low, out var high, out _);
+                RenderLevel(graphicsDevice, batch, effect, effectKey, low, capture, width, height);
+                if (high != low)
+                    RenderLevel(graphicsDevice, batch, effect, effectKey, high, capture, width, height);
+            }
+        }
 
-                switch (effect.Shape)
-                {
-                    case ShadingShape.Fill:
-                        RenderFill(graphicsDevice, batch, effect, (IGradientShape)effect, capture, width, height);
-                        break;
-                    case ShadingShape.Pattern:
-                        RenderPattern(graphicsDevice, batch, (PatternOverlay)effect, capture, width, height);
-                        break;
-                    case ShadingShape.Sparkles:
-                        RenderSparkles(graphicsDevice, batch, (Sparkles)effect, capture, width, height);
-                        break;
-                    case ShadingShape.Inner:
-                        RenderInnerShape(graphicsDevice, batch, effect, capture, width, height);
-                        break;
-                    default:
-                        RenderShape(graphicsDevice, batch, effect, capture, width, height);
-                        break;
-                }
+        /// <summary>Renders the shape of an effect at a gain level, unless it is already rendered for the current content.</summary>
+        private void RenderLevel(GraphicsDevice graphicsDevice, SpriteBatch batch, ShadingEffect effect, int effectKey, int level, RenderTarget2D capture,
+            int width, int height)
+        {
+            if (IsCurrent(effect, level, renderOpacity, effectKey))
+                return;
 
-                results[effect].Key = effectKey;
+            renderLevel = level;
+            renderGain = GainOf(level);
+            switch (effect.Shape)
+            {
+                case ShadingShape.Fill:
+                    RenderFill(graphicsDevice, batch, effect, (IGradientShape)effect, capture, width, height);
+                    break;
+                case ShadingShape.Pattern:
+                    RenderPattern(graphicsDevice, batch, (PatternOverlay)effect, capture, width, height);
+                    break;
+                case ShadingShape.Sparkles:
+                    RenderSparkles(graphicsDevice, batch, (Sparkles)effect, capture, width, height);
+                    break;
+                case ShadingShape.Inner:
+                    RenderInnerShape(graphicsDevice, batch, effect, capture, width, height);
+                    break;
+                default:
+                    RenderShape(graphicsDevice, batch, effect, capture, width, height);
+                    break;
             }
 
-            graphicsDevice.SetRenderTargets(previousTargets);
+            var result = results[(effect, level, renderOpacity)];
+            result.Key = effectKey;
+            result.Generation = generation;
+            result.Size = host.SizeWithoutScale;
+            Premultiply(graphicsDevice, batch, result.Target);
         }
 
         /// <summary>
@@ -679,7 +1003,7 @@ namespace MonoGame.GameManager.Controls.Shading
             }
 
             var result = GetResult(graphicsDevice, effect, shapeWidth, shapeHeight, downsample);
-            var gain = effect.BakedGain;
+            var gain = renderGain;
             if (sigma > 0.25f)
             {
                 // The moved silhouette blurred horizontally into a scratch target, then vertically subtracted from white.
@@ -708,6 +1032,20 @@ namespace MonoGame.GameManager.Controls.Shading
             graphicsDevice.SetRenderTarget(result.Target);
             batch.Begin(SpriteSortMode.Deferred, ShadingResources.AlphaMultiplyBlendState, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullNone);
             DrawTap(batch, silhouette, Vector2.Zero, area, sourceScale, 255);
+            batch.End();
+        }
+
+        /// <summary>
+        /// Multiplies the color of a shape by its alpha (the shapes are drawn premultiplied, in the batch of the controls).
+        /// The target stays set.
+        /// </summary>
+        private static void Premultiply(GraphicsDevice graphicsDevice, SpriteBatch batch, RenderTarget2D target)
+        {
+            graphicsDevice.SetRenderTarget(target);
+            // Linear like the controls: a texture drawn with another sampler state than the last time costs GL calls.
+            batch.Begin(SpriteSortMode.Deferred, ShadingResources.PremultiplyBlendState, SamplerState.LinearClamp, DepthStencilState.None, RasterizerState.CullNone);
+            batch.Draw(ShapeExtension.WhitePixelTexture, Vector2.Zero, null, Color.White, 0f, Vector2.Zero, new Vector2(target.Width, target.Height),
+                SpriteEffects.None, 0f);
             batch.End();
         }
 
@@ -790,7 +1128,7 @@ namespace MonoGame.GameManager.Controls.Shading
             }
 
             var result = GetResult(graphicsDevice, effect, shapeWidth, shapeHeight, downsample);
-            var gain = effect.BakedGain;
+            var gain = renderGain;
             if (sigma > 0.25f)
             {
                 // Horizontal pass into a scratch target, vertical pass into the result (with the gain of the effect).
@@ -879,8 +1217,8 @@ namespace MonoGame.GameManager.Controls.Shading
 
         private ShapeResult GetResult(GraphicsDevice graphicsDevice, ShadingEffect effect, int width, int height, int downsample)
         {
-            if (!results.TryGetValue(effect, out var result))
-                results[effect] = result = new ShapeResult();
+            if (!results.TryGetValue((effect, renderLevel, renderOpacity), out var result))
+                results[(effect, renderLevel, renderOpacity)] = result = new ShapeResult();
 
             if (result.Target == null || result.Target.IsDisposed || result.Target.Width != width || result.Target.Height != height)
             {
@@ -926,6 +1264,12 @@ namespace MonoGame.GameManager.Controls.Shading
 
             /// <summary>The key of the effect when its shape was rendered.</summary>
             public int Key;
+
+            /// <summary>The generation of the renderer (content and scale) when it was rendered.</summary>
+            public int Generation;
+
+            /// <summary>The size of the control when it was rendered (it is stretched to the size of the control when that stretches).</summary>
+            public Vector2 Size;
 
             /// <summary>The gradient of a fill, and the key of its colors.</summary>
             public Texture2D Gradient;

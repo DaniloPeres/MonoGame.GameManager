@@ -43,6 +43,9 @@ namespace MonoGame.GameManager.Controls
         private event CallbackMouseEvent onMouseWheel;
         private event CallbackMultipleTouchpointsEvent onMultipleTouchpoints;
         private event Action onUpdateDestinationRectangle;
+
+        /// <summary>The position before it is rounded to the whole pixel of the destination rectangle.</summary>
+        private Vector2 exactPosition;
         private event Action<GameTime> onUpdateEvent;
 
         private Vector2 origin;
@@ -74,8 +77,13 @@ namespace MonoGame.GameManager.Controls
             set => opacity = MathHelper.Clamp(value, 0f, 1f);
         }
 
-        /// <summary>The opacity multiplied by the opacity of all its parents.</summary>
-        public float NestedOpacity => (Parent?.NestedOpacity ?? 1f) * opacity;
+        /// <summary>
+        /// The opacity multiplied by the opacity of all its parents (a step of it while the control is drawn into the
+        /// silhouette of its shading effects, see <see cref="Shading.ShadingRenderer.CaptureHost"/>).
+        /// </summary>
+        public float NestedOpacity => ReferenceEquals(Shading.ShadingRenderer.CaptureHost, this)
+            ? Shading.ShadingRenderer.CaptureOpacity
+            : (Parent?.NestedOpacity ?? 1f) * opacity;
 
         /// <summary>When false, the control and its children are not drawn and do not receive input.</summary>
         public bool IsVisible { get; set; } = true;
@@ -315,7 +323,25 @@ namespace MonoGame.GameManager.Controls
             return ThisAsT;
         }
 
-        public virtual Vector2 GetPosition() => DestinationRectangle.Location.ToVector2();
+        public virtual Vector2 GetPosition()
+        {
+            var location = DestinationRectangle.Location.ToVector2(); // brings the exact position up to date too
+            return SubpixelPositioning ? exactPosition : location;
+        }
+
+        /// <summary>
+        /// When true, the control is drawn at its exact position instead of the whole pixel of
+        /// <see cref="DestinationRectangle"/> (its shading follows): a control that moves slowly or along a curve (a float,
+        /// an orbit) glides instead of hopping from pixel to pixel. Off by default, so still controls stay sharp.
+        /// Supported by images, circles and the controls that draw with the local helpers.
+        /// </summary>
+        public bool SubpixelPositioning { get; set; }
+
+        public TControl SetSubpixelPositioning(bool subpixelPositioning)
+        {
+            SubpixelPositioning = subpixelPositioning;
+            return ThisAsT;
+        }
 
         IControl IControl.SetPosition(float x, float y) => SetPosition(new Vector2(x, y));
         public virtual TControl SetPosition(float x, float y) => SetPosition(new Vector2(x, y));
@@ -728,6 +754,7 @@ namespace MonoGame.GameManager.Controls
             }
 
             var position = new Vector2(posX, posY);
+            exactPosition = position;
             return new Rectangle(position.ToPoint(), Size.ToPoint());
         }
 

@@ -361,6 +361,27 @@ namespace MonoGame.GameManager.Controls.Abstracts
             effects?.DrawLayer(spriteBatch, ButtonEffectLayer.Front);
         }
 
+        /// <inheritdoc />
+        /// <remarks>Unknown (null) for a button with light effects: they are part of what it draws and many move.</remarks>
+        protected override int? GetOwnContentSignature()
+        {
+            if (effectRenderer != null && effectRenderer.HasEffects || DrawDeclaringType != typeof(ButtonAbstract<>))
+                return null;
+
+            var state = VisualState;
+            var hash = new HashCode();
+            hash.Add(state);
+            hash.Add(GetTexture(state));
+            hash.Add(GetBackgroundColor(state));
+            hash.Add(Color.PackedValue);
+            hash.Add(DisabledTint.PackedValue);
+            hash.Add(BorderColor);
+            hash.Add(BorderThickness);
+            hash.Add(CornerRadius);
+            hash.Add(backgroundScale);
+            return hash.ToHashCode();
+        }
+
         public override void FireOnUpdateEvent(GameTime gameTime)
         {
             if (effectRenderer != null && effectRenderer.HasEffects)
@@ -410,7 +431,7 @@ namespace MonoGame.GameManager.Controls.Abstracts
 
         /// <summary>Draws a generated frame (rounded background or border) over the whole button.</summary>
         private void DrawLocalFrame(SpriteBatch spriteBatch, LightFrame frame, Color color)
-            => DrawLocalNineSlice(spriteBatch, frame.Texture, null, new Thickness(frame.SourceBorder), frame.GetArea(LocalBounds),
+            => DrawLocalNineSlice(spriteBatch, frame.Texture, frame.Sprite.Source, new Thickness(frame.SourceBorder), frame.GetArea(LocalBounds),
                 new Thickness(frame.DestinationBorder), color);
 
         /// <summary>The texture of the normal state (overridden by toggle buttons).</summary>

@@ -43,6 +43,9 @@ namespace MonoGame.GameManager.Controls.Effects
         public float Offset { get; set; }
 
         /// <inheritdoc />
+        public override bool IsDecorativeAnimation => true;
+
+        /// <inheritdoc />
         public override ButtonEffectLayer Layer => ButtonEffectLayer.Front;
 
         public RunningLightEffect SetCount(int count)
@@ -103,8 +106,8 @@ namespace MonoGame.GameManager.Controls.Effects
             if (count == 0 || length <= 0f || Size <= 0f)
                 return;
 
-            var glow = ButtonEffectResources.GetShape(LightShape.Glow);
-            var head = ButtonEffectResources.GetShape(HeadShape);
+            var glow = ButtonEffectResources.GetShapeSprite(LightShape.Glow);
+            var head = ButtonEffectResources.GetShapeSprite(HeadShape);
             var glowOrigin = new Vector2(glow.Width / 2f, glow.Height / 2f);
             var headOrigin = new Vector2(head.Width / 2f, head.Height / 2f);
             var tint = GetTint(context);
@@ -125,12 +128,12 @@ namespace MonoGame.GameManager.Controls.Effects
                     var position = context.PointOnBorder(headDistance - direction * tailLength * rate, out var normal) + normal * Offset;
                     var fade = (1f - rate) * (1f - rate);
                     var size = Size * 2f * (1f - 0.55f * rate);
-                    spriteBatch.Draw(glow, position, null, tint * fade, 0f, glowOrigin, size / glow.Width, SpriteEffects.None, 0f);
+                    context.Draw(spriteBatch, glow, position, tint * fade, 0f, glowOrigin, size / glow.Width);
                 }
 
                 var headPosition = context.PointOnBorder(headDistance, out var headNormal) + headNormal * Offset;
-                spriteBatch.Draw(glow, headPosition, null, tint, 0f, glowOrigin, Size * 2.6f / glow.Width, SpriteEffects.None, 0f);
-                spriteBatch.Draw(head, headPosition, null, core, time * 2f, headOrigin, Size / head.Width, SpriteEffects.None, 0f);
+                context.Draw(spriteBatch, glow, headPosition, tint, 0f, glowOrigin, Size * 2.6f / glow.Width);
+                context.Draw(spriteBatch, head, headPosition, core, time * 2f, headOrigin, Size / head.Width);
             }
         }
     }

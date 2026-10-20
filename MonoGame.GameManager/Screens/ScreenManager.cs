@@ -27,6 +27,7 @@ namespace MonoGame.GameManager.Screens
         public readonly GraphicsDeviceManager Graphics;
 
         private readonly List<Screen> screens = new List<Screen>();
+        private readonly List<Screen> updatingScreens = new List<Screen>();
         private readonly Queue<NavigationRequest> pendingNavigations = new Queue<NavigationRequest>();
         private Screen initialScreen;
         private ControlManager controlManager;
@@ -181,13 +182,19 @@ namespace MonoGame.GameManager.Screens
             controlManager?.Update(gameTime);
 
             var deltaSeconds = clock.DeltaSeconds;
-            foreach (var screen in screens.ToArray())
+            // A copy (reused, no garbage every frame): an update may open or close screens.
+            updatingScreens.Clear();
+            updatingScreens.AddRange(screens);
+            for (var i = 0; i < updatingScreens.Count; i++)
             {
+                var screen = updatingScreens[i];
                 if (screen.IsDisposed || (screen.IsCovered && !screen.UpdateWhenCovered))
                     continue;
                 screen.Scheduler.Update(deltaSeconds);
                 screen.Update(gameTime);
             }
+
+            updatingScreens.Clear();
 
             ServiceProvider.Audio.Update(clock.UnscaledDeltaSeconds);
             ServiceProvider.GlobalScheduler.Update(clock.UnscaledDeltaSeconds);
@@ -340,6 +347,14 @@ namespace MonoGame.GameManager.Screens
 
         private void RefreshScreenStates()
         {
+            // The screens under an opaque screen are hidden by it: they are not drawn.
+            var opaqueIndex = -1;
+            for (var i = screens.Count - 1; i >= 0 && opaqueIndex < 0; i--)
+            {
+                if (screens[i].IsOpaque)
+                    opaqueIndex = i;
+            }
+
             for (var i = 0; i < screens.Count; i++)
             {
                 var screen = screens[i];
@@ -348,7 +363,7 @@ namespace MonoGame.GameManager.Screens
                 if (screen.Root is ScreenRootPanel root)
                 {
                     root.UpdateEnabled = isTop || screen.UpdateWhenCovered;
-                    root.IsVisible = isTop || screen.DrawWhenCovered;
+                    root.IsVisible = isTop || screen.DrawWhenCovered && i >= opaqueIndex;
                     root.BlocksMouseEvents = screen.IsModal;
                     root.SetZIndex(i);
                 }

@@ -54,7 +54,7 @@ namespace MonoGame.GameManager.Controls.Effects
                 return;
 
             var shape = context.Bounds.Offset(new Vector2(0f, depth));
-            ButtonEffectResources.GetRoundedMask(context.CornerRadius, context.TextureDensity).Draw(spriteBatch, shape, GetTint(context));
+            ButtonEffectResources.GetRoundedMask(context.CornerRadius, context.TextureDensity).Draw(spriteBatch, context, shape, GetTint(context));
         }
     }
 }

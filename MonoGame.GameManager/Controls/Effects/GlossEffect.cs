@@ -60,6 +60,10 @@ namespace MonoGame.GameManager.Controls.Effects
         }
 
         /// <inheritdoc />
+        public override int? GetDrawKey(ButtonEffectContext context)
+            => HashCode.Combine(GetBaseDrawKey(context), Quantize(HeightRate), Quantize(Falloff), Quantize(Inset), FromBottom);
+
+        /// <inheritdoc />
         public override void Draw(SpriteBatch spriteBatch, ButtonEffectContext context)
         {
             var bounds = context.Bounds;
@@ -68,10 +72,10 @@ namespace MonoGame.GameManager.Controls.Effects
             if (width <= 0f || height <= 0f)
                 return;
 
-            var texture = ButtonEffectResources.GetVerticalGradient(Falloff);
+            var texture = ButtonEffectResources.GetVerticalGradientSprite(Falloff);
             var y = FromBottom ? bounds.Bottom - Inset - height : bounds.Y + Inset;
-            spriteBatch.Draw(texture, new Vector2(bounds.X + Inset, y), null, GetTint(context), 0f, Vector2.Zero,
-                new Vector2(width / texture.Width, height / texture.Height), FromBottom ? SpriteEffects.FlipVertically : SpriteEffects.None, 0f);
+            context.Draw(spriteBatch, texture, new Vector2(bounds.X + Inset, y), GetTint(context), 0f, Vector2.Zero,
+                new Vector2(width / texture.Width, height / texture.Height), FromBottom ? SpriteEffects.FlipVertically : SpriteEffects.None);
         }
     }
 }

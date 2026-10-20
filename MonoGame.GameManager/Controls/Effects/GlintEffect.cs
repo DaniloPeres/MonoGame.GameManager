@@ -54,6 +54,9 @@ namespace MonoGame.GameManager.Controls.Effects
         public float TwinkleSpeed { get; set; }
 
         /// <inheritdoc />
+        public override bool IsDecorativeAnimation => true;
+
+        /// <inheritdoc />
         public override ButtonEffectLayer Layer => ButtonEffectLayer.Front;
 
         /// <summary>Sets the corners with reflections.</summary>
@@ -112,7 +115,7 @@ namespace MonoGame.GameManager.Controls.Effects
                 return;
 
             var bounds = context.Bounds;
-            var texture = ButtonEffectResources.GetShape(Shape);
+            var texture = ButtonEffectResources.GetShapeSprite(Shape);
             var origin = new Vector2(texture.Width / 2f, texture.Height / 2f);
             var tint = GetTint(context);
             var cornerOffset = context.CornerRadius * 0.29f; // the arc of a rounded corner at 45 degrees
@@ -132,8 +135,8 @@ namespace MonoGame.GameManager.Controls.Effects
                 for (var i = 0; i < count; i++)
                 {
                     var stretch = i == 0 ? Math.Max(1f, Stretch) : 1f;
-                    spriteBatch.Draw(texture, position, null, tint * (i == 0 ? twinkle : 1f), angle, origin,
-                        new Vector2(size * stretch / texture.Width, size / texture.Height) * (i == 0 ? twinkle : 1f), SpriteEffects.None, 0f);
+                    context.Draw(spriteBatch, texture, position, tint * (i == 0 ? twinkle : 1f), angle, origin,
+                        new Vector2(size * stretch / texture.Width, size / texture.Height) * (i == 0 ? twinkle : 1f));
 
                     var step = size * stretch / 2f;
                     size *= 0.55f;

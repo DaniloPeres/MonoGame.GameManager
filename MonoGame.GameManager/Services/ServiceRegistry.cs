@@ -17,10 +17,14 @@ namespace MonoGame.GameManager.Services
     /// A small service container (Registry pattern): services are registered by interface and can be replaced,
     /// so the game can provide its own implementations (Dependency Inversion).
     /// </summary>
+    /// <remarks>
+    /// Services are resolved many times per frame (the clock, the control manager...), so reading never locks: the
+    /// registrations are an immutable snapshot replaced (copy on write) by every change.
+    /// </remarks>
     public sealed class ServiceRegistry
     {
-        private readonly Dictionary<Type, Registration> registrations = new Dictionary<Type, Registration>();
         private readonly object syncRoot = new object();
+        private volatile Dictionary<Type, Registration> registrations = new Dictionary<Type, Registration>();
 
         /// <summary>Registers (or replaces) a service instance.</summary>
         public void Register<TService>(TService instance) where TService : class
@@ -28,8 +32,7 @@ namespace MonoGame.GameManager.Services
             if (instance == null)
                 throw new ArgumentNullException(nameof(instance));
 
-            lock (syncRoot)
-                registrations[typeof(TService)] = Registration.ForInstance(instance);
+            Set(typeof(TService), Registration.ForInstance(instance));
         }
 
         /// <summary>Registers (or replaces) a service created on demand by a factory.</summary>
@@ -38,8 +41,7 @@ namespace MonoGame.GameManager.Services
             if (factory == null)
                 throw new ArgumentNullException(nameof(factory));
 
-            lock (syncRoot)
-                registrations[typeof(TService)] = Registration.ForFactory(() => factory(), lifetime);
+            Set(typeof(TService), Registration.ForFactory(() => factory(), lifetime));
         }
 
         /// <summary>Registers a service only if the type is not registered yet. Returns true if it was registered.</summary>
@@ -52,7 +54,7 @@ namespace MonoGame.GameManager.Services
             {
                 if (registrations.ContainsKey(typeof(TService)))
                     return false;
-                registrations[typeof(TService)] = Registration.ForFactory(() => factory(), lifetime);
+                Set(typeof(TService), Registration.ForFactory(() => factory(), lifetime));
                 return true;
             }
         }
@@ -72,37 +74,46 @@ namespace MonoGame.GameManager.Services
 
         public bool TryResolve<TService>(out TService service) where TService : class
         {
-            Registration registration;
-            lock (syncRoot)
+            if (!registrations.TryGetValue(typeof(TService), out var registration))
             {
-                if (!registrations.TryGetValue(typeof(TService), out registration))
-                {
-                    service = null;
-                    return false;
-                }
+                service = null;
+                return false;
             }
 
             service = (TService)registration.GetInstance();
             return true;
         }
 
-        public bool IsRegistered<TService>() where TService : class
-        {
-            lock (syncRoot)
-                return registrations.ContainsKey(typeof(TService));
-        }
+        public bool IsRegistered<TService>() where TService : class => registrations.ContainsKey(typeof(TService));
 
         public bool Remove<TService>() where TService : class
         {
             lock (syncRoot)
-                return registrations.Remove(typeof(TService));
+            {
+                if (!registrations.ContainsKey(typeof(TService)))
+                    return false;
+                var copy = new Dictionary<Type, Registration>(registrations);
+                copy.Remove(typeof(TService));
+                registrations = copy;
+                return true;
+            }
         }
 
         /// <summary>Removes every registration.</summary>
         public void Clear()
         {
             lock (syncRoot)
-                registrations.Clear();
+                registrations = new Dictionary<Type, Registration>();
+        }
+
+        /// <summary>Adds or replaces a registration in a new snapshot.</summary>
+        private void Set(Type type, Registration registration)
+        {
+            lock (syncRoot)
+            {
+                var copy = new Dictionary<Type, Registration>(registrations) { [type] = registration };
+                registrations = copy;
+            }
         }
 
         private sealed class Registration
@@ -111,7 +122,7 @@ namespace MonoGame.GameManager.Services
             private readonly ServiceLifetime lifetime;
             private readonly object syncRoot = new object();
             private object instance;
-            private bool hasInstance;
+            private volatile bool hasInstance;
 
             private Registration(Func<object> factory, ServiceLifetime lifetime, object instance, bool hasInstance)
             {
@@ -129,6 +140,8 @@ namespace MonoGame.GameManager.Services
             {
                 if (lifetime == ServiceLifetime.Transient && factory != null)
                     return factory();
+                if (hasInstance)
+                    return instance;
 
                 lock (syncRoot)
                 {

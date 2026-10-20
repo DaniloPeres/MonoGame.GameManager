@@ -13,7 +13,8 @@ namespace MonoGame.GameManager.Controls
     /// </summary>
     public class ControlManager : IDisposable
     {
-        private readonly Stack<SpriteBatchState> states = new Stack<SpriteBatchState>();
+        private readonly StateStack states = new StateStack();
+        private SpriteBatchState baseState;
         private readonly RasterizerState scissorRasterizerState;
         private bool isDisposed;
 
@@ -45,10 +46,17 @@ namespace MonoGame.GameManager.Controls
         public ControlMouseEventHandler MouseEventHandler { get; }
 
         /// <summary>The state used to begin the sprite batch every frame.</summary>
-        public SpriteBatchState BaseState { get; set; }
+        public SpriteBatchState BaseState
+        {
+            get => baseState;
+            set => baseState = value;
+        }
 
-        /// <summary>The state of the sprite batch at the current point of the drawing.</summary>
-        public SpriteBatchState CurrentState => states.Count > 0 ? states.Peek() : BaseState;
+        /// <summary>
+        /// The state of the sprite batch at the current point of the drawing (a reference, read without copying the
+        /// state: the controls read it many times per frame).
+        /// </summary>
+        public ref readonly SpriteBatchState CurrentState => ref states.Count > 0 ? ref states.Peek() : ref baseState;
 
         /// <summary>Fires the update event of every control.</summary>
         public void Update(GameTime gameTime) => RootPanel.FireOnUpdateEvent(gameTime);
@@ -75,20 +83,29 @@ namespace MonoGame.GameManager.Controls
         /// Ends the current batch and begins a new one with <paramref name="state"/>. Call <see cref="PopState"/>
         /// when done.
         /// </summary>
+        /// <remarks>A state equal to the current one keeps the batch (nothing is flushed).</remarks>
         public void PushState(SpriteBatch spriteBatch, SpriteBatchState state)
         {
-            spriteBatch.End();
+            var ended = CurrentState;
+            var same = state.IsSameAs(ended);
             states.Push(state);
+            if (same)
+                return;
+
+            End(spriteBatch, ended);
             Begin(spriteBatch, state);
         }
 
-        /// <summary>Ends the current batch and begins again with the previous state.</summary>
+        /// <summary>Ends the current batch and begins again with the previous state (kept when it is the same).</summary>
         public void PopState(SpriteBatch spriteBatch)
         {
-            spriteBatch.End();
-            if (states.Count > 0)
-                states.Pop();
-            Begin(spriteBatch, CurrentState);
+            var popped = states.Count > 0 ? states.Pop() : CurrentState;
+            var current = CurrentState;
+            if (popped.IsSameAs(current))
+                return;
+
+            End(spriteBatch, popped);
+            Begin(spriteBatch, current);
         }
 
         /// <summary>
@@ -116,6 +133,7 @@ namespace MonoGame.GameManager.Controls
             return area.Width > 0 && area.Height > 0;
         }
 
+
         /// <summary>Begins a batch on another render target (the state stack is shared).</summary>
         public void BeginOffscreen(SpriteBatch spriteBatch, SpriteBatchState state)
         {
@@ -126,10 +144,37 @@ namespace MonoGame.GameManager.Controls
         /// <summary>Ends a batch started with <see cref="BeginOffscreen"/>.</summary>
         public void EndOffscreen(SpriteBatch spriteBatch)
         {
-            spriteBatch.End();
+            End(spriteBatch, CurrentState);
             if (states.Count > 0)
                 states.Pop();
         }
+
+        /// <summary>
+        /// Ends a batch begun with <paramref name="state"/>. After a custom effect, the textures it bound to the other
+        /// slots (masks, noises) are unbound: MonoGame checks the sampler state of every bound texture before each draw,
+        /// and a texture left in a slot with another sampler state than the one it is drawn with in slot 0 (eg: a white
+        /// pixel used as a default mask) would have its sampler state set again at every draw call.
+        /// </summary>
+        private void End(SpriteBatch spriteBatch, SpriteBatchState state)
+        {
+            spriteBatch.End();
+            if (state.Effect != null)
+                UnbindExtraTextures(spriteBatch.GraphicsDevice);
+        }
+
+        /// <summary>Unbinds the textures of the slots above 0 (only slot 0 is used by the sprite batch).</summary>
+        public static void UnbindExtraTextures(GraphicsDevice graphicsDevice)
+        {
+            var textures = graphicsDevice.Textures;
+            for (var i = 1; i < MaxTextureSlots; i++)
+            {
+                if (textures[i] != null)
+                    textures[i] = null;
+            }
+        }
+
+        /// <summary>The texture slots checked by <see cref="UnbindExtraTextures"/> (OpenGL ES 2 guarantees 8).</summary>
+        private const int MaxTextureSlots = 8;
 
         /// <summary>Returns the axis-aligned bounds of a rectangle transformed by a matrix.</summary>
         public static Rectangle TransformBounds(Rectangle bounds, Matrix matrix)
@@ -167,6 +212,43 @@ namespace MonoGame.GameManager.Controls
             }
 
             spriteBatch.Begin(state.SortMode, state.BlendState, state.SamplerState, state.DepthStencilState, rasterizerState, state.Effect, state.TransformMatrix);
+        }
+
+        /// <summary>A stack of states whose top is read by reference.</summary>
+        private sealed class StateStack
+        {
+            private SpriteBatchState[] items = new SpriteBatchState[16];
+
+            public int Count { get; private set; }
+
+            public void Push(in SpriteBatchState state)
+            {
+                if (Count == items.Length)
+                    Array.Resize(ref items, items.Length * 2);
+                items[Count++] = state;
+            }
+
+            public SpriteBatchState Pop()
+            {
+                if (Count == 0)
+                    throw new InvalidOperationException("The stack is empty.");
+                var state = items[--Count];
+                items[Count] = default;
+                return state;
+            }
+
+            public ref SpriteBatchState Peek()
+            {
+                if (Count == 0)
+                    throw new InvalidOperationException("The stack is empty.");
+                return ref items[Count - 1];
+            }
+
+            public void Clear()
+            {
+                Array.Clear(items, 0, Count);
+                Count = 0;
+            }
         }
     }
 }

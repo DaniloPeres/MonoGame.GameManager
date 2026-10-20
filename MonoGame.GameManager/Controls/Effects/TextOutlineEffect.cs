@@ -53,6 +53,36 @@ namespace MonoGame.GameManager.Controls.Effects
         }
 
         /// <inheritdoc />
+        public override int? GetDrawKey(ButtonEffectContext context)
+        {
+            var label = context.TextLabel;
+            var hash = new HashCode();
+            hash.Add(GetBaseDrawKey(context));
+            hash.Add(Quantize(Thickness));
+            hash.Add(ShadowOffset);
+            hash.Add(ShadowColor.PackedValue);
+            hash.Add(context.Rotation);
+            hash.Add(context.Scale);
+            if (label != null)
+            {
+                hash.Add(label.IsVisible);
+                hash.Add(label.Font);
+                hash.Add(label.Text);
+                hash.Add(label.Rotation);
+                hash.Add(label.NestedScale);
+                hash.Add(label.OriginWithoutScale);
+                hash.Add(Quantize(label.CharacterSpacing));
+                hash.Add(Quantize(label.NestedOpacity));
+                hash.Add(context.ToLocalPosition(label.GetPosition()));
+            }
+
+            return hash.ToHashCode();
+        }
+
+        /// <inheritdoc />
+        public override bool DrawsWithContext => false;
+
+        /// <inheritdoc />
         public override void Draw(SpriteBatch spriteBatch, ButtonEffectContext context)
         {
             var label = context.TextLabel;

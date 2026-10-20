@@ -63,7 +63,18 @@ namespace MonoGame.GameManager.Controls
             return this;
         }
 
-        public override void Draw(SpriteBatch spriteBatch) => DrawTexture(spriteBatch, texture, DestinationRectangle, sourceRectangle, OriginWithoutScale);
+        public override void Draw(SpriteBatch spriteBatch)
+        {
+            if (!SubpixelPositioning)
+            {
+                DrawTexture(spriteBatch, texture, DestinationRectangle, sourceRectangle, OriginWithoutScale);
+                return;
+            }
+
+            // At the exact position and scale (the destination rectangle is rounded to whole pixels).
+            if (texture != null && !texture.IsDisposed)
+                spriteBatch.Draw(texture, GetPosition(), sourceRectangle, DrawColor, Rotation, OriginWithoutScale, NestedScale, SpriteEffects, LayerDepthDraw);
+        }
 
         /// <inheritdoc />
         protected override int? GetContentSignature() => HashCode.Combine(texture, sourceRectangle);

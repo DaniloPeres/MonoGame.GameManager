@@ -44,6 +44,9 @@ namespace MonoGame.GameManager.Controls.Effects
         public float FlickerAmount { get; set; } = 0.3f;
 
         /// <inheritdoc />
+        public override bool IsDecorativeAnimation => true;
+
+        /// <inheritdoc />
         public override ButtonEffectLayer Layer => ButtonEffectLayer.Behind;
 
         /// <summary>Sets the number, the length (0 = from the size of the button) and the width of the rays.</summary>
@@ -89,7 +92,7 @@ namespace MonoGame.GameManager.Controls.Effects
             var bounds = context.Bounds;
             var length = Length > 0f ? Length : Math.Max(bounds.Width, bounds.Height) * 0.75f;
             var center = context.AnchorPoint(Anchor, out _);
-            var glow = ButtonEffectResources.GetShape(LightShape.Glow);
+            var glow = ButtonEffectResources.GetShapeSprite(LightShape.Glow);
             var origin = new Vector2(glow.Width / 2f, glow.Height / 2f);
             var time = GetLocalTime(context);
             var baseAngle = MathHelper.ToRadians(RotationSpeed * time);
@@ -102,8 +105,8 @@ namespace MonoGame.GameManager.Controls.Effects
                 var rate = i % 2 == 0 ? 1f : ShortRayRate;
                 var angle = baseAngle + i * MathHelper.Pi / count;
                 var light = 1f - flicker * (0.5f + 0.5f * (float)Math.Sin(time * 2.3f + i * 1.7f));
-                spriteBatch.Draw(glow, center, null, tint * light, angle, origin,
-                    new Vector2(length * 2f * rate / glow.Width, Width / glow.Height), SpriteEffects.None, 0f);
+                context.Draw(spriteBatch, glow, center, tint * light, angle, origin,
+                    new Vector2(length * 2f * rate / glow.Width, Width / glow.Height));
             }
         }
     }

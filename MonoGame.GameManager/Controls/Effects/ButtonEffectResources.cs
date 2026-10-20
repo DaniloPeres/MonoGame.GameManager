@@ -14,9 +14,16 @@ namespace MonoGame.GameManager.Controls.Effects
     /// rounded rectangle and fit any size with nine-slice scaling).
     /// </summary>
     /// <remarks>
+    /// <para>
     /// The frames are cached by corner radius, spread and resolution. When the cache is full, the frames not used for
     /// the longest time are removed (their textures are released before the next frame is drawn), so animating a radius
     /// does not use more and more memory.
+    /// </para>
+    /// <para>
+    /// The small images (light shapes, gradients, bands and frames up to <see cref="EffectAtlas.MaxImageSize"/> pixels)
+    /// share the pages of an atlas, so the effects are drawn without switching textures. Get them again when drawing
+    /// (<see cref="EffectSprite"/>, <see cref="LightFrame"/>): the atlas is rebuilt when it is full.
+    /// </para>
     /// </remarks>
     public static class ButtonEffectResources
     {
@@ -33,7 +40,12 @@ namespace MonoGame.GameManager.Controls.Effects
             = new Dictionary<(int, int, int, int, int, int), long>();
         private static readonly List<(int, int, int, int, int, int)> evictionCandidates = new List<(int, int, int, int, int, int)>();
         private static readonly Dictionary<int, Texture2D> gradients = new Dictionary<int, Texture2D>();
+        private static readonly Dictionary<int, EffectSprite> gradientSprites = new Dictionary<int, EffectSprite>();
+        private static readonly EffectSprite[] shapeSprites = new EffectSprite[Enum.GetValues(typeof(LightShape)).Length];
         private static readonly List<Texture2D> pendingDisposal = new List<Texture2D>();
+        private static readonly List<(int, int, int, int, int, int)> invalidFrames = new List<(int, int, int, int, int, int)>();
+        private static EffectSprite softBandSprite;
+        private static EffectSprite whiteSprite;
         private static Texture2D flareTexture;
         private static Texture2D softBandTexture;
         private static BlendState lightBlendState;
@@ -116,6 +128,56 @@ namespace MonoGame.GameManager.Controls.Effects
             }
         }
 
+        /// <summary>
+        /// The image of a light shape (the same as <see cref="GetShape"/>) in the atlas of the effects:
+        /// <see cref="ParticleResources.ShapeTextureSize"/> pixels wide.
+        /// </summary>
+        public static EffectSprite GetShapeSprite(LightShape shape)
+        {
+            var device = EnsureGraphicsDevice();
+            var index = (int)shape;
+            if (index < 0 || index >= shapeSprites.Length)
+                index = (int)LightShape.Glow;
+            ref var sprite = ref shapeSprites[index];
+            if (!sprite.IsValid)
+                sprite = CreateSprite(device, ShapeTextureSize, ShapeTextureSize, CreateShapePixels((LightShape)index));
+            return sprite;
+        }
+
+        /// <summary>A white pixel in the atlas of the effects, to fill rectangles.</summary>
+        public static EffectSprite WhitePixel
+        {
+            get
+            {
+                var device = EnsureGraphicsDevice();
+                if (!whiteSprite.IsValid)
+                    whiteSprite = CreateSprite(device, 1, 1, new[] { Color.White });
+                return whiteSprite;
+            }
+        }
+
+        /// <summary>The soft band of <see cref="SoftBand"/> in the atlas of the effects.</summary>
+        public static EffectSprite SoftBandSprite
+        {
+            get
+            {
+                var device = EnsureGraphicsDevice();
+                if (!softBandSprite.IsValid)
+                    softBandSprite = CreateSprite(device, SoftBandWidth, 1, TextureFactory.CreateSoftBandPixels(SoftBandWidth, Color.White));
+                return softBandSprite;
+            }
+        }
+
+        /// <summary>The vertical gradient of <see cref="GetVerticalGradient"/> in the atlas of the effects.</summary>
+        public static EffectSprite GetVerticalGradientSprite(float falloff)
+        {
+            var device = EnsureGraphicsDevice();
+            var key = (int)Math.Round(MathUtils.Clamp(falloff, 0.1f, 10f) * 10f);
+            if (!gradientSprites.TryGetValue(key, out var sprite) || !sprite.IsValid)
+                gradientSprites[key] = sprite = CreateSprite(device, 1, GradientHeight, TextureFactory.CreateVerticalGradientPixels(GradientHeight, key / 10f, Color.White));
+            return sprite;
+        }
+
         /// <summary>A horizontal soft band, <c>64x1</c> pixels: transparent at both ends, white in the middle.</summary>
         public static Texture2D SoftBand
         {
@@ -161,9 +223,9 @@ namespace MonoGame.GameManager.Controls.Effects
 
             var border = outer + radius + inner + 1;
             var size = (border * 2 + 2) * density;
-            var texture = TextureFactory.CreateRoundedRectangleGlow(EnsureGraphicsDevice(), size, size, radius * density,
-                outer * density, inner * density, falloffKey / 10f, Color.White);
-            return AddFrame(key, new LightFrame(texture, border * density, border, outer));
+            var sprite = CreateSprite(EnsureGraphicsDevice(), size, size, TextureFactory.CreateRoundedRectangleGlowPixels(size, size, radius * density,
+                outer * density, inner * density, falloffKey / 10f, Color.White));
+            return AddFrame(key, new LightFrame(sprite, border * density, border, outer));
         }
 
         /// <summary>
@@ -184,9 +246,9 @@ namespace MonoGame.GameManager.Controls.Effects
             var soft = softnessKey / 2f;
             var border = (int)Math.Ceiling(soft * 2f + line) + radius + 1;
             var size = (border * 2 + 2) * density;
-            var texture = TextureFactory.CreateRoundedRectangleRim(EnsureGraphicsDevice(), size, size, radius * density,
-                line * density, soft * density, Color.White);
-            return AddFrame(key, new LightFrame(texture, border * density, border, soft));
+            var sprite = CreateSprite(EnsureGraphicsDevice(), size, size, TextureFactory.CreateRoundedRectangleRimPixels(size, size, radius * density,
+                line * density, soft * density, Color.White));
+            return AddFrame(key, new LightFrame(sprite, border * density, border, soft));
         }
 
         /// <summary>A white rounded rectangle (anti-aliased), used to draw rounded backgrounds and to clip the lights.</summary>
@@ -200,8 +262,8 @@ namespace MonoGame.GameManager.Controls.Effects
 
             var border = radius + 1;
             var size = (border * 2 + 2) * density;
-            var texture = TextureFactory.CreateRoundedRectangle(EnsureGraphicsDevice(), size, size, radius * density, Color.White);
-            return AddFrame(key, new LightFrame(texture, border * density, border, 0f));
+            var sprite = CreateSprite(EnsureGraphicsDevice(), size, size, TextureFactory.CreateRoundedRectanglePixels(size, size, radius * density, Color.White));
+            return AddFrame(key, new LightFrame(sprite, border * density, border, 0f));
         }
 
         /// <summary>
@@ -219,8 +281,8 @@ namespace MonoGame.GameManager.Controls.Effects
 
             var border = softnessKey + radius + 1;
             var size = (border * 2 + 2) * density;
-            var texture = TextureFactory.CreateSoftRoundedRectangle(EnsureGraphicsDevice(), size, size, radius * density, softnessKey * density, Color.White);
-            return AddFrame(key, new LightFrame(texture, border * density, border, softnessKey / 2f));
+            var sprite = CreateSprite(EnsureGraphicsDevice(), size, size, TextureFactory.CreateSoftRoundedRectanglePixels(size, size, radius * density, softnessKey * density, Color.White));
+            return AddFrame(key, new LightFrame(sprite, border * density, border, softnessKey / 2f));
         }
 
         /// <summary>The height in pixels of the textures of <see cref="GetBand"/>.</summary>
@@ -236,7 +298,8 @@ namespace MonoGame.GameManager.Controls.Effects
         /// <param name="fade">How much the light fades from the top to the bottom (0 = flat, 1 = transparent at the bottom).</param>
         /// <param name="fromBottom">When true, the band fades from the bottom to the top.</param>
         /// <param name="capWidth">Receives the width of the round ends, in texture pixels.</param>
-        public static Texture2D GetBand(float roundness, float softness, float fade, bool fromBottom, out int capWidth)
+        /// <returns>The image of the band (in the atlas of the effects when it fits).</returns>
+        public static EffectSprite GetBand(float roundness, float softness, float fade, bool fromBottom, out int capWidth)
         {
             var roundnessKey = (int)Math.Round(MathUtils.Clamp01(roundness) * 20f);
             var softnessKey = (int)Math.Round(MathUtils.Clamp(softness, 0f, 0.5f) * 40f);
@@ -247,7 +310,7 @@ namespace MonoGame.GameManager.Controls.Effects
             var radius = (BandHeight / 2f - margin) * roundnessKey / 20f;
             capWidth = (int)Math.Ceiling(radius + margin) + 2;
             if (TryGetFrame(key, out var frame))
-                return frame.Texture;
+                return frame.Sprite;
 
             var width = capWidth * 2 + 4;
             var softnessPixels = Math.Max(1f, softnessKey / 40f * BandHeight);
@@ -270,8 +333,8 @@ namespace MonoGame.GameManager.Controls.Effects
                 }
             }
 
-            var texture = TextureFactory.FromPixels(EnsureGraphicsDevice(), width, BandHeight, pixels);
-            return AddFrame(key, new LightFrame(texture, capWidth, capWidth, 0f)).Texture;
+            var sprite = CreateSprite(EnsureGraphicsDevice(), width, BandHeight, pixels);
+            return AddFrame(key, new LightFrame(sprite, capWidth, capWidth, 0f)).Sprite;
         }
 
         /// <summary>
@@ -289,14 +352,16 @@ namespace MonoGame.GameManager.Controls.Effects
             var line = thicknessKey / 2f;
             var border = (int)Math.Ceiling(line) + radius + 1;
             var size = (border * 2 + 2) * density;
-            var texture = TextureFactory.CreateRoundedRectangle(EnsureGraphicsDevice(), size, size, radius * density,
-                Color.Transparent, line * density, Color.White);
-            return AddFrame(key, new LightFrame(texture, border * density, border, 0f));
+            var sprite = CreateSprite(EnsureGraphicsDevice(), size, size, TextureFactory.CreateRoundedRectanglePixels(size, size, radius * density,
+                Color.Transparent, line * density, Color.White));
+            return AddFrame(key, new LightFrame(sprite, border * density, border, 0f));
         }
 
         /// <summary>Releases the frames removed from the cache (called before the controls are drawn).</summary>
         internal static void ReleaseUnused()
         {
+            if (EffectAtlas.ReleaseIfFull())
+                ForgetReleasedImages();
             if (pendingDisposal.Count == 0)
                 return;
             for (var i = 0; i < pendingDisposal.Count; i++)
@@ -312,6 +377,53 @@ namespace MonoGame.GameManager.Controls.Effects
             lightBlendState = null;
             maskBlendState?.Dispose();
             maskBlendState = null;
+        }
+
+        /// <summary>Removes from the cache the frames whose texture was released with the atlas (the sprites check it themselves).</summary>
+        private static void ForgetReleasedImages()
+        {
+            invalidFrames.Clear();
+            foreach (var pair in frames)
+            {
+                if (pair.Value.Texture == null || pair.Value.Texture.IsDisposed)
+                    invalidFrames.Add(pair.Key);
+            }
+
+            for (var i = 0; i < invalidFrames.Count; i++)
+            {
+                frames.Remove(invalidFrames[i]);
+                frameUses.Remove(invalidFrames[i]);
+            }
+
+            invalidFrames.Clear();
+        }
+
+        /// <summary>An image in the atlas of the effects, or in a texture of its own when it does not fit.</summary>
+        private static EffectSprite CreateSprite(GraphicsDevice device, int width, int height, Color[] pixels)
+        {
+            if (EffectAtlas.TryAdd(device, width, height, pixels, out var sprite))
+                return sprite;
+            return new EffectSprite(TextureFactory.FromPixels(device, width, height, pixels), new Rectangle(0, 0, width, height));
+        }
+
+        /// <summary>The pixels of a light shape, the same as the textures of <see cref="GetShape"/>.</summary>
+        private static Color[] CreateShapePixels(LightShape shape)
+        {
+            switch (shape)
+            {
+                case LightShape.Flare:
+                    return CreateFlarePixels();
+                case LightShape.Star:
+                    return TextureFactory.CreateStarPixels(ShapeTextureSize, Color.White);
+                case LightShape.Diamond:
+                    return TextureFactory.CreateDiamondPixels(ShapeTextureSize, Color.White);
+                case LightShape.Circle:
+                    return TextureFactory.CreateCirclePixels(ShapeTextureSize, Color.White);
+                case LightShape.Ring:
+                    return TextureFactory.CreateRingPixels(ShapeTextureSize, ShapeTextureSize * 0.12f, Color.White);
+                default:
+                    return TextureFactory.CreateGlowPixels(ShapeTextureSize, Color.White, 2f);
+            }
         }
 
         private static int Quantize(float value) => (int)Math.Round(MathUtils.Clamp(value, 0f, 512f));
@@ -357,7 +469,7 @@ namespace MonoGame.GameManager.Controls.Effects
             for (var i = 0; i < toRemove; i++)
             {
                 var key = evictionCandidates[i];
-                if (frames.TryGetValue(key, out var cached))
+                if (frames.TryGetValue(key, out var cached) && cached.Texture != null && !EffectAtlas.IsPage(cached.Texture))
                     pendingDisposal.Add(cached.Texture);
                 frames.Remove(key);
                 frameUses.Remove(key);
@@ -367,6 +479,9 @@ namespace MonoGame.GameManager.Controls.Effects
         }
 
         private static Texture2D CreateFlare(GraphicsDevice device)
+            => TextureFactory.FromPixels(device, ShapeTextureSize, ShapeTextureSize, CreateFlarePixels());
+
+        private static Color[] CreateFlarePixels()
         {
             var star = TextureFactory.CreateStarPixels(ShapeTextureSize, Color.White, 4, 0.14f);
             var glow = TextureFactory.CreateGlowPixels(ShapeTextureSize, Color.White, 3f);
@@ -377,13 +492,22 @@ namespace MonoGame.GameManager.Controls.Effects
                 star[i] = new Color(Math.Min(255, a.R + b.R), Math.Min(255, a.G + b.G), Math.Min(255, a.B + b.B), Math.Min(255, a.A + b.A));
             }
 
-            return TextureFactory.FromPixels(device, ShapeTextureSize, ShapeTextureSize, star);
+            return star;
         }
 
         private static void ResetTextures()
         {
             foreach (var frame in frames.Values)
-                frame.Texture?.Dispose();
+            {
+                if (frame.Texture != null && !EffectAtlas.IsPage(frame.Texture))
+                    frame.Texture.Dispose();
+            }
+
+            EffectAtlas.Reset();
+            Array.Clear(shapeSprites, 0, shapeSprites.Length);
+            gradientSprites.Clear();
+            softBandSprite = default;
+            whiteSprite = default;
             frames.Clear();
             frameUses.Clear();
             foreach (var gradient in gradients.Values)

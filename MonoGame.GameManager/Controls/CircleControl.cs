@@ -54,7 +54,11 @@ namespace MonoGame.GameManager.Controls
         }
 
         /// <inheritdoc />
-        protected override int? GetContentSignature() => HashCode.Combine(radius, IsFilled, Thickness, Segments);
+        /// <remarks>The radius is not part of it: a circle stretches with its size (see <see cref="ShadingStretchesWithSize"/>).</remarks>
+        protected override int? GetContentSignature() => HashCode.Combine(IsFilled, Thickness, Segments);
+
+        /// <inheritdoc />
+        protected override bool ShadingStretchesWithSize => true;
 
         public override void Draw(SpriteBatch spriteBatch)
         {

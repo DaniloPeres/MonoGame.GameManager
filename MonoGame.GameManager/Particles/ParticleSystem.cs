@@ -4,6 +4,7 @@ using MonoGame.GameManager.Core;
 using MonoGame.GameManager.Extensions;
 using MonoGame.GameManager.GameMath;
 using System;
+using MonoGame.GameManager.Services;
 
 namespace MonoGame.GameManager.Particles
 {
@@ -41,6 +42,7 @@ namespace MonoGame.GameManager.Particles
         private bool hasStarted;
         private bool isCompleted;
         private bool isPrewarming;
+        private float scaleAccumulator;
         private ParticleSystem deathSystem;
         private ParticleSystem trailSystem;
 
@@ -311,8 +313,27 @@ namespace MonoGame.GameManager.Particles
             EnsureCapacity();
             hasStarted = true;
             isCompleted = false;
+            count = ScaleCount(count);
             for (var i = 0; i < count && activeCount < particles.Length; i++)
                 particles[activeCount++] = CreateParticle(position, inheritedVelocity, tint);
+        }
+
+        /// <summary>
+        /// <paramref name="count"/> times <see cref="VisualQuality.ParticleEmissionScale"/>; the fractions are carried over to
+        /// the next emission, so a scale of 0.4 emits 4 particles out of 10 on average, even one at a time.
+        /// </summary>
+        private int ScaleCount(int count)
+        {
+            var scale = VisualQuality.ParticleEmissionScale;
+            if (scale >= 1f)
+                return count;
+            if (scale <= 0f)
+                return 0;
+
+            scaleAccumulator += count * scale;
+            var scaled = (int)scaleAccumulator;
+            scaleAccumulator -= scaled;
+            return scaled;
         }
 
         private void SimulateParticles(float deltaSeconds)

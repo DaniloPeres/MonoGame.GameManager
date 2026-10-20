@@ -36,6 +36,9 @@ namespace MonoGame.GameManager.Controls
         private Action onCompleted;
         private Vector2 previousPosition;
         private bool hasPreviousPosition;
+        private Vector2 velocity;
+        private float velocityTime;
+        private const float MinVelocitySeconds = 1f / 60f;
 
         public ParticleEmitter(ParticleSettings settings, IRandom random = null)
         {
@@ -203,6 +206,13 @@ namespace MonoGame.GameManager.Controls
             var settings = system.Settings;
             var blendState = settings.BlendState ?? Settings.BlendState;
             var controlManager = blendState != null ? ServiceProvider.ControlManager : null;
+
+            // Additive particles in a premultiplied batch: an alpha of 0 adds them to what is below (the same colors), so
+            // no new batch is needed. Not in a silhouette of shading, whose alpha must see them.
+            var additiveInBatch = controlManager != null && ReferenceEquals(blendState, ParticleResources.AdditiveBlendState)
+                && ReferenceEquals(controlManager.CurrentState.BlendState, BlendState.AlphaBlend) && !Shading.ShadingRenderer.IsCapturing;
+            if (additiveInBatch)
+                controlManager = null;
             if (controlManager != null)
                 controlManager.PushState(spriteBatch, controlManager.CurrentState.WithBlendState(blendState));
 
@@ -230,6 +240,8 @@ namespace MonoGame.GameManager.Controls
                 var baseScale = usesShape ? settings.Size / width : 1f;
                 var scale = system.GetDrawScale(particle) * baseScale * nestedScale;
                 var color = system.GetColor(particle).Multiply(tint);
+                if (additiveInBatch)
+                    color.A = 0;
 
                 var position = particle.Position;
                 if (local)
@@ -266,11 +278,23 @@ namespace MonoGame.GameManager.Controls
         {
             var deltaSeconds = GetScaledDeltaSeconds(gameTime);
             var position = GetPosition();
-            var velocity = Vector2.Zero;
-            if (hasPreviousPosition && deltaSeconds > 0f)
-                velocity = (position - previousPosition) / deltaSeconds;
-            previousPosition = position;
-            hasPreviousPosition = true;
+            // Measured over at least MinVelocitySeconds: positions are whole pixels, so at an unlocked frame rate one frame
+            // moves 0 or 1 px in a tiny time, a huge speed that the particles would inherit.
+            if (!hasPreviousPosition)
+            {
+                previousPosition = position;
+                hasPreviousPosition = true;
+            }
+            else if (deltaSeconds > 0f)
+            {
+                velocityTime += deltaSeconds;
+                if (velocityTime >= MinVelocitySeconds)
+                {
+                    velocity = (position - previousPosition) / velocityTime;
+                    previousPosition = position;
+                    velocityTime = 0f;
+                }
+            }
 
             var system = ParticleSystem;
             system.EmitterPosition = Settings.SimulationSpace == SimulationSpace.Local ? Vector2.Zero : position;

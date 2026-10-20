@@ -32,6 +32,17 @@ namespace MonoGame.GameManager.Controls
         private Color outlineColor = Color.Black;
         private float outlineThickness;
         private bool areLinesDirty = true;
+
+        // The ink bounds of the lines (GetContentBounds), measured glyph by glyph: shading asks for them every frame, so
+        // they are kept until the lines, the origin, the width, the alignment or the spacing change.
+        private int linesVersion;
+        private int boundsVersion = -1;
+        private RectangleF cachedBounds;
+        private Vector2 boundsOrigin;
+        private float boundsWidth;
+        private TextAlign boundsAlign;
+        private float boundsLineSpacing;
+        private float boundsCharacterSpacing;
         private float wrappedScaleX = float.NaN;
 
         public MultiLineLabel(SpriteFontBase font, string text, Vector2 position, Color color, int textBoxWidth)
@@ -241,6 +252,10 @@ namespace MonoGame.GameManager.Controls
                 return base.GetContentBounds();
 
             var width = SizeWithoutScale.X;
+            if (boundsVersion == linesVersion && boundsOrigin == OriginWithoutScale && boundsWidth == width && boundsAlign == textAlign
+                && boundsLineSpacing == lineSpacing && boundsCharacterSpacing == characterSpacing)
+                return cachedBounds;
+
             var lineHeight = font.LineHeight + lineSpacing;
             RectangleF? area = null;
             for (var i = 0; i < lines.Count; i++)
@@ -251,7 +266,14 @@ namespace MonoGame.GameManager.Controls
                 area = area.HasValue ? RectangleF.Union(area.Value, line) : line;
             }
 
-            return area.HasValue && !area.Value.IsEmpty ? area.Value : base.GetContentBounds();
+            cachedBounds = area.HasValue && !area.Value.IsEmpty ? area.Value : base.GetContentBounds();
+            boundsVersion = linesVersion;
+            boundsOrigin = OriginWithoutScale;
+            boundsWidth = width;
+            boundsAlign = textAlign;
+            boundsLineSpacing = lineSpacing;
+            boundsCharacterSpacing = characterSpacing;
+            return cachedBounds;
         }
 
         /// <summary>The origin of a line (unscaled): every line rotates and scales around the origin of the whole control.</summary>
@@ -292,6 +314,7 @@ namespace MonoGame.GameManager.Controls
             lines.Clear();
             lineWidths.Clear();
             areLinesDirty = false;
+            linesVersion++;
             wrappedScaleX = scaleX;
             if (font == null)
                 return;

@@ -96,11 +96,34 @@ namespace MonoGame.GameManager.Controls.Effects
         }
 
         /// <inheritdoc />
+        public override int? GetDrawKey(ButtonEffectContext context)
+        {
+            var hash = new HashCode();
+            var any = false;
+            for (var i = 0; i < Capacity; i++)
+            {
+                if (ages[i] < 0f)
+                    continue;
+                any = true;
+                hash.Add(Quantize(ages[i]));
+                hash.Add(origins[i]);
+                hash.Add(radii[i]);
+            }
+
+            // Without a ripple nothing is drawn: the key does not change.
+            if (!any)
+                return HashCode.Combine(GetType(), -1);
+            hash.Add(GetBaseDrawKey(context));
+            hash.Add(Quantize(Duration));
+            hash.Add(Quantize(FlashIntensity));
+            hash.Add(Quantize(FillIntensity));
+            return hash.ToHashCode();
+        }
+
+        /// <inheritdoc />
         public override void Draw(SpriteBatch spriteBatch, ButtonEffectContext context)
         {
             var duration = Math.Max(0.01f, Duration);
-            Texture2D ring = null;
-            Texture2D glow = null;
             var tint = GetTint(context);
 
             for (var i = 0; i < Capacity; i++)
@@ -108,18 +131,18 @@ namespace MonoGame.GameManager.Controls.Effects
                 if (ages[i] < 0f)
                     continue;
 
-                ring ??= ButtonEffectResources.GetShape(LightShape.Ring);
-                glow ??= ButtonEffectResources.GetShape(LightShape.Glow);
+                var ring = ButtonEffectResources.GetShapeSprite(LightShape.Ring);
+                var glow = ButtonEffectResources.GetShapeSprite(LightShape.Glow);
                 var progress = MathUtils.Clamp01(ages[i] / duration);
                 var fade = 1f - progress;
                 var radius = radii[i] * Easing.CubicOut(progress);
                 var origin = new Vector2(ring.Width / 2f, ring.Height / 2f);
 
                 if (FlashIntensity > 0f)
-                    spriteBatch.FillRectangle(context.Bounds, tint * (FlashIntensity * fade * fade));
+                    context.FillRectangle(spriteBatch, context.Bounds, tint * (FlashIntensity * fade * fade));
                 if (FillIntensity > 0f)
-                    spriteBatch.Draw(glow, origins[i], null, tint * (FillIntensity * fade), 0f, origin, radius * 2.2f / glow.Width, SpriteEffects.None, 0f);
-                spriteBatch.Draw(ring, origins[i], null, tint * fade, 0f, origin, radius * 2f / ring.Width, SpriteEffects.None, 0f);
+                    context.Draw(spriteBatch, glow, origins[i], tint * (FillIntensity * fade), 0f, origin, radius * 2.2f / glow.Width);
+                context.Draw(spriteBatch, ring, origins[i], tint * fade, 0f, origin, radius * 2f / ring.Width);
             }
         }
     }

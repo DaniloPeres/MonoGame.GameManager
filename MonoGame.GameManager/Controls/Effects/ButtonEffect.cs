@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoGame.GameManager.GameMath;
+using MonoGame.GameManager.Services;
 using System;
 using System.Collections.Generic;
 
@@ -88,6 +89,12 @@ namespace MonoGame.GameManager.Controls.Effects
         /// </summary>
         public ButtonEffectBlend Blend { get; set; } = ButtonEffectBlend.Light;
 
+        /// <summary>
+        /// True for the animated lights that only decorate (sparkles, particle fields, running lights, glints, rays, sweeps):
+        /// hidden while <see cref="VisualQuality.DecorativeButtonEffects"/> is false.
+        /// </summary>
+        public virtual bool IsDecorativeAnimation => false;
+
         /// <summary>The current state multiplier (it moves towards the multiplier of the state of the button).</summary>
         public float StateIntensity => stateIntensity;
 
@@ -131,7 +138,7 @@ namespace MonoGame.GameManager.Controls.Effects
                 stateIntensity = MathUtils.MoveTowards(stateIntensity, target, speed * context.DeltaSeconds);
             }
 
-            pulse = PulseSpeed > 0f && PulseAmount > 0f
+            pulse = PulseSpeed > 0f && PulseAmount > 0f && VisualQuality.ButtonPulses
                 ? 1f - MathUtils.Clamp01(PulseAmount) * (0.5f - 0.5f * (float)Math.Cos(GetLocalTime(context) * PulseSpeed * MathHelper.TwoPi))
                 : 1f;
         }
@@ -139,11 +146,36 @@ namespace MonoGame.GameManager.Controls.Effects
         /// <summary>Draws the effect in the local space of the button (the sprite batch uses additive blending).</summary>
         public abstract void Draw(SpriteBatch spriteBatch, ButtonEffectContext context);
 
+        /// <summary>
+        /// True when <see cref="Draw"/> draws only with the drawing methods of the <see cref="ButtonEffectContext"/> (never
+        /// with the sprite batch directly): the effect can then be placed in the batch of the screen. False makes the
+        /// button draw it in a batch of its own, with its transformation and its blend.
+        /// </summary>
+        public virtual bool DrawsWithContext => true;
+
         /// <summary>Called when the button is pressed, with the position of the pointer in the local space of the button.</summary>
         public virtual void OnPressed(ButtonEffectContext context, Vector2 localPosition) { }
 
         /// <summary>Called when the button is released, with the position of the pointer in the local space of the button.</summary>
         public virtual void OnReleased(ButtonEffectContext context, Vector2 localPosition) { }
+
+        /// <summary>
+        /// A key of what the effect draws in this frame: when the keys of every effect of the inside layer of a button stay
+        /// the same, that layer is not rendered again (it is kept in render targets). Null, the default, means unknown: the
+        /// layer is rendered again every frame. Override it in effects drawn inside the button, with every option that
+        /// changes the drawing and every animated value (see <see cref="GetBaseDrawKey"/>).
+        /// </summary>
+        public virtual int? GetDrawKey(ButtonEffectContext context) => null;
+
+        /// <summary>
+        /// The part of a draw key common to every effect: its type, blend, color and intensity (with the opacity of the
+        /// button, quantized so tiny changes do not render again).
+        /// </summary>
+        protected int GetBaseDrawKey(ButtonEffectContext context)
+            => HashCode.Combine(GetType(), IsEnabled, Blend, Quantize(EffectiveIntensity * context.Opacity), GetColor(context).PackedValue);
+
+        /// <summary>A value in steps of 1/1024 (for draw keys).</summary>
+        protected static int Quantize(float value) => (int)Math.Round(value * 1024f);
 
         /// <summary>Called when the visual state of the button changes.</summary>
         public virtual void OnStateChanged(ButtonEffectContext context, ButtonVisualState previousState) { }

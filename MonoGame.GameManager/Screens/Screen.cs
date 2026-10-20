@@ -65,6 +65,12 @@ namespace MonoGame.GameManager.Screens
         public virtual bool DrawWhenCovered => true;
 
         /// <summary>
+        /// True when the screen covers the whole virtual screen with opaque content (eg: a full-screen background): the
+        /// screens under it are not drawn at all while it is open (false by default).
+        /// </summary>
+        public virtual bool IsOpaque => false;
+
+        /// <summary>
         /// When true (default), the screens below this one do not receive pointer input while it is open.
         /// </summary>
         public virtual bool IsModal => true;

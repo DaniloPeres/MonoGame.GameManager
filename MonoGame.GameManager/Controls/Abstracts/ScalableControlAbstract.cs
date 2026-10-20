@@ -99,7 +99,7 @@ namespace MonoGame.GameManager.Controls.Abstracts
             var offset = (localPoint - OriginWithoutScale) * NestedScale;
             if (Rotation != 0f)
                 offset = offset.Rotated(Rotation);
-            return DestinationRectangle.Location.ToVector2() + offset;
+            return GetPosition() + offset;
         }
 
         /// <summary>
@@ -338,6 +338,14 @@ namespace MonoGame.GameManager.Controls.Abstracts
         IControl IShadingHost.Control => this;
 
         float IShadingHost.ShadingMargin => ShadingMargin;
+
+        bool IShadingHost.ShadingStretchesWithSize => ShadingStretchesWithSize;
+
+        /// <summary>
+        /// True when what the control draws fills its area and stretches with it (a circle, a rectangle): its shading effects
+        /// are then stretched with small changes of size instead of rendered again (false by default).
+        /// </summary>
+        protected virtual bool ShadingStretchesWithSize => false;
 
         int? IShadingHost.GetShadingContentSignature() => GetContentSignature();
 

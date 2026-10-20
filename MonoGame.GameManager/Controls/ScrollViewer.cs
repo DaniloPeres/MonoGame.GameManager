@@ -37,7 +37,6 @@ namespace MonoGame.GameManager.Controls
     {
         private const float DragThreshold = 5f;
         private const float VelocitySampleSeconds = 0.1f;
-        private const float MaxInertiaSpeed = 3000f;
         private const float MinInertiaSpeed = 15f;
         private const float FlingStopSpeed = 100f;
         private const float WheelDeltaPerNotch = 120f;
@@ -114,6 +113,19 @@ namespace MonoGame.GameManager.Controls
 
         /// <summary>How fast the inertia slows down (higher stops sooner).</summary>
         public float InertiaDamping { get; set; } = 3.5f;
+
+        /// <summary>
+        /// The fastest fling, in the units of the viewer per second: the speed of the pointer at the end of a drag is
+        /// clamped to it before <see cref="FlingBoost"/> (0 or less disables the inertia).
+        /// </summary>
+        public float MaxInertiaSpeed { get; set; } = 12000f;
+
+        /// <summary>
+        /// How much faster than the pointer a fast fling starts: the speed is multiplied by
+        /// 1 + FlingBoost x (speed / <see cref="MaxInertiaSpeed"/>), so a gentle drag is barely changed and a
+        /// hard flick gets the whole boost (0 keeps the speed of the pointer).
+        /// </summary>
+        public float FlingBoost { get; set; } = 0.6f;
 
         /// <summary>The distance scrolled by one notch of the mouse wheel, in the units of the viewer (0 disables the wheel).</summary>
         public float WheelScrollSpeed { get; set; } = 60f;
@@ -573,10 +585,13 @@ namespace MonoGame.GameManager.Controls
                 dragSamples.RemoveAt(0);
         }
 
-        /// <summary>The speed of the pointer at the end of the drag, in the units of the viewer per second.</summary>
+        /// <summary>
+        /// The speed of the fling at the end of the drag, in the units of the viewer per second: the speed of the
+        /// pointer clamped to <see cref="MaxInertiaSpeed"/>, then raised by <see cref="FlingBoost"/>.
+        /// </summary>
         private Vector2 EstimateVelocity()
         {
-            if (dragSamples.Count < 2)
+            if (dragSamples.Count < 2 || MaxInertiaSpeed <= 0f)
                 return Vector2.Zero;
 
             var last = dragSamples[dragSamples.Count - 1];
@@ -593,9 +608,18 @@ namespace MonoGame.GameManager.Controls
                 velocity.X = 0f;
             if (!VerticalScrollEnabled)
                 velocity.Y = 0f;
-            if (velocity.Length() > MaxInertiaSpeed)
-                velocity = Vector2.Normalize(velocity) * MaxInertiaSpeed;
-            return velocity.Length() < MinInertiaSpeed ? Vector2.Zero : velocity;
+
+            var speed = velocity.Length();
+            if (speed < MinInertiaSpeed)
+                return Vector2.Zero;
+            if (speed > MaxInertiaSpeed)
+            {
+                velocity = velocity / speed * MaxInertiaSpeed;
+                speed = MaxInertiaSpeed;
+            }
+
+            // A faster move flings faster than the pointer: a gentle drag keeps its speed, a hard flick gets the boost.
+            return velocity * (1f + Math.Max(0f, FlingBoost) * (speed / MaxInertiaSpeed));
         }
 
         private void ApplyScrollPosition(Vector2 position, bool showBars)

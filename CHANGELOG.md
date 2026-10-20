@@ -19,6 +19,64 @@
 - Demos: the "Text Effects" page: a title whose text, font, size, rotation, opacity, letter spacing and stage can be changed live, with pages for the fill, three outlines, bevel, inner shadow and glow, shadows, glows, shine and motion, Reset and Random buttons, a Detail page (gradient overlays, patterns and sparkles), and a gallery of 205 styles clicked to edit them: 50 layered titles with many effects inside the letters (29 still, 21 animated), 40 static, 15 animated and 100 in nine themed sections (Fantasy & RPG, Arcade & Retro, Cartoon & Comic, Horror & Dark, Sci-fi & Neon, Materials & Nature, Western & Vintage, Elegant & Script, Seasons & Holidays). The tiles get their effects only near the visible part of the gallery. The Label page has a letter spacing option.
 - Demos: 17 display fonts, loaded by `ContentHandler.Fonts` (licenses next to them): Alfa Slab One, Lilita One, Bangers, Press Start 2P, Audiowide, Creepster, Pacifico, Rye, Black Ops One, Monoton, Cinzel Decorative, Bungee, Kaushan Script and UnifrakturMaguntia, plus Luckiest Guy, Permanent Marker and Special Elite under the Apache 2.0 license.
 
+### Performance
+- `Control.SubpixelPositioning` / `SetSubpixelPositioning`: the control is drawn at its exact position instead of the whole
+  pixel of its destination rectangle (images, circles, the local drawing helpers and the shading follow), so a slow float
+  or an orbit glides instead of hopping. Off by default (still controls stay sharp).
+- `ContainerAbstract.RenderCacheRate` / `RenderCacheMargin`: above twice that frame rate, the children of a container are
+  drawn into a render target at most that many times per second and the container draws it in between (one draw call for
+  a whole card or panel); slower (60 FPS on a phone) the children are drawn as usual. The target is rounded up, so a
+  container that pops in keeps it.
+- The children of a scroll viewer that are out of sight (with `ContainerAbstract.ScrolledChildCullMargin` around them) are
+  not drawn: a long list no longer costs the draw calls of every card.
+- `VisualQuality.ButtonEffectRefreshRate` (60): the animated inside layer of a button (sweeps, twinkling particle fields,
+  ripples) is rendered again at most that many times per second, instead of at every frame of an unlocked frame rate.
+- `VisualQuality` (static): knobs a game sets from its effects quality setting. `ParticleEmissionScale` (0 to 1) scales every particle emitted, the fractions carried over; `DecorativeButtonEffects` hides the animated lights that only decorate (`ButtonEffect.IsDecorativeAnimation`: sparkles, particle fields, running lights, glints, light rays, shine sweeps); `ButtonPulses` stops the pulses, so the inside layers of the buttons stay in their render targets.
+- Far fewer render target switches (slow on phone GPUs): a typical screen goes from 15-45 per frame to 2-5, a busy one
+  from about 115-150 to 4-13, with the same look.
+  - The inside layer of a button (shine sweeps, ripples, shades...) is kept in its render targets while nothing it draws
+    changes, instead of being rendered again every frame: `ButtonEffect.GetDrawKey` (null by default: rendered every frame;
+    the effects of the library override it).
+  - Containers (`Panel`, buttons without light effects) have a content signature built from their children, so their
+    shading effects are no longer rendered again every frame (`ContainerAbstract.GetOwnContentSignature`).
+  - Shading shapes are not rendered again when only the scale changes (breathing, pop-ins), when the intensity above 1 or
+    the opacity moves (kept in steps of 0.25 and 1/16, the two nearest blended), or when a circle or a rectangle changes
+    size a little (`ScalableControlAbstract.ShadingStretchesWithSize`: shapes stretched within 6%).
+- Fewer sprite batches: shading shapes are premultiplied and drawn in the batch of the controls (lights with an alpha of 0),
+  additive particles too, and `ControlManager.PushState` / `PopState` keep the batch when the state does not change.
+- Button effects are drawn in the sprite batch of the screen when it uses the alpha blend and the button has the same scale
+  on both axes: the `ButtonEffectContext` places the sprites (`Draw`, `DrawNineSlice`, `FillRectangle`) and draws the
+  lights with an alpha of 0 (the same as the light blend). Effects that draw with the batch itself return false from
+  `ButtonEffect.DrawsWithContext` and keep a batch of their own (`TextOutlineEffect`).
+- The small generated images of the effects (light shapes, gradients, bands, frames up to 256 pixels) share an atlas, so
+  the effects of many buttons are drawn without switching textures: `EffectSprite`, `ButtonEffectResources.GetShapeSprite`,
+  `GetVerticalGradientSprite`, `SoftBandSprite`, `WhitePixel`; `LightFrame.Sprite`. A screen of shop cards goes from about
+  640 draw calls to about 320.
+- The inside layer of a button uses one render target instead of two (the lights add their color over the paint and keep
+  its alpha), composited with one sprite.
+- `ControlManager.CurrentState` returns a reference (no copy of the state each time it is read) and the `With...` methods of
+  `SpriteBatchState` are `readonly`.
+- After a batch with a custom `Effect`, `ControlManager` unbinds the textures it left in the slots above 0
+  (`ControlManager.UnbindExtraTextures`): MonoGame sets the sampler state of a bound texture again at every draw call when
+  it is drawn with another sampler state in slot 0 (eg: the white pixel used as a default mask).
+- `Screen.IsOpaque`: an opaque screen hides the screens under it (they are not drawn).
+- `ServiceProvider` lookups no longer take a lock.
+- `ShadingEffect.Strength` (0 to 1): a multiplier applied when the effect is drawn, free to animate.
+- `ScreenManager.Update` no longer copies the list of screens every frame.
+
+### Breaking changes
+- `ButtonEffectResources.GetBand` returns an `EffectSprite` (the band may be in the atlas): draw it with its `Source`.
+- Code that draws a `LightFrame` by hand must use `LightFrame.Sprite.Source` (the frame may be a part of an atlas page).
+- `ControlManager.CurrentState` is a `ref readonly` property.
+
+### Changed
+- `ScrollViewer` flings follow the speed of the pointer: a faster move scrolls faster and farther. `MaxInertiaSpeed` is a property (12000 by default instead of a fixed 3000) and `FlingBoost` (0.6 by default) raises the speed of fast flicks; `FlingBoost = 0` and `MaxInertiaSpeed = 3000` give the old feel.
+
+### Fixed
+- The glow of a circle or rectangle that grows (`ShadingStretchesWithSize`) was stretched from the size of the last shape
+  rendered, not its own: while a ring grew and faded, the glows of its other opacity levels were drawn up to 6% too small,
+  so the ring seemed to shake and shrink. Each shape now keeps the size it was rendered at.
+
 ## [3.0.0] (2026-10-07)
 
 Text is rendered with FontStashSharp: TrueType/OpenType fonts at any size, sharp when scaled, without `.spritefont` files.

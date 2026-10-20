@@ -46,6 +46,18 @@ namespace MonoGame.GameManager.Controls.Shading
             set => intensity = MathUtils.Clamp(value, 0f, MaxIntensity);
         }
 
+        /// <summary>
+        /// Multiplies the effect when it is drawn, from 0 (hidden) to 1 (the default). Unlike <see cref="Intensity"/> above 1,
+        /// it is never baked into the rendered shape: animating it (a fade, a breathing light) costs nothing.
+        /// </summary>
+        public float Strength
+        {
+            get => strength;
+            set => strength = MathUtils.Clamp01(value);
+        }
+
+        private float strength = 1f;
+
         /// <summary>How the effect is mixed with what is below it.</summary>
         public ShadingBlend Blend { get; set; } = ShadingBlend.Normal;
 
@@ -100,7 +112,10 @@ namespace MonoGame.GameManager.Controls.Shading
         /// <summary>The control that owns the effect.</summary>
         internal object Owner { get; set; }
 
-        /// <summary>The part of the intensity above 1, baked into the rendered shape (denser soft edges).</summary>
+        /// <summary>
+        /// The part of the intensity above 1, baked into the rendered shape (denser soft edges). The renderer keeps a shape per
+        /// step of gain and blends the two nearest ones, so an intensity that moves does not render the shape again.
+        /// </summary>
         internal float BakedGain => Math.Max(1f, intensity);
 
         /// <summary>How far the effect reaches outside the silhouette, in local units (offset not included).</summary>
@@ -168,7 +183,7 @@ namespace MonoGame.GameManager.Controls.Shading
 
         /// <summary>A key of the options that change the rendered shape (quantized, so tiny changes do not render again).</summary>
         internal virtual int GetShapeKey()
-            => HashCode.Combine(IsEnabled, (int)Math.Round(Dilation * 8f), (int)Math.Round(SoftEdge * 8f), (int)Math.Round(BakedGain * 32f));
+            => HashCode.Combine(IsEnabled, (int)Math.Round(Dilation * 8f), (int)Math.Round(SoftEdge * 8f));
 
         /// <summary>
         /// A key of the animations baked into the shape (a scrolling gradient, an orbiting inner shadow): when it changes,
@@ -208,6 +223,13 @@ namespace MonoGame.GameManager.Controls.Shading
         public TEffect SetIntensity(float intensity)
         {
             Intensity = intensity;
+            return ThisAsT;
+        }
+
+        /// <summary>Sets <see cref="ShadingEffect.Strength"/> (0 to 1, free to animate: the shape is not rendered again).</summary>
+        public TEffect SetStrength(float strength)
+        {
+            Strength = strength;
             return ThisAsT;
         }
 

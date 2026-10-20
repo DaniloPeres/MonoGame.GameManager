@@ -47,6 +47,10 @@ namespace MonoGame.GameManager.Controls
             return this;
         }
 
+        /// <inheritdoc />
+        protected override int? GetOwnContentSignature()
+            => DrawDeclaringType == typeof(Panel) ? System.HashCode.Combine(BackgroundColor, BorderColor, BorderThickness) : (int?)null;
+
         public override void Draw(SpriteBatch spriteBatch)
         {
             var opacity = NestedOpacity;

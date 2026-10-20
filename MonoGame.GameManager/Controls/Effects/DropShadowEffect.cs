@@ -60,7 +60,7 @@ namespace MonoGame.GameManager.Controls.Effects
                 return;
 
             var radius = Math.Max(0f, context.CornerRadius + Spread);
-            ButtonEffectResources.GetSoftFill(radius, Math.Max(0f, Blur), context.TextureDensity).Draw(spriteBatch, shape, GetTint(context));
+            ButtonEffectResources.GetSoftFill(radius, Math.Max(0f, Blur), context.TextureDensity).Draw(spriteBatch, context, shape, GetTint(context));
         }
     }
 }

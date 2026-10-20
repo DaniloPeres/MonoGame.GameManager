@@ -155,6 +155,29 @@ namespace MonoGame.GameManager.Controls.Effects
         }
 
         /// <inheritdoc />
+        public override int? GetDrawKey(ButtonEffectContext context)
+        {
+            var hash = new HashCode();
+            hash.Add(GetBaseDrawKey(context));
+            hash.Add(Position);
+            hash.Add(Quantize(Offset));
+            hash.Add(Quantize(ThicknessScale));
+            hash.Add(context.BackgroundColor);
+            var layers = Layers;
+            if (layers != null)
+            {
+                for (var i = 0; i < layers.Count; i++)
+                {
+                    hash.Add(layers[i].Color.PackedValue);
+                    hash.Add(Quantize(layers[i].Thickness));
+                    hash.Add(layers[i].ButtonColorShade);
+                }
+            }
+
+            return hash.ToHashCode();
+        }
+
+        /// <inheritdoc />
         public override void Draw(SpriteBatch spriteBatch, ButtonEffectContext context)
         {
             var layers = Layers;
@@ -186,14 +209,14 @@ namespace MonoGame.GameManager.Controls.Effects
                 if (outside)
                 {
                     var shape = bounds.Inflate(reach, reach);
-                    ButtonEffectResources.GetRoundedBorder(Math.Max(0f, radius + reach), reach - start, context.TextureDensity).Draw(spriteBatch, shape, tint);
+                    ButtonEffectResources.GetRoundedBorder(Math.Max(0f, radius + reach), reach - start, context.TextureDensity).Draw(spriteBatch, context, shape, tint);
                 }
                 else
                 {
                     var shape = bounds.Inflate(-start, -start);
                     if (shape.Width <= 0f || shape.Height <= 0f)
                         continue;
-                    ButtonEffectResources.GetRoundedBorder(Math.Max(0f, radius - start), reach - start, context.TextureDensity).Draw(spriteBatch, shape, tint);
+                    ButtonEffectResources.GetRoundedBorder(Math.Max(0f, radius - start), reach - start, context.TextureDensity).Draw(spriteBatch, context, shape, tint);
                 }
             }
         }

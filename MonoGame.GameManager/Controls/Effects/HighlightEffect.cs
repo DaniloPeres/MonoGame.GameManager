@@ -111,6 +111,11 @@ namespace MonoGame.GameManager.Controls.Effects
         }
 
         /// <inheritdoc />
+        public override int? GetDrawKey(ButtonEffectContext context)
+            => HashCode.Combine(GetBaseDrawKey(context), Style, Quantize(Inset), Quantize(TopInset), Quantize(HeightRate), Quantize(Thickness),
+                Quantize(Softness), HashCode.Combine(Quantize(Roundness), Quantize(Fade)));
+
+        /// <inheritdoc />
         public override void Draw(SpriteBatch spriteBatch, ButtonEffectContext context)
         {
             var bounds = context.Bounds;
@@ -130,9 +135,9 @@ namespace MonoGame.GameManager.Controls.Effects
 
             if (Style == HighlightStyle.Ellipse)
             {
-                var glow = ButtonEffectResources.GetShape(LightShape.Glow);
-                spriteBatch.Draw(glow, area.Center, null, tint, 0f, new Vector2(glow.Width / 2f, glow.Height / 2f),
-                    new Vector2(area.Width * 1.25f / glow.Width, area.Height * 1.6f / glow.Height), SpriteEffects.None, 0f);
+                var glow = ButtonEffectResources.GetShapeSprite(LightShape.Glow);
+                context.Draw(spriteBatch, glow, area.Center, tint, 0f, glow.Center,
+                    new Vector2(area.Width * 1.25f / glow.Width, area.Height * 1.6f / glow.Height));
                 return;
             }
 
@@ -141,7 +146,7 @@ namespace MonoGame.GameManager.Controls.Effects
             var texture = ButtonEffectResources.GetBand(Roundness, strip ? 0.3f : Softness, strip ? 0f : Fade, fromBottom, out var cap);
             var capScale = height / ButtonEffectResources.BandHeight;
             var capWidth = Math.Min(cap * capScale, width / 2f);
-            spriteBatch.DrawNineSlice(texture, null, new Thickness(cap, 0f, cap, 0f), area, new Thickness(capWidth, 0f, capWidth, 0f), tint);
+            context.DrawNineSlice(spriteBatch, texture.Texture, texture.Source, new Thickness(cap, 0f, cap, 0f), area, new Thickness(capWidth, 0f, capWidth, 0f), tint);
         }
     }
 }

@@ -52,6 +52,9 @@ namespace MonoGame.GameManager.Controls
         /// <inheritdoc />
         protected override int? GetContentSignature() => System.HashCode.Combine(BorderColor, BorderThickness);
 
+        /// <inheritdoc />
+        protected override bool ShadingStretchesWithSize => true;
+
         public override void Draw(SpriteBatch spriteBatch)
         {
             var size = SizeWithoutScale;

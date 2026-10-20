@@ -68,6 +68,10 @@ namespace MonoGame.GameManager.Controls.Effects
         }
 
         /// <inheritdoc />
+        public override int? GetDrawKey(ButtonEffectContext context)
+            => HashCode.Combine(GetBaseDrawKey(context), Placement, Quantize(HeightRate), Quantize(Falloff), Quantize(Radius));
+
+        /// <inheritdoc />
         public override void Draw(SpriteBatch spriteBatch, ButtonEffectContext context)
         {
             var bounds = context.Bounds;
@@ -75,20 +79,20 @@ namespace MonoGame.GameManager.Controls.Effects
             switch (Placement)
             {
                 case ShadePlacement.Full:
-                    spriteBatch.FillRectangle(bounds, tint);
+                    context.FillRectangle(spriteBatch, bounds, tint);
                     break;
                 case ShadePlacement.Edges:
                     var depth = Math.Min(Math.Max(0f, Radius), Math.Min(bounds.Width, bounds.Height) / 2f);
-                    ButtonEffectResources.GetGlowFrame(context.CornerRadius, 0f, depth, Falloff, context.TextureDensity).Draw(spriteBatch, bounds, tint);
+                    ButtonEffectResources.GetGlowFrame(context.CornerRadius, 0f, depth, Falloff, context.TextureDensity).Draw(spriteBatch, context, bounds, tint);
                     break;
                 default:
                     var height = bounds.Height * MathUtils.Clamp01(HeightRate);
                     if (height <= 0f || bounds.Width <= 0f)
                         return;
-                    var gradient = ButtonEffectResources.GetVerticalGradient(Falloff);
+                    var gradient = ButtonEffectResources.GetVerticalGradientSprite(Falloff);
                     var fromBottom = Placement == ShadePlacement.Bottom;
-                    spriteBatch.Draw(gradient, new Vector2(bounds.X, fromBottom ? bounds.Bottom - height : bounds.Y), null, tint, 0f, Vector2.Zero,
-                        new Vector2(bounds.Width / gradient.Width, height / gradient.Height), fromBottom ? SpriteEffects.FlipVertically : SpriteEffects.None, 0f);
+                    context.Draw(spriteBatch, gradient, new Vector2(bounds.X, fromBottom ? bounds.Bottom - height : bounds.Y), tint, 0f, Vector2.Zero,
+                        new Vector2(bounds.Width / gradient.Width, height / gradient.Height), fromBottom ? SpriteEffects.FlipVertically : SpriteEffects.None);
                     break;
             }
         }

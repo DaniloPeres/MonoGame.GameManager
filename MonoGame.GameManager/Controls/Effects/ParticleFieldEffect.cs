@@ -78,6 +78,9 @@ namespace MonoGame.GameManager.Controls.Effects
         public float DriftSpeed { get; set; }
 
         /// <inheritdoc />
+        public override bool IsDecorativeAnimation => true;
+
+        /// <inheritdoc />
         public override ButtonEffectLayer Layer
             => Area == ParticleFieldArea.Inside || Area == ParticleFieldArea.Top || Area == ParticleFieldArea.Bottom
                 ? ButtonEffectLayer.Inside
@@ -157,6 +160,40 @@ namespace MonoGame.GameManager.Controls.Effects
         }
 
         /// <inheritdoc />
+        public override int? GetDrawKey(ButtonEffectContext context)
+        {
+            var hash = new HashCode();
+            hash.Add(GetBaseDrawKey(context));
+            hash.Add(Area);
+            hash.Add(Count);
+            hash.Add(Quantize(SizeMin));
+            hash.Add(Quantize(SizeMax));
+            hash.Add(Seed);
+            hash.Add(Quantize(Spread));
+            hash.Add(Quantize(OpacityMin));
+            hash.Add(Quantize(CoreRate));
+            hash.Add(Quantize(TwinkleSpeed));
+            hash.Add(Quantize(TwinkleAmount));
+            hash.Add(Quantize(DriftSpeed));
+            if (Shapes != null)
+            {
+                for (var i = 0; i < Shapes.Count; i++)
+                    hash.Add(Shapes[i]);
+            }
+
+            if (Colors != null)
+            {
+                for (var i = 0; i < Colors.Count; i++)
+                    hash.Add(Colors[i].PackedValue);
+            }
+
+            // Twinkling or drifting particles move with the time.
+            if (TwinkleSpeed > 0f || DriftSpeed != 0f)
+                hash.Add(Quantize(GetLocalTime(context)));
+            return hash.ToHashCode();
+        }
+
+        /// <inheritdoc />
         public override void Draw(SpriteBatch spriteBatch, ButtonEffectContext context)
         {
             var count = Math.Max(0, Math.Min(500, Count));
@@ -175,7 +212,7 @@ namespace MonoGame.GameManager.Controls.Effects
             var strength = EffectiveIntensity * context.Opacity;
             var shapes = Shapes;
             var colors = Colors;
-            var core = ButtonEffectResources.GetShape(LightShape.Circle);
+            var core = ButtonEffectResources.GetShapeSprite(LightShape.Circle);
             var coreOrigin = new Vector2(core.Width / 2f, core.Height / 2f);
             var twinkleAmount = MathUtils.Clamp01(TwinkleAmount);
             var drift = DriftSpeed != 0f && area.Height > 0f ? time * DriftSpeed / area.Height : 0f;
@@ -196,13 +233,13 @@ namespace MonoGame.GameManager.Controls.Effects
 
                 var shape = shapes != null && shapes.Count > 0 ? shapes[particle.Shape % shapes.Count] : LightShape.Glow;
                 var color = colors != null && colors.Count > 0 ? colors[particle.Color % colors.Count] : baseColor;
-                var texture = ButtonEffectResources.GetShape(shape);
+                var texture = ButtonEffectResources.GetShapeSprite(shape);
                 var origin = new Vector2(texture.Width / 2f, texture.Height / 2f);
                 var rotation = shape == LightShape.Flare || shape == LightShape.Star ? particle.Rotation : 0f;
-                spriteBatch.Draw(texture, position, null, color * (alpha * strength), rotation, origin, size / texture.Width, SpriteEffects.None, 0f);
+                context.Draw(spriteBatch, texture, position, color * (alpha * strength), rotation, origin, size / texture.Width);
 
                 if (shape == LightShape.Glow && CoreRate > 0f)
-                    spriteBatch.Draw(core, position, null, Color.White * (alpha * strength * 0.5f), 0f, coreOrigin, size * CoreRate / core.Width, SpriteEffects.None, 0f);
+                    context.Draw(spriteBatch, core, position, Color.White * (alpha * strength * 0.5f), 0f, coreOrigin, size * CoreRate / core.Width);
             }
         }
 

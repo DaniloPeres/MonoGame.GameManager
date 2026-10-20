@@ -23,7 +23,10 @@ namespace MonoGame.GameManager.Controls.Effects
         public override ButtonEffectLayer Layer => ButtonEffectLayer.Inside;
 
         /// <inheritdoc />
+        public override int? GetDrawKey(ButtonEffectContext context) => GetBaseDrawKey(context);
+
+        /// <inheritdoc />
         public override void Draw(SpriteBatch spriteBatch, ButtonEffectContext context)
-            => spriteBatch.FillRectangle(context.Bounds, GetTint(context));
+            => context.FillRectangle(spriteBatch, context.Bounds, GetTint(context));
     }
 }

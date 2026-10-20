@@ -96,6 +96,11 @@ namespace MonoGame.GameManager.Controls.Effects
         }
 
         /// <inheritdoc />
+        public override int? GetDrawKey(ButtonEffectContext context)
+            => HashCode.Combine(GetBaseDrawKey(context), Placement, Quantize(Radius), Quantize(Falloff), Quantize(Thickness), Quantize(Softness), Edges,
+                Quantize(Offset));
+
+        /// <inheritdoc />
         public override void Draw(SpriteBatch spriteBatch, ButtonEffectContext context)
         {
             var shape = context.Bounds.Inflate(Offset, Offset);
@@ -122,7 +127,7 @@ namespace MonoGame.GameManager.Controls.Effects
                     break;
             }
 
-            frame.Draw(spriteBatch, shape, GetTint(context));
+            frame.Draw(spriteBatch, context, shape, GetTint(context));
         }
 
         /// <summary>An inner glow along the top or the bottom edge only: a gradient clipped by the shape of the button.</summary>
@@ -132,10 +137,10 @@ namespace MonoGame.GameManager.Controls.Effects
             if (height <= 0f)
                 return;
 
-            var gradient = ButtonEffectResources.GetVerticalGradient(Falloff);
+            var gradient = ButtonEffectResources.GetVerticalGradientSprite(Falloff);
             var fromBottom = Edges == GlowEdges.Bottom;
-            spriteBatch.Draw(gradient, new Vector2(shape.X, fromBottom ? shape.Bottom - height : shape.Y), null, GetTint(context), 0f, Vector2.Zero,
-                new Vector2(shape.Width / gradient.Width, height / gradient.Height), fromBottom ? SpriteEffects.FlipVertically : SpriteEffects.None, 0f);
+            context.Draw(spriteBatch, gradient, new Vector2(shape.X, fromBottom ? shape.Bottom - height : shape.Y), GetTint(context), 0f, Vector2.Zero,
+                new Vector2(shape.Width / gradient.Width, height / gradient.Height), fromBottom ? SpriteEffects.FlipVertically : SpriteEffects.None);
         }
     }
 }

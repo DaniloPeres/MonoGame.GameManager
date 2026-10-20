@@ -58,6 +58,10 @@ namespace MonoGame.GameManager.Controls.Effects
         }
 
         /// <inheritdoc />
+        public override int? GetDrawKey(ButtonEffectContext context)
+            => HashCode.Combine(GetBaseDrawKey(context), Position, Quantize(Thickness), Quantize(Offset));
+
+        /// <inheritdoc />
         public override void Draw(SpriteBatch spriteBatch, ButtonEffectContext context)
         {
             var thickness = Math.Max(0f, Thickness);
@@ -72,7 +76,7 @@ namespace MonoGame.GameManager.Controls.Effects
                 return;
 
             var radius = Math.Max(0f, context.CornerRadius + grow);
-            ButtonEffectResources.GetRoundedBorder(radius, thickness, context.TextureDensity).Draw(spriteBatch, shape, GetTint(context));
+            ButtonEffectResources.GetRoundedBorder(radius, thickness, context.TextureDensity).Draw(spriteBatch, context, shape, GetTint(context));
         }
     }
 }

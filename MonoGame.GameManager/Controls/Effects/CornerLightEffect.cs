@@ -135,8 +135,8 @@ namespace MonoGame.GameManager.Controls.Effects
             var time = GetLocalTime(context);
             var tint = GetTint(context);
             var core = ApplyIntensity(CoreColor, context);
-            var glow = ButtonEffectResources.GetShape(LightShape.Glow);
-            var shape = ButtonEffectResources.GetShape(Shape);
+            var glow = ButtonEffectResources.GetShapeSprite(LightShape.Glow);
+            var shape = ButtonEffectResources.GetShapeSprite(Shape);
             var glowOrigin = new Vector2(glow.Width / 2f, glow.Height / 2f);
             var shapeOrigin = new Vector2(shape.Width / 2f, shape.Height / 2f);
             var amount = Math.Max(0f, Math.Min(1f, TwinkleAmount));
@@ -148,13 +148,13 @@ namespace MonoGame.GameManager.Controls.Effects
                 var rotation = SpinSpeed != 0f ? MathHelper.ToRadians(SpinSpeed * time) + i * GoldenAngle : 0f;
 
                 if (GlowSize > 0f)
-                    spriteBatch.Draw(glow, position, null, tint * twinkle, 0f, glowOrigin, GlowSize * twinkle / glow.Width, SpriteEffects.None, 0f);
+                    context.Draw(spriteBatch, glow, position, tint * twinkle, 0f, glowOrigin, GlowSize * twinkle / glow.Width);
                 if (StreakLength > 0f && StreakThickness > 0f)
-                    spriteBatch.Draw(glow, position, null, tint * twinkle, 0f, glowOrigin,
-                        new Vector2(StreakLength / glow.Width, StreakThickness * 2f / glow.Height) * (0.6f + 0.4f * twinkle), SpriteEffects.None, 0f);
+                    context.Draw(spriteBatch, glow, position, tint * twinkle, 0f, glowOrigin,
+                        new Vector2(StreakLength / glow.Width, StreakThickness * 2f / glow.Height) * (0.6f + 0.4f * twinkle));
                 if (Size > 0f)
-                    spriteBatch.Draw(shape, position, null, core * (0.5f + 0.5f * twinkle), rotation, shapeOrigin,
-                        Size * (0.75f + 0.25f * twinkle) / shape.Width, SpriteEffects.None, 0f);
+                    context.Draw(spriteBatch, shape, position, core * (0.5f + 0.5f * twinkle), rotation, shapeOrigin,
+                        Size * (0.75f + 0.25f * twinkle) / shape.Width);
             }
         }
     }

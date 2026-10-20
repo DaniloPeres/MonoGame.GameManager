@@ -38,14 +38,19 @@ namespace MonoGame.GameManager.Controls.Effects
     /// </summary>
     /// <remarks>
     /// <para>
-    /// Each layer is drawn with a transformation that maps the local space of the button to the screen. Consecutive
-    /// effects of a layer with the same <see cref="ButtonEffectBlend"/> share one batch: lights use
-    /// <see cref="ButtonEffectResources.LightBlendState"/>, painted effects the premultiplied alpha blend.
+    /// When the batch of the screen uses the premultiplied alpha blend and the button has the same scale on both axes, the
+    /// effects are drawn in that batch: the <see cref="ButtonEffectContext"/> places their sprites on the screen and draws
+    /// the lights with an alpha of 0 (an alpha of 0 under the alpha blend adds the color and keeps the alpha below, exactly
+    /// like <see cref="ButtonEffectResources.LightBlendState"/>). With the shared images of the atlas of the effects, the
+    /// effects of many buttons cost a few draw calls. Otherwise (another blend, a scale that differs between the axes, an
+    /// effect that draws with the batch itself) the layer is drawn in a batch of its own, with a transformation that maps
+    /// the local space of the button to the screen.
     /// </para>
     /// <para>
     /// The inside layer is clipped to the shape of the button: with the scissor rectangle when the shape is a rectangle
-    /// that is not rotated, otherwise it is drawn into render targets (before the frame is drawn) multiplied by the
-    /// shape. Its painted effects are drawn first and its lights after them.
+    /// that is not rotated, otherwise it is drawn into a render target (before the frame is drawn) multiplied by the
+    /// shape. Its painted effects are drawn first and its lights after them; the target holds both (premultiplied: the
+    /// lights add their color and keep the alpha of the paint), so it is composited with one sprite.
     /// </para>
     /// </remarks>
     internal sealed class ButtonEffectRenderer : IDisposable
@@ -58,10 +63,16 @@ namespace MonoGame.GameManager.Controls.Effects
         private readonly IButtonEffectHost host;
         private readonly List<ButtonEffect> effects = new List<ButtonEffect>();
         private readonly ButtonEffectContext context = new ButtonEffectContext();
-        private RenderTarget2D lightTarget;
-        private RenderTarget2D paintTarget;
+        private RenderTarget2D insideTarget;
         private SpriteBatch offscreenBatch;
         private bool insideUsesTargets;
+        private bool hasInsideKey;
+        private int insideKey;
+        /// <summary>
+        /// When the inside layer was last rendered (<see cref="System.Diagnostics.Stopwatch"/> ticks, real time: the clock of the
+        /// button can be stopped while its opacity still changes), see <see cref="VisualQuality.ButtonEffectRefreshRate"/>.
+        /// </summary>
+        private long insideRenderTicks;
         private bool isCulled;
         private bool hasState;
         private ButtonVisualState lastState;
@@ -149,16 +160,71 @@ namespace MonoGame.GameManager.Controls.Effects
                 return;
             }
 
+            // The layer is kept in its render targets while nothing it draws changed (most buttons are still between their
+            // shine sweeps): rendering it again every frame would switch render targets twice per button.
+            var key = ComputeInsideKey(mask, maskTexture, maskArea, width, height);
+            if (key.HasValue && hasInsideKey && key.Value == insideKey && AreInsideTargetsValid())
+            {
+                insideUsesTargets = true;
+                return;
+            }
+
+            // An animation that changed again soon after the last render waits (same size: only what it draws moved).
+            var refreshRate = VisualQuality.ButtonEffectRefreshRate;
+            if (refreshRate > 0f && AreInsideTargetsValid() && insideTarget.Width == width && insideTarget.Height == height
+                && (System.Diagnostics.Stopwatch.GetTimestamp() - insideRenderTicks) * refreshRate < System.Diagnostics.Stopwatch.Frequency)
+            {
+                insideUsesTargets = true;
+                return;
+            }
+
             offscreenBatch ??= new SpriteBatch(graphicsDevice);
             var previousTargets = graphicsDevice.GetRenderTargets();
             var transform = Matrix.CreateScale(width / size.X, height / size.Y, 1f);
 
-            RenderInsideTarget(ref paintTarget, ButtonEffectBlend.Normal, graphicsDevice, controlManager, width, height, transform, mask, maskTexture, maskArea);
-            RenderInsideTarget(ref lightTarget, ButtonEffectBlend.Light, graphicsDevice, controlManager, width, height, transform, mask, maskTexture, maskArea);
+            RenderInsideTarget(graphicsDevice, controlManager, width, height, transform, mask, maskTexture, maskArea);
 
             graphicsDevice.SetRenderTargets(previousTargets);
             insideUsesTargets = true;
+            insideRenderTicks = System.Diagnostics.Stopwatch.GetTimestamp();
+            hasInsideKey = key.HasValue;
+            insideKey = key ?? 0;
         }
+
+        /// <summary>
+        /// A key of everything the inside layer draws now (the size, the mask, the shape and the draw key of every visible
+        /// inside effect), or null when an effect cannot tell (it is rendered again every frame).
+        /// </summary>
+        private int? ComputeInsideKey(ButtonEffectMask mask, Texture2D maskTexture, RectangleF maskArea, int width, int height)
+        {
+            var hash = new HashCode();
+            hash.Add(width);
+            hash.Add(height);
+            hash.Add(mask);
+            hash.Add(maskTexture);
+            hash.Add(maskArea);
+            hash.Add(context.Bounds);
+            hash.Add(context.CornerRadius);
+            hash.Add(context.TextureDensity);
+            hash.Add(context.BackgroundColor);
+            hash.Add(host.SizeWithoutScale);
+            for (var i = 0; i < effects.Count; i++)
+            {
+                var effect = effects[i];
+                if (!IsVisible(effect, ButtonEffectLayer.Inside))
+                    continue;
+                var effectKey = effect.GetDrawKey(context);
+                if (!effectKey.HasValue)
+                    return null;
+                hash.Add(i);
+                hash.Add(effectKey.Value);
+            }
+
+            return hash.ToHashCode();
+        }
+
+        /// <summary>True when the target of the inside layer still holds what was rendered into it.</summary>
+        private bool AreInsideTargetsValid() => insideTarget != null && !insideTarget.IsDisposed;
 
         /// <summary>Draws the effects of the behind or front layer.</summary>
         public void DrawLayer(SpriteBatch spriteBatch, ButtonEffectLayer layer)
@@ -170,8 +236,7 @@ namespace MonoGame.GameManager.Controls.Effects
             if (controlManager == null)
                 return;
 
-            var state = controlManager.CurrentState.WithTransform(GetLocalTransform(controlManager.CurrentState.TransformMatrix));
-            DrawRuns(spriteBatch, controlManager, state, layer, null);
+            DrawEffects(spriteBatch, controlManager, layer, null, false);
         }
 
         /// <summary>Draws the inside layer, clipped to the shape of the button.</summary>
@@ -184,14 +249,13 @@ namespace MonoGame.GameManager.Controls.Effects
             if (controlManager == null)
                 return;
 
-            var state = controlManager.CurrentState.WithTransform(GetLocalTransform(controlManager.CurrentState.TransformMatrix));
-
             if (insideUsesTargets)
             {
-                CompositeTarget(spriteBatch, controlManager, state, paintTarget, BlendState.AlphaBlend);
-                CompositeTarget(spriteBatch, controlManager, state, lightTarget, ButtonEffectResources.LightBlendState);
+                CompositeTarget(spriteBatch, controlManager);
                 return;
             }
+
+            Rectangle? scissor = null;
 
             // A rectangle that is not rotated: the scissor rectangle clips the effects.
             if (host.Rotation == 0f)
@@ -207,12 +271,11 @@ namespace MonoGame.GameManager.Controls.Effects
                     (int)Math.Ceiling(Math.Max(topLeft.Y, bottomRight.Y)) - top);
                 if (!controlManager.TryGetClipArea(clip, out var area))
                     return;
-                state = state.WithScissor(area);
+                scissor = area;
             }
 
             // The painted effects first (shades under the lights), then the lights.
-            DrawRuns(spriteBatch, controlManager, state, ButtonEffectLayer.Inside, ButtonEffectBlend.Normal);
-            DrawRuns(spriteBatch, controlManager, state, ButtonEffectLayer.Inside, ButtonEffectBlend.Light);
+            DrawEffects(spriteBatch, controlManager, ButtonEffectLayer.Inside, scissor, true);
         }
 
         public void OnPressed(Vector2 localPosition)
@@ -253,64 +316,117 @@ namespace MonoGame.GameManager.Controls.Effects
             => blend == ButtonEffectBlend.Normal ? BlendState.AlphaBlend : ButtonEffectResources.LightBlendState;
 
         /// <summary>
-        /// Draws the visible effects of a layer (only those of a blend when <paramref name="onlyBlend"/> is set), one
-        /// batch for each run of consecutive effects with the same blend.
+        /// Draws the visible effects of a layer in the order of the list (with <paramref name="paintThenLights"/>, the painted
+        /// effects first and the lights after them). They are placed in the current batch when it allows it, otherwise
+        /// drawn in a batch of their own with the transformation of the button (and the <paramref name="scissor"/>).
         /// </summary>
-        private void DrawRuns(SpriteBatch spriteBatch, ControlManager controlManager, SpriteBatchState state, ButtonEffectLayer layer, ButtonEffectBlend? onlyBlend)
+        private void DrawEffects(SpriteBatch spriteBatch, ControlManager controlManager, ButtonEffectLayer layer, Rectangle? scissor, bool paintThenLights)
         {
             context.DeltaSeconds = 0f;
-            ButtonEffectBlend? current = null;
-            for (var i = 0; i < effects.Count; i++)
+            var current = controlManager.CurrentState;
+            var alphaBlend = ReferenceEquals(current.BlendState, BlendState.AlphaBlend) && current.Effect == null
+                && current.SortMode == SpriteSortMode.Deferred;
+            var uniformScale = 1f;
+            var place = alphaBlend && !scissor.HasValue && TryGetUniformScale(out uniformScale);
+            var localState = current.WithTransform(GetLocalTransform(current.TransformMatrix));
+            if (scissor.HasValue)
+                localState = localState.WithScissor(scissor);
+
+            BlendState pushed = null;
+            for (var pass = 0; pass < (paintThenLights ? 2 : 1); pass++)
             {
-                var effect = effects[i];
-                if (!IsVisible(effect, layer) || onlyBlend.HasValue && effect.Blend != onlyBlend.Value)
-                    continue;
-
-                if (current != effect.Blend)
+                for (var i = 0; i < effects.Count; i++)
                 {
-                    if (current.HasValue)
-                        controlManager.PopState(spriteBatch);
-                    current = effect.Blend;
-                    controlManager.PushState(spriteBatch, state.WithBlendState(GetBlendState(effect.Blend)));
-                }
+                    var effect = effects[i];
+                    if (!IsVisible(effect, layer))
+                        continue;
+                    if (paintThenLights && (effect.Blend == ButtonEffectBlend.Light) != (pass == 1))
+                        continue;
 
-                effect.Draw(spriteBatch, context);
+                    var lightsWithoutAlpha = alphaBlend && effect.DrawsWithContext && effect.Blend == ButtonEffectBlend.Light;
+                    if (place && effect.DrawsWithContext)
+                    {
+                        if (pushed != null)
+                        {
+                            controlManager.PopState(spriteBatch);
+                            pushed = null;
+                        }
+
+                        context.BeginPlacing(host.GetPosition(), host.OriginWithoutScale, uniformScale, host.Rotation);
+                    }
+                    else
+                    {
+                        var blend = lightsWithoutAlpha ? BlendState.AlphaBlend : GetBlendState(effect.Blend);
+                        if (!ReferenceEquals(pushed, blend))
+                        {
+                            if (pushed != null)
+                                controlManager.PopState(spriteBatch);
+                            controlManager.PushState(spriteBatch, localState.WithBlendState(blend));
+                            pushed = blend;
+                        }
+                    }
+
+                    context.LightsWithoutAlpha = lightsWithoutAlpha;
+                    effect.Draw(spriteBatch, context);
+                    context.LightsWithoutAlpha = false;
+                    context.EndPlacing();
+                }
             }
 
-            if (current.HasValue)
+            if (pushed != null)
                 controlManager.PopState(spriteBatch);
         }
 
-        /// <summary>Renders the inside effects of a blend into a render target, multiplied by the shape of the button.</summary>
-        private void RenderInsideTarget(ref RenderTarget2D target, ButtonEffectBlend blend, GraphicsDevice graphicsDevice, ControlManager controlManager,
+        /// <summary>The scale of the button when it is the same on both axes and positive (its effects can be placed in the batch).</summary>
+        private bool TryGetUniformScale(out float scale)
+        {
+            var nested = host.NestedScale;
+            scale = nested.X;
+            return nested.X > 0f && nested.Y > 0f && Math.Abs(nested.X - nested.Y) <= 1e-5f * nested.X;
+        }
+
+        /// <summary>
+        /// Renders the inside effects into the render target, multiplied by the shape of the button: the painted effects
+        /// first, then the lights (they add their color and keep the alpha, so the target is premultiplied).
+        /// </summary>
+        private void RenderInsideTarget(GraphicsDevice graphicsDevice, ControlManager controlManager,
             int width, int height, Matrix transform, ButtonEffectMask mask, Texture2D maskTexture, RectangleF maskArea)
         {
-            if (!HasVisibleEffects(ButtonEffectLayer.Inside, blend))
+            if (insideTarget == null || insideTarget.IsDisposed || insideTarget.Width != width || insideTarget.Height != height)
             {
-                target?.Dispose();
-                target = null;
-                return;
+                insideTarget?.Dispose();
+                insideTarget = new RenderTarget2D(graphicsDevice, width, height, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.DiscardContents);
             }
 
-            if (target == null || target.IsDisposed || target.Width != width || target.Height != height)
-            {
-                target?.Dispose();
-                target = new RenderTarget2D(graphicsDevice, width, height, false, SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.DiscardContents);
-            }
-
-            graphicsDevice.SetRenderTarget(target);
+            graphicsDevice.SetRenderTarget(insideTarget);
             graphicsDevice.Clear(Color.Transparent);
 
-            controlManager.BeginOffscreen(offscreenBatch, controlManager.BaseState
-                .WithTransform(transform)
-                .WithScissor(null)
-                .WithBlendState(GetBlendState(blend)));
+            var state = controlManager.BaseState.WithTransform(transform).WithScissor(null);
+            var batchBlend = BlendState.AlphaBlend;
+            controlManager.BeginOffscreen(offscreenBatch, state.WithBlendState(batchBlend));
             context.DeltaSeconds = 0f;
-            for (var i = 0; i < effects.Count; i++)
+            for (var pass = 0; pass < 2; pass++)
             {
-                var effect = effects[i];
-                if (IsVisible(effect, ButtonEffectLayer.Inside) && effect.Blend == blend)
+                var blend = pass == 0 ? ButtonEffectBlend.Normal : ButtonEffectBlend.Light;
+                for (var i = 0; i < effects.Count; i++)
+                {
+                    var effect = effects[i];
+                    if (!IsVisible(effect, ButtonEffectLayer.Inside) || effect.Blend != blend)
+                        continue;
+
+                    // The lights of the effects that draw with the batch itself need the light blend.
+                    var needed = effect.DrawsWithContext ? BlendState.AlphaBlend : GetBlendState(blend);
+                    if (!ReferenceEquals(needed, batchBlend))
+                    {
+                        offscreenBatch.End();
+                        batchBlend = needed;
+                        controlManager.BeginOffscreen(offscreenBatch, state.WithBlendState(batchBlend));
+                    }
+
+                    context.LightsWithoutAlpha = effect.DrawsWithContext && blend == ButtonEffectBlend.Light;
                     effect.Draw(offscreenBatch, context);
+                    context.LightsWithoutAlpha = false;
+                }
             }
             offscreenBatch.End();
 
@@ -321,15 +437,27 @@ namespace MonoGame.GameManager.Controls.Effects
             controlManager.EndOffscreen(offscreenBatch);
         }
 
-        private void CompositeTarget(SpriteBatch spriteBatch, ControlManager controlManager, SpriteBatchState state, RenderTarget2D target, BlendState blendState)
+        /// <summary>Draws the render target of the inside layer (premultiplied) over the button.</summary>
+        private void CompositeTarget(SpriteBatch spriteBatch, ControlManager controlManager)
         {
+            var target = insideTarget;
             if (target == null || target.IsDisposed)
                 return;
 
             var size = host.SizeWithoutScale;
-            controlManager.PushState(spriteBatch, state.WithBlendState(blendState));
-            spriteBatch.Draw(target, Vector2.Zero, null, Color.White, 0f, Vector2.Zero,
-                new Vector2(size.X / target.Width, size.Y / target.Height), SpriteEffects.None, 0f);
+            var scale = new Vector2(size.X / target.Width, size.Y / target.Height);
+            var current = controlManager.CurrentState;
+            if (ReferenceEquals(current.BlendState, BlendState.AlphaBlend) && current.Effect == null && current.SortMode == SpriteSortMode.Deferred
+                && TryGetUniformScale(out var uniformScale))
+            {
+                context.BeginPlacing(host.GetPosition(), host.OriginWithoutScale, uniformScale, host.Rotation);
+                context.Draw(spriteBatch, target, Vector2.Zero, null, Color.White, 0f, Vector2.Zero, scale);
+                context.EndPlacing();
+                return;
+            }
+
+            controlManager.PushState(spriteBatch, current.WithTransform(GetLocalTransform(current.TransformMatrix)).WithBlendState(BlendState.AlphaBlend));
+            spriteBatch.Draw(target, Vector2.Zero, null, Color.White, 0f, Vector2.Zero, scale, SpriteEffects.None, 0f);
             controlManager.PopState(spriteBatch);
         }
 
@@ -381,7 +509,8 @@ namespace MonoGame.GameManager.Controls.Effects
         }
 
         private static bool IsVisible(ButtonEffect effect, ButtonEffectLayer layer)
-            => effect.IsEnabled && effect.Layer == layer && effect.EffectiveIntensity > 0.001f;
+            => effect.IsEnabled && effect.Layer == layer && effect.EffectiveIntensity > 0.001f
+                && (VisualQuality.DecorativeButtonEffects || !effect.IsDecorativeAnimation);
 
         private bool HasVisibleEffects(ButtonEffectLayer layer, ButtonEffectBlend? blend)
         {
@@ -429,10 +558,9 @@ namespace MonoGame.GameManager.Controls.Effects
         private void ReleaseTargets()
         {
             insideUsesTargets = false;
-            lightTarget?.Dispose();
-            lightTarget = null;
-            paintTarget?.Dispose();
-            paintTarget = null;
+            hasInsideKey = false;
+            insideTarget?.Dispose();
+            insideTarget = null;
         }
     }
 }

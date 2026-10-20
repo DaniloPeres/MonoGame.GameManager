@@ -40,6 +40,7 @@ namespace MonoGame.GameManager.Controls.Shading
         private static BlendState alphaSubtractBlendState;
         private static BlendState alphaMultiplyBlendState;
         private static BlendState colorReplaceBlendState;
+        private static BlendState premultiplyBlendState;
         private static SpriteBatch spriteBatch;
         private static Texture2D sparkleTexture;
         private static readonly Dictionary<ShadingPattern, Texture2D> patternTextures = new Dictionary<ShadingPattern, Texture2D>();
@@ -185,6 +186,28 @@ namespace MonoGame.GameManager.Controls.Shading
             }
         }
 
+        /// <summary>Multiplies the color (red, green and blue) below by its alpha: premultiplies a rendered shape.</summary>
+        internal static BlendState PremultiplyBlendState
+        {
+            get
+            {
+                if (premultiplyBlendState == null || premultiplyBlendState.IsDisposed)
+                {
+                    premultiplyBlendState = new BlendState
+                    {
+                        Name = "ShadingResources.Premultiply",
+                        ColorSourceBlend = Blend.Zero,
+                        ColorDestinationBlend = Blend.DestinationAlpha,
+                        AlphaSourceBlend = Blend.Zero,
+                        AlphaDestinationBlend = Blend.One,
+                        ColorWriteChannels = ColorWriteChannels.Red | ColorWriteChannels.Green | ColorWriteChannels.Blue
+                    };
+                }
+
+                return premultiplyBlendState;
+            }
+        }
+
         /// <summary>Writes only the color (red, green and blue) of what is drawn, and keeps the alpha below (gradient fills).</summary>
         internal static BlendState ColorReplaceBlendState
         {
@@ -255,6 +278,8 @@ namespace MonoGame.GameManager.Controls.Shading
             alphaMultiplyBlendState = null;
             colorReplaceBlendState?.Dispose();
             colorReplaceBlendState = null;
+            premultiplyBlendState?.Dispose();
+            premultiplyBlendState = null;
         }
 
         private static int RoundUp(int value) => (value + SizeStep - 1) / SizeStep * SizeStep;

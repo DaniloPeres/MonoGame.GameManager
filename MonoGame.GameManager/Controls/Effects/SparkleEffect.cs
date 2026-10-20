@@ -118,6 +118,9 @@ namespace MonoGame.GameManager.Controls.Effects
         }
 
         /// <inheritdoc />
+        public override bool IsDecorativeAnimation => true;
+
+        /// <inheritdoc />
         public override ButtonEffectLayer Layer => ButtonEffectLayer.Front;
 
         public SparkleEffect SetRate(float rate)
@@ -223,7 +226,7 @@ namespace MonoGame.GameManager.Controls.Effects
             if (count == 0)
                 return;
 
-            var texture = ButtonEffectResources.GetShape(Shape);
+            var texture = ButtonEffectResources.GetShapeSprite(Shape);
             var origin = new Vector2(texture.Width / 2f, texture.Height / 2f);
             var baseScale = Settings.Size / texture.Width;
             var tint = GetTint(context);
@@ -233,8 +236,8 @@ namespace MonoGame.GameManager.Controls.Effects
             {
                 ref var particle = ref particles[i];
                 var color = system.GetColor(particle).Multiply(tint);
-                spriteBatch.Draw(texture, particle.Position, null, color, system.GetRotation(particle), origin,
-                    system.GetDrawScale(particle) * baseScale, system.GetEffects(particle), 0f);
+                context.Draw(spriteBatch, texture, particle.Position, color, system.GetRotation(particle), origin,
+                    system.GetDrawScale(particle) * baseScale, system.GetEffects(particle));
             }
         }
 

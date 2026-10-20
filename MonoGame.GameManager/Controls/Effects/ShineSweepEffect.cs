@@ -50,6 +50,9 @@ namespace MonoGame.GameManager.Controls.Effects
         public EasingFunction Easing { get; set; } = Animations.Easing.SineInOut;
 
         /// <inheritdoc />
+        public override bool IsDecorativeAnimation => true;
+
+        /// <inheritdoc />
         public override ButtonEffectLayer Layer => ButtonEffectLayer.Inside;
 
         /// <summary>Sets <see cref="AngleDegrees"/>.</summary>
@@ -120,20 +123,40 @@ namespace MonoGame.GameManager.Controls.Effects
         }
 
         /// <inheritdoc />
-        public override void Draw(SpriteBatch spriteBatch, ButtonEffectContext context)
+        public override int? GetDrawKey(ButtonEffectContext context)
+        {
+            // Between two sweeps nothing is drawn: the key does not change.
+            if (!TryGetRawProgress(context, out var progress))
+                return HashCode.Combine(GetType(), -1);
+            return HashCode.Combine(GetBaseDrawKey(context), Quantize(progress), Quantize(AngleDegrees), Quantize(Width), Reverse,
+                Quantize(SecondaryBandRate), Easing);
+        }
+
+        /// <summary>The progress of the sweep shown now (0 to 1, before the easing), or false when no sweep is shown.</summary>
+        private bool TryGetRawProgress(ButtonEffectContext context, out float progress)
         {
             var duration = Math.Max(0.01f, Duration);
-            float progress;
+            progress = 0f;
             if (hoverSweepTime >= 0f)
-                progress = hoverSweepTime / duration;
-            else if (Interval >= 0f)
             {
-                var time = MathUtils.Wrap(GetLocalTime(context), 0f, duration + Interval);
-                if (time > duration)
-                    return;
-                progress = time / duration;
+                progress = hoverSweepTime / duration;
+                return true;
             }
-            else
+
+            if (Interval < 0f)
+                return false;
+
+            var time = MathUtils.Wrap(GetLocalTime(context), 0f, duration + Interval);
+            if (time > duration)
+                return false;
+            progress = time / duration;
+            return true;
+        }
+
+        /// <inheritdoc />
+        public override void Draw(SpriteBatch spriteBatch, ButtonEffectContext context)
+        {
+            if (!TryGetRawProgress(context, out var progress))
                 return;
 
             progress = MathUtils.Clamp01(Easing != null ? Easing(MathUtils.Clamp01(progress)) : progress);
@@ -149,19 +172,19 @@ namespace MonoGame.GameManager.Controls.Effects
             var length = bounds.Height / (float)Math.Cos(angle) + width;
             var tint = GetTint(context);
 
-            DrawBand(spriteBatch, x, bounds.Center.Y, width, length, angle, tint);
+            DrawBand(spriteBatch, context, x, bounds.Center.Y, width, length, angle, tint);
             if (SecondaryBandRate > 0f)
             {
                 var behind = Reverse ? 1f : -1f;
-                DrawBand(spriteBatch, x + behind * width * SecondaryBandDistance, bounds.Center.Y, width * SecondaryBandRate, length, angle, tint * 0.8f);
+                DrawBand(spriteBatch, context, x + behind * width * SecondaryBandDistance, bounds.Center.Y, width * SecondaryBandRate, length, angle, tint * 0.8f);
             }
         }
 
-        private static void DrawBand(SpriteBatch spriteBatch, float x, float y, float width, float length, float angle, Color color)
+        private static void DrawBand(SpriteBatch spriteBatch, ButtonEffectContext context, float x, float y, float width, float length, float angle, Color color)
         {
-            var band = ButtonEffectResources.SoftBand;
-            spriteBatch.Draw(band, new Vector2(x, y), null, color, angle, new Vector2(band.Width / 2f, 0.5f),
-                new Vector2(width / band.Width, length), SpriteEffects.None, 0f);
+            var band = ButtonEffectResources.SoftBandSprite;
+            context.Draw(spriteBatch, band, new Vector2(x, y), color, angle, new Vector2(band.Width / 2f, 0.5f),
+                new Vector2(width / band.Width, length));
         }
     }
 }
